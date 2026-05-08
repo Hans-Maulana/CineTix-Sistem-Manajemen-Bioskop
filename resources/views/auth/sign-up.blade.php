@@ -4,80 +4,139 @@
 <head>
   <meta charset="utf-8">
   <meta name="viewport" content="width=device-width, initial-scale=1">
-  <title>Studiova</title>
-  <link rel="shortcut icon" type="image/png" href="../assets/images/logos/favicon.svg" />
-  <link rel="stylesheet" href="../assets/libs/owl.carousel/dist/assets/owl.carousel.min.css">
-  <link rel="stylesheet" href="../assets/libs/aos-master/dist/aos.css">
-  <link rel="stylesheet" href="../assets/css/styles.css" />
+  <title>Studiova - Sign Up</title>
+
+  <link rel="shortcut icon" href="../assets/images/logos/favicon.svg">
+
+  <link href="https://cdn.jsdelivr.net/npm/bootstrap@5.3.3/dist/css/bootstrap.min.css" rel="stylesheet">
+  <link rel="stylesheet" href="https://cdn.jsdelivr.net/npm/bootstrap-icons@1.11.3/font/bootstrap-icons.css">
+
+  <style>
+    body {
+      background: #f5f6fa;
+    }
+
+    .auth-card {
+      border: 0;
+      border-radius: 18px;
+      box-shadow: 0 10px 30px rgba(0, 0, 0, 0.08);
+    }
+
+    .form-control {
+      border-radius: 10px;
+    }
+
+    .form-control:focus {
+        border-color: #212529;
+        box-shadow: none;
+    }
+
+    .btn-dark {
+      border-radius: 10px;
+    }
+
+    .google-btn {
+        background: #fff;
+        border: 1px solid #ddd;
+        border-radius: 10px;
+        color: #444;
+        font-weight: 500;
+        transition: all 0.2s;
+    }
+
+    .google-btn:hover {
+        background: #f8f9fa;
+        border-color: #ccc;
+    }
+  </style>
 </head>
 
 <body>
 
-  <!--  Page Wrapper -->
-  <div class="page-wrapper overflow-hidden">
+  <section class="min-vh-100 d-flex align-items-center">
+    <div class="container">
+      <div class="row justify-content-center">
+        <div class="col-12 col-md-7 col-lg-4">
 
-    <!--  Get in touch Section -->
-    <section
-      class="bg-light-gray border-top border-primary border-4 d-flex align-items-center justify-content-center min-vh-100">
-      <div class="container py-3">
-        <div class="sign-in card mx-auto shadow-lg">
-          <div class="card-body py-8 px-lg-5">
-            <a href="index.html" class="mb-8 hstack justify-content-center">
-              <img src="../assets/images/logos/logo-dark.svg" alt="logo-dark" class="img-fluid">
-            </a>
-            <div class="hstack gap-3">
-              <a href="{{ route('login.google') }}"
-                class="btn btn-outline-light bg-white px-3 py-2 fs-4 text-dark w-50 fw-medium hstack gap-2 lh-lg justify-content-center">
-                <i class="fab fa-google"></i>Sign In With <img src="../assets/images/svgs/icon-google.svg" alt="google" class="img-fluid"></a>
-            </div>
-            <div class="position-relative hstack justify-content-center">
-              <hr class="my-8 w-100 d-block">
-              <p class="mb-0 fs-3 bg-body px-3 position-absolute top-50 start-50 translate-middle">OR</p>
-            </div>
-            <form class="d-flex flex-column gap-3">
-              <div>
-                <input type="text" id="disabledTextInput" class="form-control border-bottom" placeholder="Name">
-              </div>
-              <div>
-                <input type="email" class="form-control border-bottom" id="exampleInputEmail1" placeholder="Email"
-                  aria-describedby="emailHelp">
-              </div>
-              <div>
-                <input type="password" class="form-control border-bottom" id="inputPassword" placeholder="Password">
+          <div class="card auth-card">
+            <div class="card-body p-5">
+
+              <div class="text-center mb-4">
+                <img src="../assets/images/logos/logo-dark.svg" style="height:40px;" alt="Logo">
+                <h5 class="fw-bold mt-3">Create Account</h5>
+                <p class="text-muted small mb-0">Sign up to get started</p>
               </div>
 
-              <a href="sign-in.html" class="btn btn-dark w-100 justify-content-center py-2 fw-medium my-7 fs-4 lh-lg">
-                Sign Up
+              <a href="{{ route('login.google') }}" class="btn w-100 d-flex align-items-center justify-content-center gap-2 mb-3 google-btn">
+                <img src="https://www.gstatic.com/firebasejs/ui/2.0.0/images/auth/google.svg" width="18" height="18">
+                Continue with Google
               </a>
-            </form>
-            <p class="text-center mb-1 d-block fw-medium">By creating an account, you agree with our <a
-                class="text-dark" href="privacy-policy.html">Privacy</a> and <a class="text-dark" href="privacy-policy.html">Policy</a>.</p>
-            <p class="mb-0 fw-medium text-center">Already have an account? <a class="text-dark" href="sign-in.html">Sign
-                In</a>
-            </p>
+
+              <div class="d-flex align-items-center my-4">
+                <hr class="flex-grow-1">
+                <span class="px-2 text-muted small">OR</span>
+                <hr class="flex-grow-1">
+              </div>
+
+              <form method="POST" action="{{ route('register') }}">
+                @csrf
+
+                <div class="mb-3">
+                  <label class="form-label small">Name</label>
+                  <input type="text" name="name" class="form-control py-2 @error('name') is-invalid @enderror"
+                         placeholder="Your name" value="{{ old('name') }}" required autofocus>
+                  @error('name')
+                    <div class="invalid-feedback">{{ $message }}</div>
+                  @enderror
+                </div>
+
+                <div class="mb-3">
+                  <label class="form-label small">Email</label>
+                  <input type="email" name="email" class="form-control py-2 @error('email') is-invalid @enderror"
+                         placeholder="you@email.com" value="{{ old('email') }}" required>
+                  @error('email')
+                    <div class="invalid-feedback">{{ $message }}</div>
+                  @enderror
+                </div>
+
+                <div class="mb-3">
+                  <label class="form-label small">Password</label>
+                  <input type="password" name="password" class="form-control py-2 @error('password') is-invalid @enderror"
+                         placeholder="••••••••" required>
+                  @error('password')
+                    <div class="invalid-feedback">{{ $message }}</div>
+                  @enderror
+                </div>
+
+                <div class="mb-3">
+                  <label class="form-label small">Confirm Password</label>
+                  <input type="password" name="password_confirmation" class="form-control py-2"
+                         placeholder="••••••••" required>
+                </div>
+
+                <button type="submit" class="btn btn-dark w-100 py-2 mt-2">
+                  Sign Up
+                </button>
+              </form>
+
+              <div class="text-center mt-4">
+                <p class="small text-muted mb-2">
+                  By signing up you agree to our <a href="#" class="text-decoration-none">Privacy Policy</a>
+                </p>
+
+                <p class="small mb-0">
+                  Already have an account?
+                  <a href="{{ route('login') }}" class="fw-semibold text-dark">Sign In</a>
+                </p>
+              </div>
+
+            </div>
           </div>
+
         </div>
       </div>
-    </section>
+    </div>
+  </section>
 
-  </div>
-
-  <div class="get-template hstack gap-2">
-    
-    <button class="btn bg-primary p-2 round-52 rounded-circle hstack justify-content-center flex-shrink-0"
-      id="scrollToTopBtn">
-      <iconify-icon icon="lucide:arrow-up" class="fs-7 text-dark"></iconify-icon>
-    </button>
-  </div>
-
-
-  <script src="../assets/libs/jquery/dist/jquery.min.js"></script>
-  <script src="../assets/libs/bootstrap/dist/js/bootstrap.bundle.min.js"></script>
-  <script src="../assets/libs/owl.carousel/dist/owl.carousel.min.js"></script>
-  <script src="../assets/libs/aos-master/dist/aos.js"></script>
-  <script src="../assets/js/custom.js"></script>
-  <!-- solar icons -->
-  <script src="https://cdn.jsdelivr.net/npm/iconify-icon@1.0.8/dist/iconify-icon.min.js"></script>
 </body>
-
 </html>
