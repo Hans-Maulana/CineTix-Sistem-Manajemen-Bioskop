@@ -26,12 +26,9 @@
               <img src="../assets/images/logos/logo-dark.svg" alt="logo-dark" class="img-fluid">
             </a>
             <div class="hstack gap-3">
-              <a href="javascript:void(0)"
-                class="btn btn-outline-light bg-white px-3 py-2 fs-4 text-dark w-50 fw-medium hstack gap-2 lh-lg justify-content-center">Sign
-                In <img src="../assets/images/svgs/icon-google.svg" alt="google" class="img-fluid"></a>
-              <a href="javascript:void(0)"
-                class="btn btn-outline-light bg-white px-3 py-2 fs-4 text-dark w-50 fw-medium hstack gap-2 lh-lg justify-content-center">Sign
-                In <img src="../assets/images/svgs/icon-github.svg" alt="google" class="img-fluid"></a>
+              <a href="{{ route('login.google') }}"
+                class="btn btn-outline-light bg-white px-3 py-2 fs-4 text-dark w-50 fw-medium hstack gap-2 lh-lg justify-content-center">
+                <i class="fab fa-google"></i>Sign In With <img src="../assets/images/svgs/icon-google.svg" alt="google" class="img-fluid"></a>
             </div>
             <div class="position-relative hstack justify-content-center">
               <hr class="my-8 w-100 d-block">
