@@ -5,10 +5,10 @@
   <meta charset="utf-8">
   <meta name="viewport" content="width=device-width, initial-scale=1">
   <title>Studiova</title>
-  <link rel="shortcut icon" type="image/png" href="../assets/images/logos/favicon.svg" />
-  <link rel="stylesheet" href="../assets/libs/owl.carousel/dist/assets/owl.carousel.min.css">
-  <link rel="stylesheet" href="../assets/libs/aos-master/dist/aos.css">
-  <link rel="stylesheet" href="../assets/css/styles.css" />
+  <link rel="shortcut icon" type="image/png" href="{{asset("assets/images/logos/favicon.svg")}}" />
+  <link rel="stylesheet" href="{{asset("assets/libs/owl.carousel/dist/assets/owl.carousel.min.css")}}">
+  <link rel="stylesheet" href="{{asset("assets/libs/aos-master/dist/aos.css")}}">
+  <link rel="stylesheet" href="{{asset("assets/css/styles.css")}}" />
 </head>
 
 <body>
