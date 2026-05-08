@@ -30,7 +30,7 @@
             </a>
 
 
-            <!-- Google Login -->
+            <!-- Google  -->
             <div class="hstack gap-3">
               <a href="{{ route('login.google') }}"
                 class="btn btn-outline-light bg-white px-3 py-2 fs-4 text-dark w-100 fw-medium hstack gap-2 lh-lg justify-content-center">
@@ -77,7 +77,7 @@
 
     </section>
 
-  </div>
+    </div>
 
   <!-- Scripts -->
   <script src="../assets/libs/jquery/dist/jquery.min.js"></script>
