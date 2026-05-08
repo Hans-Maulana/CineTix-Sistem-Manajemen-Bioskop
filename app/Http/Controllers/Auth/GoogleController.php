@@ -11,27 +11,40 @@ class GoogleController extends Controller
 {
     public function redirectToGoogle()
     {
-        return Socialite::driver('google')->redirect();
+        return Socialite::driver('google')->stateless()->redirect();
     }
 
     public function handleGoogleCallback()
     {
-        $googleUser = Socialite::driver('google')->user();
+        try {
+            $googleUser = Socialite::driver('google')->stateless()->user();
+        } catch (\Exception $e) {
+            return redirect()->route('login')->withErrors([
+                'google' => 'Login dengan Google gagal. Silakan coba lagi.',
+            ]);
+        }
 
-        $user = User::where('google_id', $googleUser->id)->first();
+        $user = User::where('google_id', $googleUser->id)
+            ->orWhere('email', $googleUser->email)
+            ->first();
 
         if ($user) {
+            // Update google_id jika login via email yang sudah ada
+            if (!$user->google_id) {
+                $user->update(['google_id' => $googleUser->id]);
+            }
             Auth::login($user);
         } else {
             $user = User::create([
-                'name' => $googleUser->name,
-                'email' => $googleUser->email,
+                'name'      => $googleUser->name,
+                'email'     => $googleUser->email,
                 'google_id' => $googleUser->id,
-                'password' => bcrypt('dummy123'),
+                'password'  => bcrypt('dummy123'),
             ]);
             Auth::login($user);
         }
 
-        return redirect()->intended('dashboard');
+        return redirect()->intended(route('landing-page'));
+
     }
 }

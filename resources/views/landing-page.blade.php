@@ -44,7 +44,7 @@
               <a href="sign-in.html"
                 class="btn btn-outline-light btn-md fs-6 bg-white px-3 py-1 text-dark hstack justify-content-center">Sign
                 In</a>
-              <a href="sign-up.html"
+              <a href="{{ route('register') }}"
                 class="btn btn-dark btn-md text-white fs-6 bg-dark px-3 py-1 hstack justify-content-center">Sign
                 Up</a>
             </div>
