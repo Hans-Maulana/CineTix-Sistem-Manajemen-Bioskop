@@ -77,7 +77,7 @@
 
     </section>
 
-  </div>
+    </div>
 
   <!-- Scripts -->
   <script src="../assets/libs/jquery/dist/jquery.min.js"></script>
