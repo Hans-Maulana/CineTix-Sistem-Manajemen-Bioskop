@@ -11,10 +11,16 @@ return new class extends Migration
      */
     public function up(): void
     {
-        Schema::create('promos', function (Blueprint $table) {
+        // database/migrations/xxxx_xx_xx_create_films_table.php
+        Schema::create('films', function (Blueprint $table) {
             $table->id();
+            $table->string('title');
+            $table->string('genre');
+            $table->integer('duration'); // menit
+            $table->date('release_date');
             $table->timestamps();
         });
+
     }
 
     /**
@@ -22,6 +28,6 @@ return new class extends Migration
      */
     public function down(): void
     {
-        Schema::dropIfExists('promos');
+        Schema::dropIfExists('films');
     }
 };
