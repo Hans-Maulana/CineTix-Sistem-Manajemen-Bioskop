@@ -11,8 +11,17 @@ class DatabaseSeeder extends Seeder
         $this->call([
             RoleSeeder::class,
             AdminSeeder::class,
-            Resepsionisseeder::class,
             CustomerSeeder::class,
+            TypeSeeder::class,
+            GenreSeeder::class,
+            FilmSeeder::class,
+            StudioSeeder::class,
+            ScheduleSeeder::class,
+            SeatSeeder::class,
+            PromoSeeder::class,
+            BundlingSeeder::class,
+            ReviewSeeder::class,
+            GenreFilmSeeder::class,
         ]);
     }
 }

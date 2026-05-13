@@ -11,7 +11,7 @@ return new class extends Migration
         // Tabel types 
         Schema::create('types', function (Blueprint $table) {
             $table->id();
-            $table->string('name');
+            $table->enum('name', ['2D', '3D', '4D Experience', 'Premium']);
             $table->timestamps();
         });
 
@@ -22,40 +22,12 @@ return new class extends Migration
             });
         }
 
-        // Tabel FnB
-        Schema::create('fnbs', function (Blueprint $table) {
-            $table->id();
-            $table->string('name');
-            $table->string('category');
-            $table->decimal('current_price', 12, 2)->default(0);
-            $table->integer('stock')->default(0);
-            $table->boolean('is_available')->default(true);
-            $table->timestamps();
-        });
-
-        // Tabel FnB_Bookings
-        Schema::create('fnb_bookings', function (Blueprint $table) {
-            $table->id();
-            $table->foreignId('booking_id')->constrained('bookings')->cascadeOnDelete();
-            $table->foreignId('fnb_id')->constrained('fnbs')->cascadeOnDelete();
-            $table->integer('quantity')->default(1);
-            $table->decimal('price_at_sale', 12, 2);
-            $table->timestamps();
-        });
-
-        // Tabel Bundling (paket tiket + FnB)
+        // Tabel Bundling (paket tiket)
         Schema::create('bundlings', function (Blueprint $table) {
             $table->id();
             $table->string('name');
             $table->decimal('price', 12, 2);
             $table->timestamps();
-        });
-
-        // Pivot Bundling <-> FnB
-        Schema::create('bundling_fnb', function (Blueprint $table) {
-            $table->foreignId('bundling_id')->constrained('bundlings')->cascadeOnDelete();
-            $table->foreignId('fnb_id')->constrained('fnbs')->cascadeOnDelete();
-            $table->primary(['bundling_id', 'fnb_id']);
         });
 
         // Tabel Bundling Booking
@@ -81,10 +53,7 @@ return new class extends Migration
     {
         Schema::dropIfExists('reviews');
         Schema::dropIfExists('bundling_bookings');
-        Schema::dropIfExists('bundling_fnb');
         Schema::dropIfExists('bundlings');
-        Schema::dropIfExists('fnb_bookings');
-        Schema::dropIfExists('fnbs');
         Schema::dropIfExists('types');
     }
 };

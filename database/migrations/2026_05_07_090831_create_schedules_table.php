@@ -15,7 +15,10 @@ return new class extends Migration
             $table->id();
             $table->foreignId('film_id')->constrained('films')->onDelete('cascade');
             $table->foreignId('studio_id')->constrained('studios')->onDelete('cascade');
-            $table->dateTime('show_time');
+            $table->date('schedule_date');
+            $table->time('start_time');
+            $table->time('end_time');
+            $table->decimal('ticket_price', 12, 2)->default(0);
             $table->timestamps();
         });
     }   
