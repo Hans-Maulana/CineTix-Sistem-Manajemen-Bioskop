@@ -12,7 +12,7 @@ class FilmSeeder extends Seeder
         $films = [
             [
                 'title' => 'The Avengers',
-                'description' => 'Earth\'s mightiest heroes must come together and learn to fight as a team.',
+                'synopsis' => 'Nick Fury, director of SHIELD, assembles a team of superheroes to save the world from the god Loki and his alien army.',
                 'duration' => 143,
                 'rating' => 8.0,
                 'actors' => 'Robert Downey Jr., Chris Evans, Chris Hemsworth',
@@ -25,7 +25,7 @@ class FilmSeeder extends Seeder
             ],
             [
                 'title' => 'Inception',
-                'description' => 'A skilled thief who steals corporate secrets through dream-sharing technology.',
+                'synopsis' => 'Dom Cobb is a skilled thief, the absolute best in the dangerous art of extraction, stealing valuable secrets from deep within the subconscious during the dream state.',
                 'duration' => 148,
                 'rating' => 8.8,
                 'actors' => 'Leonardo DiCaprio, Ellen Page, Joseph Gordon-Levitt',
@@ -38,7 +38,7 @@ class FilmSeeder extends Seeder
             ],
             [
                 'title' => 'The Dark Knight',
-                'description' => 'When the menace known as The Joker wreaks havoc on Gotham.',
+                'synopsis' => 'When the menace known as the Joker wreaks havoc and chaos on the people of Gotham, Batman must accept one of the greatest psychological and physical tests of his ability to fight injustice.',
                 'duration' => 152,
                 'rating' => 9.0,
                 'actors' => 'Christian Bale, Heath Ledger, Aaron Eckhart',
@@ -51,7 +51,7 @@ class FilmSeeder extends Seeder
             ],
             [
                 'title' => 'Interstellar',
-                'description' => 'A team of explorers travel through a wormhole in space.',
+                'synopsis' => 'In a future where Earth is becoming uninhabitable, farmer and ex-NASA pilot Joseph Cooper is tasked to pilot a spacecraft, along with a team of researchers, through a wormhole to find a new planet for humans.',
                 'duration' => 169,
                 'rating' => 8.6,
                 'actors' => 'Matthew McConaughey, Anne Hathaway, Jessica Chastain',
@@ -64,7 +64,7 @@ class FilmSeeder extends Seeder
             ],
             [
                 'title' => 'Toy Story',
-                'description' => 'A cowboy doll is accidentally displaced and must team up with Buzz.',
+                'synopsis' => 'A cowboy doll is profoundly threatened and jealous when a new spaceman figure supplants him as top toy in a boy\'s room.',
                 'duration' => 81,
                 'rating' => 8.3,
                 'actors' => 'Tom Hanks, Tim Allen',
@@ -78,7 +78,7 @@ class FilmSeeder extends Seeder
         ];
 
         foreach ($films as $filmData) {
-            Film::firstOrCreate(
+            Film::updateOrCreate(
                 ['title' => $filmData['title']],
                 $filmData
             );

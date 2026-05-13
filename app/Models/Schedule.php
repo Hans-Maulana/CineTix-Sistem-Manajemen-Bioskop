@@ -16,6 +16,7 @@ class Schedule extends Model
         'start_time',
         'end_time',
         'ticket_price',
+        'status',
     ];
 
     protected $casts = [
@@ -40,5 +41,19 @@ class Schedule extends Model
     public function ticketBookings()
     {
         return $this->hasMany(TicketBooking::class);
+    }
+
+    /**
+     * Get remaining available seats for this schedule.
+     */
+    public function getAvailableSeatsAttribute(): int
+    {
+        $occupiedCount = $this->ticketBookings()
+            ->whereHas('booking', function ($query) {
+                $query->whereIn('status', ['pending', 'confirmed']);
+            })
+            ->count();
+
+        return max(0, $this->studio->capacity - $occupiedCount);
     }
 }

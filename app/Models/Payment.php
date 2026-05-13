@@ -11,15 +11,18 @@ class Payment extends Model
 
     protected $fillable = [
         'booking_id',
-        'method',       // 'credit_card' | 'e_wallet' | 'bank_transfer' | 'cash'
-        'amount_paid',
-        'paid_status',  // 'pending' | 'paid' | 'refunded' | 'failed'
-        'paid_date',
+        'amount',
+        'method',       // 'cash' | 'transfer' | 'ewallet' | 'qris' | 'virtual_account'
+        'status',       // 'pending' | 'success' | 'failed'
+        'va_number',
+        'countdown_seconds',
+        'paid_at',
     ];
 
     protected $casts = [
-        'amount_paid' => 'decimal:2',
-        'paid_date'   => 'datetime',
+        'amount'            => 'decimal:2',
+        'paid_at'           => 'datetime',
+        'countdown_seconds' => 'integer',
     ];
 
     // -------------------------
@@ -31,14 +34,45 @@ class Payment extends Model
         return $this->belongsTo(Booking::class);
     }
 
+    // -------------------------
+    // Helper Methods
+    // -------------------------
 
-    // Helper Methods (Strategy Pattern: setiap method bisa dikembangkan)
-    
-
-    public function processPayment(): bool
+    /**
+     * Check apakah payment sudah expired (countdown habis).
+     */
+    public function isExpired(): bool
     {
-        $this->paid_status = 'paid';
-        $this->paid_date   = now();
+        if (!$this->countdown_seconds) {
+            return false;
+        }
+
+        $expiresAt = $this->created_at->addSeconds($this->countdown_seconds);
+        return now()->greaterThan($expiresAt);
+    }
+
+    /**
+     * Get sisa waktu dalam detik.
+     */
+    public function getRemainingSecondsAttribute(): int
+    {
+        if (!$this->countdown_seconds) {
+            return 0;
+        }
+
+        $expiresAt = $this->created_at->addSeconds($this->countdown_seconds);
+        $remaining = now()->diffInSeconds($expiresAt, false);
+
+        return max(0, (int) $remaining);
+    }
+
+    /**
+     * Mark payment sebagai success.
+     */
+    public function markAsSuccess(): bool
+    {
+        $this->status = 'success';
+        $this->paid_at = now();
         $saved = $this->save();
 
         if ($saved) {
@@ -48,27 +82,53 @@ class Payment extends Model
         return $saved;
     }
 
-    public function refundPayment(): bool
+    /**
+     * Mark payment sebagai failed.
+     */
+    public function markAsFailed(): bool
     {
-        if ($this->paid_status === 'paid') {
-            $this->paid_status = 'refunded';
-            $this->save();
-            $this->booking->cancelBooking();
-            return true;
-        }
-
-        return false;
+        $this->status = 'failed';
+        return $this->save();
     }
 
-    public function cancelPayment(): bool
+    /**
+     * Get human-readable method label.
+     */
+    public function getMethodLabelAttribute(): string
     {
-        if ($this->paid_status === 'pending') {
-            $this->paid_status = 'failed';
-            $this->save();
-            $this->booking->cancelBooking();
-            return true;
-        }
+        return match ($this->method) {
+            'qris' => 'QRIS',
+            'virtual_account' => 'Virtual Account',
+            'cash' => 'Tunai',
+            'transfer' => 'Transfer Bank',
+            'ewallet' => 'E-Wallet',
+            default => ucfirst($this->method),
+        };
+    }
 
-        return false;
+    /**
+     * Get human-readable status label.
+     */
+    public function getStatusLabelAttribute(): string
+    {
+        return match ($this->status) {
+            'pending' => 'Menunggu Pembayaran',
+            'success' => 'Berhasil',
+            'failed' => 'Gagal',
+            default => ucfirst($this->status),
+        };
+    }
+
+    /**
+     * Get status badge CSS class.
+     */
+    public function getStatusBadgeAttribute(): string
+    {
+        return match ($this->status) {
+            'pending' => 'bg-warning',
+            'success' => 'bg-success',
+            'failed' => 'bg-danger',
+            default => 'bg-secondary',
+        };
     }
 }

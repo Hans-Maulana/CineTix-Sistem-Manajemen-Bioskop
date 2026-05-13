@@ -12,39 +12,53 @@ class StudioSeeder extends Seeder
     {
         $types = Type::all();
 
+        // 1 = Seat, 0 = Aisle/Empty
+        $layoutA = [
+            [1, 1, 1, 0, 1, 1, 1, 1, 0, 1, 1, 1], // Row A
+            [1, 1, 1, 0, 1, 1, 1, 1, 0, 1, 1, 1], // Row B
+            [1, 1, 1, 0, 1, 1, 1, 1, 0, 1, 1, 1], // Row C
+            [0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0], // Row D (Aisle)
+            [1, 1, 1, 0, 1, 1, 1, 1, 0, 1, 1, 1], // Row E
+            [1, 1, 1, 0, 1, 1, 1, 1, 0, 1, 1, 1], // Row F
+        ];
+
+        $layoutB = [
+            [1, 1, 0, 1, 1, 1, 1, 0, 1, 1],
+            [1, 1, 0, 1, 1, 1, 1, 0, 1, 1],
+            [1, 1, 0, 1, 1, 1, 1, 0, 1, 1],
+            [1, 1, 0, 1, 1, 1, 1, 0, 1, 1],
+            [1, 1, 0, 1, 1, 1, 1, 0, 1, 1],
+        ];
+
         $studios = [
             [
                 'type_id' => $types->firstWhere('name', '2D')->id ?? 1,
                 'name' => 'Studio A',
-                'capacity' => 100,
-                'status' => 'active',
-            ],
-            [
-                'type_id' => $types->firstWhere('name', '2D')->id ?? 1,
-                'name' => 'Studio B',
-                'capacity' => 120,
+                'capacity' => 45,
+                'seat_layout' => $layoutA,
                 'status' => 'active',
             ],
             [
                 'type_id' => $types->firstWhere('name', '3D')->id ?? 2,
-                'name' => 'Studio C',
-                'capacity' => 80,
+                'name' => 'Studio B',
+                'capacity' => 40,
+                'seat_layout' => $layoutB,
                 'status' => 'active',
             ],
             [
-                'type_id' => $types->firstWhere('name', '4D Experience')->id ?? 3,
-                'name' => 'Studio D',
-                'capacity' => 200,
+                'type_id' => $types->firstWhere('name', 'IMAX')->id ?? 3,
+                'name' => 'Studio C',
+                'capacity' => 40,
+                'seat_layout' => $layoutB,
                 'status' => 'active',
             ],
         ];
 
         foreach ($studios as $studio) {
-            Studio::firstOrCreate(
+            Studio::updateOrCreate(
                 ['name' => $studio['name']],
                 $studio
             );
         }
     }
 }
-

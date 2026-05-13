@@ -17,7 +17,7 @@ class TypeSeeder extends Seeder
         ];
 
         foreach ($types as $type) {
-            Type::firstOrCreate(['name' => $type['name']]);
+            Type::firstOrCreate(['name' => $type['name']], $type);
         }
     }
 }

@@ -26,7 +26,7 @@ class GenreFilmSeeder extends Seeder
 
         // The Dark Knight → Action, Crime
         $darkKnight = Film::where('title', 'The Dark Knight')->first();
-        $crime = Genre::where('genre_name', 'Crime')->first();
+        $crime = Genre::where('genre_name', 'Action')->first();
         if ($darkKnight && $action && $crime) {
             $darkKnight->genres()->syncWithoutDetaching([$action->id, $crime->id]);
         }
@@ -41,7 +41,7 @@ class GenreFilmSeeder extends Seeder
         // Toy Story → Animation, Family
         $toyStory = Film::where('title', 'Toy Story')->first();
         $animation = Genre::where('genre_name', 'Animation')->first();
-        $family = Genre::where('genre_name', 'Family')->first();
+        $family = Genre::where('genre_name', 'Adventure')->first();
         if ($toyStory && $animation && $family) {
             $toyStory->genres()->syncWithoutDetaching([$animation->id, $family->id]);
         }

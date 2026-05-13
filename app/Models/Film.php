@@ -11,7 +11,7 @@ class Film extends Model
 
     protected $fillable = [
         'title',
-        'description',
+        'synopsis',
         'duration',
         'rating',
         'actors',
@@ -20,6 +20,7 @@ class Film extends Model
         'status',
         'classification',
         'cover',
+        'release_date',
     ];
 
     protected $casts = [
@@ -42,5 +43,17 @@ class Film extends Model
     public function reviews()
     {
         return $this->hasMany(Review::class);
+    }
+
+    /**
+     * Get the URL for the film cover.
+     */
+    public function getCoverUrlAttribute()
+    {
+        if ($this->cover && (str_starts_with($this->cover, 'http') || file_exists(public_path('storage/cover/' . $this->cover)))) {
+            return str_starts_with($this->cover, 'http') ? $this->cover : asset('storage/cover/' . $this->cover);
+        }
+        
+        return asset('storage/cover/default-cover.svg'); // Default template image
     }
 }
