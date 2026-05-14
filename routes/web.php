@@ -32,7 +32,16 @@ Route::middleware('auth')->group(function () {
         return view('resepsionis.dashboard');
     })->name('resepsionis.dashboard');
 
-    Route::get('/customer', [HomeController::class, 'index'])->name('customer.dashboard'); 
+    Route::get('/customer', [HomeController::class, 'index'])->name('customer.dashboard');
+
+    // Proses saat user klik kursi
+    Route::post('/seat/select', [BookingController::class, 'selectSeat'])->name('seat.select');
+
+    // Halaman payment (yang dibuat Hasan)
+    Route::get('/payment/{seat_id}', [BookingController::class, 'showPayment'])->name('payment.page');
+
+    // Konfirmasi pembayaran
+    Route::post('/payment/confirm', [BookingController::class, 'confirmPayment'])->name('payment.confirm');
 
     // Profile Routes
     Route::get('/profile', [ProfileController::class, 'edit'])->name('profile.edit');
@@ -43,18 +52,18 @@ Route::middleware('auth')->group(function () {
     Route::prefix('booking')->name('booking.')->group(function () {
         Route::get('schedule/{schedule}', [BookingController::class, 'show'])->name('show');
         Route::post('store', [BookingController::class, 'store'])->name('store');
-        
+
         // Payment flow (Strategy Pattern)
         Route::get('payment/{booking}', [BookingController::class, 'payment'])->name('payment');
         Route::post('initiate-payment/{booking}', [BookingController::class, 'initiatePayment'])->name('initiate-payment');
         Route::get('process-payment/{booking}/{payment}', [BookingController::class, 'processPayment'])->name('process-payment');
         Route::post('confirm-payment/{booking}/{payment}', [BookingController::class, 'confirmPayment'])->name('confirm-payment');
-        
+
         Route::get('confirmation/{booking}', [BookingController::class, 'confirmation'])->name('confirmation');
         Route::get('history', [BookingController::class, 'history'])->name('history');
         Route::get('tickets', [BookingController::class, 'tickets'])->name('tickets');
         Route::post('cancel/{booking}', [BookingController::class, 'cancel'])->name('cancel');
-        
+
         // AJAX endpoints
         Route::get('available-seats/{schedule}', [BookingController::class, 'getAvailableSeats'])->name('available-seats');
         Route::get('details/{booking}', [BookingController::class, 'getBookingDetails'])->name('details');

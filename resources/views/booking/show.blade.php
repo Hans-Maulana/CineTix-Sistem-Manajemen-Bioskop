@@ -6,7 +6,7 @@
         <div class="col-md-8">
             <div class="card shadow-sm">
                 <div class="card-header bg-primary text-white">
-                    <h4 class="mb-0 text-white  ">{{ $schedule->film->title }}</h4>
+                    <h4 class="mb-0 text-white">{{ $schedule->film->title }}</h4>
                 </div>
                 <div class="card-body">
                     <div class="row mb-4">
@@ -22,7 +22,6 @@
 
                     <hr>
 
-                    <!-- Seats Grid -->
                     <div class="cinema-screen bg-dark text-white text-center py-2 mb-5 rounded shadow-sm">
                         <small>LAYAR BIOSKOP</small>
                     </div>
@@ -32,7 +31,7 @@
                             @foreach($schedule->studio->seat_layout as $rowIndex => $row)
                                 <div class="d-flex gap-2 align-items-center">
                                     <div class="row-label fw-bold text-muted me-2" style="width: 20px;">{{ chr(65 + $rowIndex) }}</div>
-                                    
+
                                     @foreach($row as $colIndex => $isSeat)
                                         @if($isSeat == 1)
                                             @php
@@ -40,10 +39,10 @@
                                                 $seat = $seatsByCode->get($seatCode);
                                                 $isBooked = $seat && in_array($seat->id, $bookedSeatIds);
                                             @endphp
-                                            
+
                                             @if($seat)
-                                                <button type="button" 
-                                                        class="seat-btn btn btn-sm {{ $isBooked ? 'seat-booked' : 'seat-available' }}" 
+                                                <button type="button"
+                                                        class="seat-btn btn btn-sm {{ $isBooked ? 'seat-booked' : 'seat-available' }}"
                                                         data-seat-id="{{ $seat->id }}"
                                                         data-seat-code="{{ $seatCode }}"
                                                         onclick="toggleSeat({{ $seat->id }}, '{{ $seatCode }}', '{{ $isBooked ? 'booked' : 'available' }}')"
@@ -64,7 +63,6 @@
                         @endif
                     </div>
 
-                    <!-- Legend -->
                     <div class="mt-4 pt-3 border-top">
                         <div class="d-flex flex-wrap gap-4 justify-content-center">
                             <div class="d-flex align-items-center gap-2">
@@ -85,7 +83,6 @@
             </div>
         </div>
 
-        <!-- Booking Summary -->
         <div class="col-md-4">
             <div class="card shadow-sm border-0 rounded-4 overflow-hidden position-sticky" style="top: 100px;">
                 <div class="card-header bg-white border-bottom py-3">
@@ -133,7 +130,7 @@
                         </div>
 
                         <button type="submit" class="btn btn-primary text-white w-100 py-3 fw-bold rounded-3 shadow-sm" id="bookingBtn" disabled>
-                            Lanjutkan ke Pembayaran <i class="iconify" data-icon="lucide:arrow-right"></i> 
+                            Lanjutkan ke Pembayaran <i class="iconify" data-icon="lucide:arrow-right"></i>
                         </button>
                     </form>
                 </div>
@@ -142,7 +139,6 @@
     </div>
 </div>
 
-<!-- WebSocket Script untuk Real-Time Updates -->
 <script src="https://js.pusher.com/8.2.0/pusher.min.js"></script>
 <script src="https://cdn.socket.io/4.5.4/socket.io.min.js"></script>
 <script>
@@ -251,12 +247,11 @@
         document.getElementById('seatCount').textContent = seatCount;
         document.getElementById('totalPrice').innerHTML = `<strong>Rp ${totalPrice.toLocaleString('id-ID')}</strong>`;
         document.getElementById('seatIds').value = selectedSeats.map(s => s.id).join(',');
-        document.getElementById('selectedSeats').innerHTML = seatCount > 0 
+        document.getElementById('selectedSeats').innerHTML = seatCount > 0
             ? selectedSeats.map(s => `<span class="badge bg-primary px-3 py-2 rounded-pill shadow-sm">${s.code}</span>`).join('')
             : '<small class="text-muted">Belum ada kursi yang dipilih</small>';
 
         document.getElementById('bookingBtn').disabled = seatCount === 0;
-        text
     }
 
     function updateSeatStatus(seatId, status) {

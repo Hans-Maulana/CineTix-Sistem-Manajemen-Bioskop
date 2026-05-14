@@ -17,7 +17,9 @@ return new class extends Migration
             $table->string('row_label');
             $table->integer('seat_number');
             $table->string('seat_code')->unique();
-            $table->string('status')->default('available');
+            $table->enum('status', ['available', 'pending', 'booked'])->default('available');
+            $table->timestamp('locked_until')->nullable();
+            $table->foreignId('locked_by_user_id')->nullable()->constrained('users');
             $table->timestamps();
         });
     }

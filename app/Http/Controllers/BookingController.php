@@ -21,7 +21,7 @@ class BookingController extends Controller
     public function show(Schedule $schedule)
     {
         $schedule->load('film', 'studio.seats');
-        
+
         // Get already booked seats untuk schedule ini
         $bookedSeatIds = TicketBooking::whereHas('booking', function ($q) {
             $q->whereIn('status', ['pending', 'confirmed']);
@@ -40,9 +40,8 @@ class BookingController extends Controller
      * Store booking dengan real-time seat locking
      * Menggunakan transaction untuk mencegah race condition
      */
-    public function store(Request $request)
+   public function store(Request $request)
     {
-        // Convert comma-separated seat_ids to array
         if (is_string($request->seat_ids)) {
             $request->merge(['seat_ids' => explode(',', $request->seat_ids)]);
         }
@@ -56,45 +55,37 @@ class BookingController extends Controller
 
         try {
             $booking = DB::transaction(function () use ($validated) {
-                $schedule = Schedule::with('film')->lockForUpdate()->find($validated['schedule_id']);
-                
-                // Validate seats availability with lock
+                $schedule = Schedule::with('film')->find($validated['schedule_id']);
                 $seatIds = $validated['seat_ids'];
+
+                // 1. PESSIMISTIC LOCKING: Kunci kursi saat dicek
                 $seats = Seat::whereIn('id', $seatIds)
                     ->where('studio_id', $schedule->studio_id)
                     ->lockForUpdate()
                     ->get();
 
-                // Check if any seat is already booked
-                $bookedTickets = TicketBooking::whereIn('seat_id', $seatIds)
-                    ->where('schedule_id', $schedule->id)
-                    ->whereHas('booking', function ($q) {
-                        $q->where('status', '!=', 'cancelled');
-                    })
-                    ->lockForUpdate()
-                    ->count();
-
-                if ($bookedTickets > 0) {
-                    throw new \Exception('Beberapa kursi sudah dipesan. Silakan pilih kursi lain.');
+                // 2. STATE PATTERN: Cek apakah kursi masih available atau waktu pendingnya sudah habis
+                foreach ($seats as $seat) {
+                    if (!$seat->isAvailable()) { // Menggunakan method dari Model Seat yang kita buat
+                        throw new \Exception("Maaf, kursi {$seat->seat_code} baru saja diambil orang lain.");
+                    }
                 }
 
-                // Calculate total amount
+                // Kalkulasi harga & promo
                 $totalAmount = $schedule->ticket_price * count($seatIds);
                 $promoId = null;
 
-                // Apply promo if provided
                 if (!empty($validated['promo_code'])) {
                     $promo = Promo::where('code', $validated['promo_code'])
                         ->where('valid_until', '>=', now())
                         ->first();
-
                     if ($promo) {
                         $totalAmount -= $promo->disc_amount;
                         $promoId = $promo->id;
                     }
                 }
 
-                // Create booking
+                // Buat Booking
                 $booking = Booking::create([
                     'user_id' => Auth::id(),
                     'promo_id' => $promoId,
@@ -104,7 +95,7 @@ class BookingController extends Controller
                     'qr_redeem' => \Illuminate\Support\Str::random(15),
                 ]);
 
-                // Create ticket bookings and update seat status
+                // 3. UBAH STATE & SET TIMER
                 foreach ($seats as $seat) {
                     TicketBooking::create([
                         'booking_id' => $booking->id,
@@ -113,15 +104,21 @@ class BookingController extends Controller
                         'price_at_sale' => $schedule->ticket_price,
                     ]);
 
-                    // Update seat status (Observer handles broadcasting)
-                    $seat->update(['status' => 'occupied']);
+                    $seat->update([
+                        'status' => 'pending',
+                        'locked_until' => now()->addMinutes(5), // Timer anti-nyangkut
+                        'locked_by_user_id' => Auth::id()
+                    ]);
+
+                    // 4. OBSERVER PATTERN: Broadcast agar layar user lain jadi abu-abu
+                    broadcast(new \App\Events\SeatStatusUpdated($seat->id, 'pending'))->toOthers();
                 }
 
                 return $booking;
-            }, 3); // 3 attempts for transaction
+            }, 3);
 
             return redirect()->route('booking.payment', $booking)
-                ->with('success', 'Kursi berhasil dipesan. Silakan pilih metode pembayaran.');
+                ->with('success', 'Kursi berhasil di-lock sementara. Segera lakukan pembayaran dalam 5 menit.');
 
         } catch (\Throwable $e) {
             return back()->with('error', $e->getMessage());
@@ -141,7 +138,7 @@ class BookingController extends Controller
         if ($booking->status === 'confirmed') {
             return redirect()->route('booking.confirmation', $booking);
         }
-        
+
         $booking->load(['ticketBookings.seat', 'ticketBookings.schedule.film', 'promo']);
         $paymentMethods = PaymentContext::availableMethods();
 
@@ -239,10 +236,24 @@ class BookingController extends Controller
                 ->with('error', 'Waktu pembayaran telah habis. Silakan coba lagi.');
         }
 
-        try {
-            DB::transaction(function () use ($payment) {
+      try {
+            DB::transaction(function () use ($payment, $booking) {
+                // Proses payment via Strategy Pattern Hasan
                 $strategy = PaymentContext::resolve($payment->method);
                 $strategy->process($payment);
+
+                // FINALISASI STATE: Ubah status kursi dari pending menjadi booked
+                $ticketBookings = $booking->ticketBookings()->with('seat')->get();
+                foreach ($ticketBookings as $ticket) {
+                    $seat = $ticket->seat;
+                    $seat->update([
+                        'status' => 'booked',
+                        'locked_until' => null, // Matikan timer
+                    ]);
+
+                    // Broadcast lagi kalau kursi ini sudah fix laku
+                    broadcast(new \App\Events\SeatStatusUpdated($seat->id, 'booked'))->toOthers();
+                }
             });
 
             return redirect()->route('booking.confirmation', $booking)
@@ -263,7 +274,7 @@ class BookingController extends Controller
         if ($booking->user_id !== Auth::id()) {
             abort(403);
         }
-        
+
         $booking->load(['ticketBookings.seat', 'ticketBookings.schedule.film', 'ticketBookings.schedule.studio', 'user', 'payments']);
 
         return view('booking.confirmation', compact('booking'));
@@ -313,7 +324,7 @@ class BookingController extends Controller
             DB::transaction(function () use ($booking) {
                 // Free up seats
                 $ticketBookings = $booking->ticketBookings()->with('seat')->get();
-                
+
                 foreach ($ticketBookings as $ticket) {
                     $seat = $ticket->seat;
                     $seat->update(['status' => 'available']);
