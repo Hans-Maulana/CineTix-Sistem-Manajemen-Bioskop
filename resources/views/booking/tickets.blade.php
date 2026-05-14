@@ -6,58 +6,59 @@
         <div class="col-md-10">
             <div class="d-flex align-items-center justify-content-between mb-4">
                 <h2 class="mb-0">🎟️ Tiket Aktif Saya</h2>
-                <a href="{{ route('landing-page') }}" class="btn btn-outline-secondary">Kembali</a>
+                <a href="{{ route('landing-page') }}" class="btn btn-outline-secondary text-white">Kembali</a>
             </div>
 
             @if($bookings->isNotEmpty())
                 <div class="row g-4">
                     @foreach($bookings as $booking)
-                        @foreach($booking->ticketBookings as $ticket)
-                            <div class="col-lg-6">
-                                <div class="card shadow-sm border-0 h-100 overflow-hidden ticket-card">
-                                    <div class="row g-0 h-100">
-                                        <div class="col-4 bg-dark d-flex align-items-center justify-content-center p-3">
-                                            <div class="text-center">
-                                                <div class="bg-white p-2 rounded mb-2">
-                                                    <img src="https://api.qrserver.com/v1/create-qr-code/?size=100x100&data={{ $booking->qr_redeem }}" 
-                                                         alt="QR Code" class="img-fluid">
-                                                </div>
-                                                <small class="text-white font-monospace">{{ $booking->qr_redeem }}</small>
+                        @php
+                            $firstTicket = $booking->ticketBookings->first();
+                            $film = $firstTicket ? $firstTicket->schedule->film : null;
+                            $seatCodes = $booking->ticketBookings->pluck('seat.seat_code')->implode(', ');
+                        @endphp
+                        <div class="col-lg-6">
+                            <div class="card shadow-sm border-0 h-100 overflow-hidden ticket-card" style="border-radius: 15px !important;">
+                                <div class="row g-0 h-100">
+                                    <div class="col-4">
+                                        <img src="{{ $film ? $film->cover_url : asset('storage/cover/default-cover.svg') }}" 
+                                             alt="{{ $film->title ?? 'Film' }}" 
+                                             class="img-fluid h-100 object-fit-cover"
+                                             style="min-height: 160px;">
+                                    </div>
+                                    <div class="col-8">
+                                        <div class="card-body d-flex flex-column h-100">
+                                            <div class="d-flex justify-content-between align-items-start mb-2">
+                                                <h6 class="fw-bold text-primary mb-0 text-truncate" style="max-width: 150px;">{{ $film->title ?? 'Film' }}</h6>
+                                                <span class="badge bg-info small">{{ $firstTicket->schedule->studio->name ?? 'Studio' }}</span>
                                             </div>
-                                        </div>
-                                        <div class="col-8">
-                                            <div class="card-body">
-                                                <div class="d-flex justify-content-between align-items-start mb-2">
-                                                    <h5 class="card-title mb-0 fw-bold text-primary">{{ $ticket->schedule->film->title }}</h5>
-                                                    <span class="badge bg-info">{{ $ticket->schedule->studio->name ?? 'Studio' }}</span>
+                                            
+                                            <div class="row g-1 mb-2">
+                                                <div class="col-6">
+                                                    <small class="text-muted d-block" style="font-size: 10px;">Tanggal</small>
+                                                    <span class="fw-bold small" style="font-size: 11px;">{{ $firstTicket->schedule->schedule_date->format('d M Y') }}</span>
                                                 </div>
-                                                <hr class="my-2">
-                                                <div class="row g-2">
-                                                    <div class="col-6">
-                                                        <small class="text-muted d-block">Tanggal</small>
-                                                        <span class="fw-bold small">{{ $ticket->schedule->schedule_date->format('d M Y') }}</span>
-                                                    </div>
-                                                    <div class="col-6">
-                                                        <small class="text-muted d-block">Waktu</small>
-                                                        <span class="fw-bold small">{{ $ticket->schedule->start_time }}</span>
-                                                    </div>
-                                                    <div class="col-6 mt-2">
-                                                        <small class="text-muted d-block">Kursi</small>
-                                                        <span class="badge bg-warning text-dark fs-6">{{ $ticket->seat->seat_code }}</span>
-                                                    </div>
-                                                    <div class="col-6 mt-2 text-end align-self-end">
-                                                        <a href="{{ route('booking.confirmation', $booking) }}" class="btn btn-sm btn-link p-0 text-decoration-none">Detail Tiket →</a>
-                                                    </div>
+                                                <div class="col-6">
+                                                    <small class="text-muted d-block" style="font-size: 10px;">Kursi</small>
+                                                    <span class="fw-bold text-warning small" style="font-size: 11px;">{{ $seatCodes }}</span>
                                                 </div>
+                                            </div>
+
+                                            <div class="mt-auto d-flex justify-content-between align-items-center">
+                                                <div class="bg-light p-1 rounded border">
+                                                    <img src="https://api.qrserver.com/v1/create-qr-code/?size=60x60&data={{ $booking->qr_redeem }}" 
+                                                         alt="QR" class="img-fluid" style="width: 40px;">
+                                                </div>
+                                                <a href="{{ route('booking.confirmation', $booking) }}" class="btn btn-sm btn-primary px-3 rounded-pill text-white text-decoration-none shadow-sm">Detail Tiket</a>
                                             </div>
                                         </div>
                                     </div>
-                                    {{-- Ticket perforation effect --}}
-                                    <div class="ticket-cutout-top"></div>
-                                    <div class="ticket-cutout-bottom"></div>
                                 </div>
+                                {{-- Ticket perforation effect --}}
+                                <div class="ticket-cutout-top" style="left: 33.333%;"></div>
+                                <div class="ticket-cutout-bottom" style="left: 33.333%;"></div>
                             </div>
-                        @endforeach
+                        </div>
                     @endforeach
                 </div>
             @else

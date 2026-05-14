@@ -89,6 +89,7 @@ class BookingController extends Controller
                 $booking = Booking::create([
                     'user_id' => Auth::id(),
                     'promo_id' => $promoId,
+                    'schedule_id' => $schedule->id,
                     'booking_type' => 'ticket',
                     'total_amount' => max(0, $totalAmount),
                     'status' => 'pending',

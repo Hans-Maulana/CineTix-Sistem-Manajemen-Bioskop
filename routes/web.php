@@ -28,9 +28,6 @@ Route::middleware('auth')->group(function () {
         return view('admin.dashboard');
     })->name('admin.dashboard');
 
-    Route::get('/resepsionis', function () {
-        return view('resepsionis.dashboard');
-    })->name('resepsionis.dashboard');
 
     Route::get('/customer', [HomeController::class, 'index'])->name('customer.dashboard');
 

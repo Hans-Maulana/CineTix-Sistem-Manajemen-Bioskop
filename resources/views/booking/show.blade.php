@@ -3,6 +3,37 @@
 @section('content')
 <div class="container py-5">
     <div class="row">
+        {{-- Flash Messages --}}
+        <div class="col-12">
+            @if(session('error'))
+                <div class="alert alert-danger alert-dismissible fade show rounded-4 border-0 shadow-sm mb-4" role="alert">
+                    <iconify-icon icon="lucide:alert-circle" class="me-2"></iconify-icon>
+                    {{ session('error') }}
+                    <button type="button" class="btn-close" data-bs-dismiss="alert"></button>
+                </div>
+            @endif
+
+            @if($errors->any())
+                <div class="alert alert-danger alert-dismissible fade show rounded-4 border-0 shadow-sm mb-4" role="alert">
+                    <iconify-icon icon="lucide:alert-triangle" class="me-2"></iconify-icon>
+                    <ul class="mb-0">
+                        @foreach ($errors->all() as $error)
+                            <li>{{ $error }}</li>
+                        @endforeach
+                    </ul>
+                    <button type="button" class="btn-close" data-bs-dismiss="alert"></button>
+                </div>
+            @endif
+
+            @if(session('success'))
+                <div class="alert alert-success alert-dismissible fade show rounded-4 border-0 shadow-sm mb-4" role="alert">
+                    <iconify-icon icon="lucide:check-circle" class="me-2"></iconify-icon>
+                    {{ session('success') }}
+                    <button type="button" class="btn-close" data-bs-dismiss="alert"></button>
+                </div>
+            @endif
+        </div>
+
         <div class="col-md-8">
             <div class="card shadow-sm">
                 <div class="card-header bg-primary text-white">
@@ -95,8 +126,8 @@
 
                         <div class="mb-3">
                             <label class="form-label"><strong>Kursi Pilihanmu</strong></label>
-                            <div id="selectedSeats" class="alert alert-light">
-                                <small>Belum ada kursi yang dipilih</small>
+                            <div id="selectedSeats" class="p-3 bg-light rounded-3 mb-2 min-vh-10" style="min-height: 50px; border: 1px dashed #ced4da;">
+                                <small class="text-white text-secondary opacity-75">Belum ada kursi yang dipilih</small>
                             </div>
                             <input type="hidden" name="seat_ids" id="seatIds">
                         </div>
@@ -124,9 +155,9 @@
 
                         <hr class="my-4 opacity-10">
 
-                        <div class="mb-3">
-                            <p class="mb-1"><strong>Total Harga:</strong></p>
-                            <p id="totalPrice" class="fs-4 text-primary"><strong>Rp 0</strong></p>
+                        <div class="mb-3 d-flex justify-content-between align-items-center">
+                            <span class="fw-bold text-dark">Total Harga:</span>
+                            <span id="totalPrice" class="fs-4 fw-bold" style="color: #1A1953;">Rp 0</span>
                         </div>
 
                         <button type="submit" class="btn btn-primary text-white w-100 py-3 fw-bold rounded-3 shadow-sm" id="bookingBtn" disabled>
@@ -147,24 +178,31 @@
     let selectedSeats = [];
 
     // Initialize Pusher untuk Real-Time Seat Updates
-    const pusher = new Pusher('{{ config('broadcasting.connections.pusher.key') }}', {
-        cluster: '{{ config('broadcasting.connections.pusher.options.cluster') }}',
-        encrypted: true
-    });
+    try {
+        const pusherKey = '{{ config('broadcasting.connections.pusher.key') }}';
+        if (pusherKey) {
+            const pusher = new Pusher(pusherKey, {
+                cluster: '{{ config('broadcasting.connections.pusher.options.cluster') }}',
+                encrypted: true
+            });
 
-    const channel = pusher.subscribe(`booking.schedule.${scheduleId}`);
+            const channel = pusher.subscribe(`booking.schedule.${scheduleId}`);
 
-    // Listen untuk Seat Booked Event
-    channel.bind('seat-booked', function(data) {
-        console.log('Seat booked:', data);
-        updateSeatStatus(data.seat_id, 'booked');
-    });
+            // Listen untuk Seat Booked Event
+            channel.bind('seat-booked', function(data) {
+                console.log('Seat booked:', data);
+                updateSeatStatus(data.seat_id, 'booked');
+            });
 
-    // Listen untuk Seat Available Event
-    channel.bind('seat-available', function(data) {
-        console.log('Seat available:', data);
-        updateSeatStatus(data.seat_id, 'available');
-    });
+            // Listen untuk Seat Available Event
+            channel.bind('seat-available', function(data) {
+                console.log('Seat available:', data);
+                updateSeatStatus(data.seat_id, 'available');
+            });
+        }
+    } catch (error) {
+        console.error('Pusher failed to initialize:', error);
+    }
 
     // Initialize styles
     document.addEventListener('DOMContentLoaded', function() {
@@ -245,11 +283,11 @@
         const totalPrice = seatCount * ticketPrice;
 
         document.getElementById('seatCount').textContent = seatCount;
-        document.getElementById('totalPrice').innerHTML = `<strong>Rp ${totalPrice.toLocaleString('id-ID')}</strong>`;
+        document.getElementById('totalPrice').innerHTML = `Rp ${totalPrice.toLocaleString('id-ID')}`;
         document.getElementById('seatIds').value = selectedSeats.map(s => s.id).join(',');
         document.getElementById('selectedSeats').innerHTML = seatCount > 0
-            ? selectedSeats.map(s => `<span class="badge bg-primary px-3 py-2 rounded-pill shadow-sm">${s.code}</span>`).join('')
-            : '<small class="text-muted">Belum ada kursi yang dipilih</small>';
+            ? selectedSeats.map(s => `<span class="badge px-3 py-2 rounded-pill shadow-sm me-1 mb-1" style="background: #1A1953; color: white;">${s.code}</span>`).join('')
+            : '<small class="text-secondary opacity-75">Belum ada kursi yang dipilih</small>';
 
         document.getElementById('bookingBtn').disabled = seatCount === 0;
     }
@@ -285,14 +323,16 @@
 
     // Form submission
     document.getElementById('bookingForm').addEventListener('submit', function(e) {
-        e.preventDefault();
-
         if (selectedSeats.length === 0) {
+            e.preventDefault();
             alert('Silakan pilih minimal 1 kursi');
             return;
         }
-
-        this.submit();
+        
+        // Show loading state
+        const btn = document.getElementById('bookingBtn');
+        btn.disabled = true;
+        btn.innerHTML = '<span class="spinner-border spinner-border-sm me-2"></span> Memproses...';
     });
 </script>
 

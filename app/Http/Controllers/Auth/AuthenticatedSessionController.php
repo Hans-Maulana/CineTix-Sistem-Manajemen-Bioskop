@@ -30,11 +30,6 @@ class AuthenticatedSessionController extends Controller
             return redirect('/admin');
         }
 
-        if ($user->role?->name === 'resepsionis') {
-
-            return redirect('/resepsionis');
-        }
-
         if ($user->role?->name === 'customer') {
 
             return redirect('/customer');

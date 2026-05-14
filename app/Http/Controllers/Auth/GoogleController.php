@@ -4,6 +4,7 @@ namespace App\Http\Controllers\Auth;
 
 use App\Http\Controllers\Controller;
 use App\Models\User;
+use App\Models\Role;
 use Illuminate\Support\Facades\Auth;
 use Illuminate\Support\Facades\Hash;
 use Illuminate\Support\Str;
@@ -38,7 +39,7 @@ class GoogleController extends Controller
                 'email'     => $googleUser->email,
                 'google_id' => $googleUser->id,
                 'password'  => Hash::make(Str::random(16)),
-                'role_id'   => 3,
+                'role_id'   => Role::where('name', 'customer')->first()->id,
             ]);
         } else {
 
@@ -64,9 +65,6 @@ class GoogleController extends Controller
             return redirect()->intended('/admin');
         }
 
-        if ($user->isResepsionis()) {
-            return redirect()->intended('/resepsionis');
-        }
 
         if ($user->isCustomer()) {
             return redirect()->intended('/customer');
