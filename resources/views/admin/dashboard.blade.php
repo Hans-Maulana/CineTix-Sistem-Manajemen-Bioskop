@@ -1,309 +1,142 @@
-# resources/views/admin/dashboard.blade.php
+@extends('layouts.admin')
 
-```php
-<!doctype html>
-<html lang="en">
+@section('title', 'Dashboard')
 
-<head>
-    <meta charset="utf-8">
-    <meta name="viewport" content="width=device-width, initial-scale=1">
-    <title>Admin Dashboard - Studiova</title>
+@section('content')
+<div class="row mb-4 align-items-center">
+    <div class="col-md-6">
+        <h1 class="fw-bold text-primary">Overview</h1>
+        <p class="text-muted">Pantau performa bioskop kamu hari ini.</p>
+    </div>
+    <div class="col-md-6 text-md-end">
+        <a href="{{ route('admin.films.create') }}" class="btn-teal text-decoration-none">
+            <i class="bi bi-plus-lg"></i> Tambah Film Baru
+        </a>
+    </div>
+</div>
 
-    <link rel="shortcut icon" type="image/png" href="{{ asset('assets/images/logos/favicon.svg') }}" />
+<!-- STATS -->
+<div class="row g-4 mb-5">
+    <div class="col-md-4">
+        <div class="card-custom">
+            <div class="text-muted small fw-bold text-uppercase mb-2">Total Film</div>
+            <div class="display-6 fw-bold text-primary">{{ $totalFilms }}</div>
+            <div class="text-success small mt-2">↑ Tersedia di katalog</div>
+        </div>
+    </div>
+    <div class="col-md-4">
+        <div class="card-custom">
+            <div class="text-muted small fw-bold text-uppercase mb-2">Total Transaksi</div>
+            <div class="display-6 fw-bold text-primary">{{ $totalBookings }}</div>
+            <div class="text-primary small mt-2">Total pesanan tiket</div>
+        </div>
+    </div>
+    <div class="col-md-4">
+        <div class="card-custom">
+            <div class="text-muted small fw-bold text-uppercase mb-2">Total Member</div>
+            <div class="display-6 fw-bold text-primary">{{ $totalCustomers }}</div>
+            <div class="text-warning small mt-2">User terdaftar</div>
+        </div>
+    </div>
+</div>
 
-    <link rel="stylesheet" href="{{ asset('assets/libs/bootstrap/dist/css/bootstrap.min.css') }}">
-
-    <style>
-        body {
-            background-color: #f5f5f5;
-            font-family: Arial, Helvetica, sans-serif;
-        }
-
-        .topbar {
-            background-color: #006b68;
-            padding: 18px 0;
-        }
-
-        .logo-text {
-            color: #d4b06a;
-            font-size: 42px;
-            font-weight: bold;
-            text-decoration: none;
-        }
-
-        .menu-bar {
-            background-color: #efefef;
-            border-bottom: 1px solid #ddd;
-            padding: 14px 0;
-        }
-
-        .menu-link {
-            text-decoration: none;
-            color: #006b68;
-            font-size: 17px;
-            font-weight: 500;
-            margin-right: 28px;
-        }
-
-        .search-box {
-            border-radius: 30px;
-            border: none;
-            padding: 12px 20px;
-            width: 320px;
-            font-size: 14px;
-        }
-
-        .dashboard-title {
-            color: #006b68;
-            font-weight: bold;
-            font-size: 34px;
-        }
-
-        .movie-card {
-            border: none;
-            border-radius: 14px;
-            overflow: hidden;
-            transition: 0.3s;
-            box-shadow: 0 4px 14px rgba(0,0,0,0.08);
-            background: white;
-        }
-
-        .movie-card:hover {
-            transform: translateY(-5px);
-        }
-
-        .movie-img {
-            height: 420px;
-            object-fit: cover;
-        }
-
-        .movie-title {
-            font-size: 22px;
-            font-weight: bold;
-            color: #222;
-        }
-
-        .movie-category {
-            color: #777;
-            font-size: 14px;
-        }
-
-        .btn-teal {
-            background-color: #006b68;
-            color: white;
-            border-radius: 10px;
-            padding: 10px 18px;
-            border: none;
-            font-weight: 600;
-        }
-
-        .btn-teal:hover {
-            background-color: #00514f;
-            color: white;
-        }
-
-        .btn-danger-custom {
-            background-color: #b42318;
-            color: white;
-            border-radius: 10px;
-            padding: 10px 18px;
-            border: none;
-            font-weight: 600;
-        }
-
-        .stats-card {
-            background: white;
-            border-radius: 14px;
-            padding: 24px;
-            box-shadow: 0 4px 14px rgba(0,0,0,0.08);
-        }
-
-        .stats-title {
-            color: #777;
-            font-size: 16px;
-        }
-
-        .stats-number {
-            font-size: 34px;
-            font-weight: bold;
-            color: #006b68;
-        }
-    </style>
-</head>
-
-<body>
-
-    <!-- TOPBAR -->
-    <div class="topbar">
-        <div class="container d-flex justify-content-between align-items-center">
-
-            <a href="#" class="logo-text">
-                Cinema XXI
-            </a>
-
-            <input type="text" class="search-box" placeholder="Search movie, theater...">
-
+<div class="row">
+    <!-- SALES CHART -->
+    <div class="col-lg-8">
+        <div class="card-custom" style="height: 400px;">
+            <h5 class="fw-bold mb-4">Grafik Penjualan (7 Hari Terakhir)</h5>
+            <div style="height: 300px;">
+                <canvas id="salesChart"></canvas>
+            </div>
         </div>
     </div>
 
-    <!-- MENU -->
-    <div class="menu-bar">
-        <div class="container d-flex align-items-center">
-            <a href="#" class="menu-link">Dashboard</a>
-            <a href="#" class="menu-link">Film</a>
-            <a href="#" class="menu-link">Studio</a>
-            <a href="#" class="menu-link">Schedule</a>
-            <a href="#" class="menu-link">Booking</a>
-            <a href="#" class="menu-link">Customer</a>
+    <!-- RECENT BOOKINGS / NOTIF -->
+    <div class="col-lg-4">
+        <div class="card-custom" style="height: 400px; overflow-y: auto;">
+            <h5 class="fw-bold mb-4">Booking Terbaru (Pending)</h5>
+            <div class="list-group list-group-flush">
+                @forelse($recentBookings as $rb)
+                <div class="list-group-item px-0 border-0 mb-3">
+                    <div class="d-flex justify-content-between">
+                        <h6 class="mb-1 fw-bold">{{ $rb->user->name }}</h6>
+                        <span class="badge bg-warning text-dark small">Pending</span>
+                    </div>
+                    <p class="mb-1 text-muted small">ID: #{{ $rb->id }} • {{ $rb->created_at->diffForHumans() }}</p>
+                    <small class="fw-bold text-primary">Rp {{ number_format($rb->payments->first()?->amount ?? 0, 0, ',', '.') }}</small>
+                </div>
+                @empty
+                <div class="text-center py-4">
+                    <p class="text-muted italic">Tidak ada booking baru</p>
+                </div>
+                @endforelse
+            </div>
         </div>
     </div>
+</div>
 
-    <!-- CONTENT -->
-    <div class="container py-5">
-
-        <div class="d-flex justify-content-between align-items-center mb-4">
-            <div>
-                <h1 class="dashboard-title">Dashboard Admin</h1>
-                <p class="text-muted">Selamat datang Admin Studiova</p>
+<!-- MOVIES -->
+<h3 class="fw-bold mb-4 mt-5">Now Playing</h3>
+<div class="row g-4">
+    @foreach($films as $film)
+    <div class="col-lg-3 col-md-6">
+        <div class="card border-0 shadow-sm rounded-4 overflow-hidden h-100" style="background: #1a1a1a;">
+            <img src="{{ $film->cover_url }}" class="w-100" style="height: 350px; object-fit: contain; background: #000;" alt="{{ $film->title }}">
+            <div class="p-4 bg-white">
+                <h5 class="fw-bold mb-1 text-truncate">{{ $film->title }}</h5>
+                <p class="text-muted small mb-3 text-truncate">
+                    {{ $film->genres->pluck('name')->implode(', ') }}
+                </p>
+                <div class="d-flex gap-2">
+                    <a href="{{ route('admin.films.edit', $film) }}" class="btn btn-outline-warning flex-grow-1 rounded-3">Edit</a>
+                    <form action="{{ route('admin.films.destroy', $film) }}" method="POST" class="flex-grow-1" onsubmit="return confirm('Yakin ingin menghapus film ini?')">
+                        @csrf
+                        @method('DELETE')
+                        <button type="submit" class="btn btn-outline-danger w-100 rounded-3">Hapus</button>
+                    </form>
+                </div>
             </div>
-
-            <form method="POST" action="{{ route('logout') }}">
-                @csrf
-
-                <button type="submit" class="btn-danger-custom">
-                    Logout
-                </button>
-            </form>
         </div>
-
-        <!-- STATS -->
-        <div class="row mb-5">
-
-            <div class="col-md-4 mb-3">
-                <div class="stats-card">
-                    <div class="stats-title">Total Film</div>
-                    <div class="stats-number">24</div>
-                </div>
-            </div>
-
-            <div class="col-md-4 mb-3">
-                <div class="stats-card">
-                    <div class="stats-title">Total Booking</div>
-                    <div class="stats-number">120</div>
-                </div>
-            </div>
-
-            <div class="col-md-4 mb-3">
-                <div class="stats-card">
-                    <div class="stats-title">Total Customer</div>
-                    <div class="stats-number">85</div>
-                </div>
-            </div>
-
-        </div>
-
-        <!-- MOVIES -->
-        <div class="d-flex justify-content-between align-items-center mb-4">
-            <h3 class="fw-bold">Now Playing</h3>
-
-            <button class="btn-teal">
-                + Tambah Film
-            </button>
-        </div>
-
-        <div class="row">
-
-            <div class="col-lg-3 col-md-6 mb-4">
-                <div class="movie-card">
-                    <img src="https://upload.wikimedia.org/wikipedia/en/7/7f/Minecraft_film_poster.jpg"
-                        class="w-100 movie-img">
-
-                    <div class="p-3">
-                        <div class="movie-title">Minecraft</div>
-                        <div class="movie-category">Adventure • Fantasy</div>
-
-                        <div class="mt-3 d-flex gap-2">
-                            <button class="btn btn-warning w-100">
-                                Edit
-                            </button>
-
-                            <button class="btn btn-danger w-100">
-                                Hapus
-                            </button>
-                        </div>
-                    </div>
-                </div>
-            </div>
-
-            <div class="col-lg-3 col-md-6 mb-4">
-                <div class="movie-card">
-                    <img src="https://upload.wikimedia.org/wikipedia/en/a/a2/How_to_Train_Your_Dragon_%282025_film%29_poster.jpg"
-                        class="w-100 movie-img">
-
-                    <div class="p-3">
-                        <div class="movie-title">How To Train Dragon</div>
-                        <div class="movie-category">Animation • Adventure</div>
-
-                        <div class="mt-3 d-flex gap-2">
-                            <button class="btn btn-warning w-100">
-                                Edit
-                            </button>
-
-                            <button class="btn btn-danger w-100">
-                                Hapus
-                            </button>
-                        </div>
-                    </div>
-                </div>
-            </div>
-
-            <div class="col-lg-3 col-md-6 mb-4">
-                <div class="movie-card">
-                    <img src="https://upload.wikimedia.org/wikipedia/en/8/8d/Lilo_%26_Stitch_2025_film_poster.jpg"
-                        class="w-100 movie-img">
-
-                    <div class="p-3">
-                        <div class="movie-title">Lilo & Stitch</div>
-                        <div class="movie-category">Family • Comedy</div>
-
-                        <div class="mt-3 d-flex gap-2">
-                            <button class="btn btn-warning w-100">
-                                Edit
-                            </button>
-
-                            <button class="btn btn-danger w-100">
-                                Hapus
-                            </button>
-                        </div>
-                    </div>
-                </div>
-            </div>
-
-            <div class="col-lg-3 col-md-6 mb-4">
-                <div class="movie-card">
-                    <img src="https://upload.wikimedia.org/wikipedia/en/f/fb/Final_Destination_Bloodlines_Poster.jpg"
-                        class="w-100 movie-img">
-
-                    <div class="p-3">
-                        <div class="movie-title">Final Destination</div>
-                        <div class="movie-category">Horror • Thriller</div>
-
-                        <div class="mt-3 d-flex gap-2">
-                            <button class="btn btn-warning w-100">
-                                Edit
-                            </button>
-
-                            <button class="btn btn-danger w-100">
-                                Hapus
-                            </button>
-                        </div>
-                    </div>
-                </div>
-            </div>
-
-        </div>
-
     </div>
+    @endforeach
+</div>
+@endsection
 
-</body>
-</html>
+@push('scripts')
+<script>
+    const ctx = document.getElementById('salesChart').getContext('2d');
+    new Chart(ctx, {
+        type: 'line',
+        data: {
+            labels: {!! json_encode($chartLabels) !!},
+            datasets: [{
+                label: 'Pendapatan (Rp)',
+                data: {!! json_encode($chartTotals) !!},
+                borderColor: '#1A1953',
+                backgroundColor: 'rgba(26, 25, 83, 0.1)',
+                borderWidth: 3,
+                fill: true,
+                tension: 0.4,
+                pointRadius: 5,
+                pointBackgroundColor: '#1A1953'
+            }]
+        },
+        options: {
+            responsive: true,
+            maintainAspectRatio: false,
+            plugins: {
+                legend: { display: false }
+            },
+            scales: {
+                y: {
+                    beginAtZero: true,
+                    grid: { color: 'rgba(0,0,0,0.05)' }
+                },
+                x: {
+                    grid: { display: false }
+                }
+            }
+        }
+    });
+</script>
+@endpush

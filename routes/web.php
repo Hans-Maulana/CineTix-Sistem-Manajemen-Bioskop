@@ -24,9 +24,12 @@ Route::middleware('auth')->group(function () {
         return redirect('/admin');
     })->name('dashboard');
 
-    Route::get('/admin', function () {
-        return view('admin.dashboard');
-    })->name('admin.dashboard');
+    Route::get('/admin', [App\Http\Controllers\AdminController::class, 'index'])->name('admin.dashboard');
+    Route::resource('admin/films', App\Http\Controllers\Admin\FilmController::class)->names('admin.films');
+    Route::resource('admin/studios', App\Http\Controllers\Admin\StudioController::class)->names('admin.studios');
+    Route::resource('admin/schedules', App\Http\Controllers\Admin\ScheduleController::class)->names('admin.schedules');
+    Route::get('admin/bookings', [App\Http\Controllers\Admin\BookingManagementController::class, 'index'])->name('admin.bookings.index');
+    Route::get('admin/customers', [App\Http\Controllers\Admin\CustomerController::class, 'index'])->name('admin.customers.index');
 
 
     Route::get('/customer', [HomeController::class, 'index'])->name('customer.dashboard');
