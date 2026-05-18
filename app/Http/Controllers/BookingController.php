@@ -112,7 +112,12 @@ class BookingController extends Controller
                     ]);
 
                     // 4. OBSERVER PATTERN: Broadcast agar layar user lain jadi abu-abu
-                    broadcast(new \App\Events\SeatStatusUpdated($seat->id, 'pending'))->toOthers();
+                    try {
+                        broadcast(new \App\Events\SeatStatusUpdated($seat->id, 'pending'))->toOthers();
+                    } catch (\Exception $e) {
+                        // Abaikan error Pusher agar transaksi tetap lanjut
+                        \Illuminate\Support\Facades\Log::error("Pusher Error (Store): " . $e->getMessage());
+                    }
                 }
 
                 return $booking;
@@ -253,7 +258,12 @@ class BookingController extends Controller
                     ]);
 
                     // Broadcast lagi kalau kursi ini sudah fix laku
-                    broadcast(new \App\Events\SeatStatusUpdated($seat->id, 'booked'))->toOthers();
+                    try {
+                        broadcast(new \App\Events\SeatStatusUpdated($seat->id, 'booked'))->toOthers();
+                    } catch (\Exception $e) {
+                        // Abaikan error Pusher agar transaksi tetap lanjut
+                        \Illuminate\Support\Facades\Log::error("Pusher Error (Confirm): " . $e->getMessage());
+                    }
                 }
             });
 
