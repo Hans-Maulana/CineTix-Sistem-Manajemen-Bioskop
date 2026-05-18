@@ -13,11 +13,13 @@ class Studio extends Model
         'type_id',
         'name',
         'capacity',
+        'seat_layout',
         'status', 
     ];
 
     protected $casts = [
         'capacity' => 'integer',
+        'seat_layout' => 'array',
     ];
 
 

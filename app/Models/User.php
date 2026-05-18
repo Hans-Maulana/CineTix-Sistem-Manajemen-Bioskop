@@ -55,10 +55,6 @@ class User extends Authenticatable
         return $this->role?->name === 'admin';
     }
 
-    public function isResepsionis(): bool
-    {
-        return $this->role?->name === 'resepsionis';
-    }
 
     public function isCustomer(): bool
     {

@@ -1,6 +1,7 @@
 $(function () {
 
-    // Header Scroll
+    // Header Scroll Disabled
+    /*
     $(window).scroll(function () {
         if ($(window).scrollTop() >= 60) {
             $("header").addClass("fixed-header");
@@ -8,6 +9,7 @@ $(function () {
             $("header").removeClass("fixed-header");
         }
     });
+    */
 
 
     // Featured Owl Carousel

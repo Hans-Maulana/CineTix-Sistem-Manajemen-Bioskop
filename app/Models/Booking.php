@@ -13,6 +13,7 @@ class Booking extends Model
     protected $fillable = [
         'user_id',
         'promo_id',
+        'schedule_id',
         'booking_type',
         'total_amount',
         'status',
@@ -51,9 +52,17 @@ class Booking extends Model
         return $this->hasMany(BundlingBooking::class);
     }
 
-    public function payment()
+    public function payments()
     {
-        return $this->hasOne(Payment::class);
+        return $this->hasMany(Payment::class);
+    }
+
+    /**
+     * Get the latest payment for this booking.
+     */
+    public function latestPayment()
+    {
+        return $this->hasOne(Payment::class)->latestOfMany();
     }
 
 
