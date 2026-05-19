@@ -30,6 +30,10 @@ Route::middleware('auth')->group(function () {
     Route::resource('admin/schedules', App\Http\Controllers\Admin\ScheduleController::class)->names('admin.schedules');
     Route::get('admin/bookings', [App\Http\Controllers\Admin\BookingManagementController::class, 'index'])->name('admin.bookings.index');
     Route::get('admin/customers', [App\Http\Controllers\Admin\CustomerController::class, 'index'])->name('admin.customers.index');
+    Route::get('admin/tickets', [App\Http\Controllers\Admin\TicketManagementController::class, 'index'])->name('admin.tickets.index');
+    Route::post('admin/tickets/scan', [App\Http\Controllers\Admin\TicketManagementController::class, 'scan'])->name('admin.tickets.scan');
+    Route::get('admin/reports', [App\Http\Controllers\Admin\ReportController::class, 'index'])->name('admin.reports.index');
+    Route::get('admin/reports/export', [App\Http\Controllers\Admin\ReportController::class, 'export'])->name('admin.reports.export');
 
 
     Route::get('/customer', [HomeController::class, 'index'])->name('customer.dashboard');

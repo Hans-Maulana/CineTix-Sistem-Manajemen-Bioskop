@@ -24,8 +24,8 @@
                                 <div class="card position-relative overflow-hidden bg-primary h-100 p-4" data-aos="fade-up" data-aos-delay="100" data-aos-duration="1000">
                                     <div class="card-body d-flex flex-column justify-content-between">
                                         <div class="d-flex flex-column gap-3">
-                                            <h4 class="text-dark">Visi Kami</h4>
-                                            <p class="mb-0 fs-6 text-dark">Menjadi platform hiburan sinema terdepan yang memberikan akses hiburan berkualitas tinggi bagi seluruh masyarakat Indonesia.</p>
+                                            <h4 class="text-white">Visi Kami</h4>
+                                            <p class="mb-0 fs-6 text-white">Menjadi platform hiburan sinema terdepan yang memberikan akses hiburan berkualitas tinggi bagi seluruh masyarakat Indonesia.</p>
                                         </div>
                                     </div>
                                 </div>

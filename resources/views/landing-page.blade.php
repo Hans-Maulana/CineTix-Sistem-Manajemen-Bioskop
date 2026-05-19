@@ -188,7 +188,7 @@
                 <div class="portfolio d-flex flex-column gap-6">
                   <div class="portfolio-img position-relative overflow-hidden">
                     <img src="{{ $film->cover_url }}" alt="{{ $film->title }}"
-                      class="img-fluid w-100 object-fit-cover shadow-sm rounded-3" style="aspect-ratio: 2/3;">
+                      class="img-fluid w-100 object-fit-fill shadow-sm rounded-3" style="aspect-ratio: 2/3;">
                     <div class="portfolio-overlay">
                       <a href="{{ route('films.detail', $film) }}"
                         class="position-absolute top-50 start-50 translate-middle bg-primary round-64 rounded-circle hstack justify-content-center">
@@ -241,34 +241,33 @@
               </div>
             </div>
           </div>
-          <div class="row">
-            @foreach($comingSoonFilms as $film)
-              <div class="col-md-6 col-xl-3 mb-7 mb-xl-0">
-                <div class="poster-film d-flex flex-column gap-4" data-aos="fade-up"
-                  data-aos-delay="{{ $loop->iteration * 100 }}" data-aos-duration="1000">
-                  <div class="poster-film-img position-relative overflow-hidden">
-                    <img src="{{ $film->cover_url }}" alt="{{ $film->title }}"
-                      class="img-fluid w-100 object-fit-cover shadow-sm rounded-3" style="aspect-ratio: 2/3;">
-                    <div class="poster-film-overlay p-7 d-flex flex-column justify-content-end">
-                      <ul class="social list-unstyled mb-0 hstack gap-2 justify-content-end">
-                        <li><a href="{{ route('films.detail', $film) }}"
-                            class="btn bg-white p-2 round-45 rounded-circle hstack justify-content-center">
-                            <iconify-icon icon="lucide:eye" class="text-dark fs-5"></iconify-icon>
-                          </a></li>
-                      </ul>
+          <div class="coming-soon-slider px-3">
+            <div class="owl-carousel owl-theme">
+              @foreach($comingSoonFilms as $film)
+                <div class="item">
+                  <div class="portfolio d-flex flex-column gap-6">
+                    <div class="portfolio-img position-relative overflow-hidden">
+                      <img src="{{ $film->cover_url }}" alt="{{ $film->title }}"
+                        class="img-fluid w-100 object-fit-fill shadow-sm rounded-3" style="aspect-ratio: 2/3;">
+                      <div class="portfolio-overlay">
+                        <a href="{{ route('films.detail', $film) }}"
+                          class="position-absolute top-50 start-50 translate-middle bg-primary round-64 rounded-circle hstack justify-content-center">
+                          <iconify-icon icon="lucide:arrow-up-right" class="fs-8 text-dark"></iconify-icon>
+                        </a>
+                      </div>
+                    </div>
+                    <div class="portfolio-details d-flex flex-column gap-3">
+                      <h3 class="mb-0">{{ $film->title }}</h3>
+                      <div class="hstack gap-2">
+                        @foreach($film->genres as $genre)
+                          <span class="badge text-dark border">{{ $genre->genre_name }}</span>
+                        @endforeach
+                      </div>
                     </div>
                   </div>
-                  <div class="poster-film-details">
-                    <h4 class="mb-0">{{ $film->title }}</h4>
-                    <p class="mb-0">
-                      @foreach($film->genres as $genre)
-                        {{ $genre->genre_name }}{{ !$loop->last ? ' / ' : '' }}
-                      @endforeach
-                    </p>
-                  </div>
                 </div>
-              </div>
-            @endforeach
+              @endforeach
+            </div>
           </div>
         </div>
       </div>

@@ -32,7 +32,7 @@
                                 <div class="col-md-3">
                                     <img src="{{ $ticket->schedule->film->cover_url }}" 
                                          alt="{{ $ticket->schedule->film->title }}" 
-                                         class="img-fluid h-100 object-fit-cover" 
+                                         class="img-fluid h-100 object-fit-fill" 
                                          style="min-height: 180px;">
                                 </div>
 

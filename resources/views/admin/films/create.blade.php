@@ -52,18 +52,14 @@
                     <div class="border rounded-4 p-3 text-center bg-light" style="border-style: dashed !important; border-width: 2px !important;">
                         <i class="bi bi-cloud-arrow-up display-4 text-muted"></i>
                         <input type="file" name="cover" class="form-control mt-2" accept="image/*">
-                        <small class="text-muted d-block mt-2">Format: JPG, PNG (Max 2MB)</small>
+                        <small class="text-muted d-block mt-2">Format: JPG, PNG, WEBP, AVIF (Max 2MB)</small>
                     </div>
                 </div>
 
                 <div class="row">
-                    <div class="col-6 mb-4">
+                    <div class="col-12 mb-4">
                         <label class="form-label fw-bold">Durasi (Menit)</label>
                         <input type="number" name="duration" class="form-control" placeholder="120" value="{{ old('duration') }}" required>
-                    </div>
-                    <div class="col-6 mb-4">
-                        <label class="form-label fw-bold">Rating</label>
-                        <input type="number" step="0.1" name="rating" class="form-control" placeholder="8.5" value="{{ old('rating') }}" required>
                     </div>
                 </div>
 

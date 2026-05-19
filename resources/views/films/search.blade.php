@@ -34,7 +34,7 @@
                     <div class="col-sm-6 col-md-4 col-lg-3" data-aos="fade-up" data-aos-delay="{{ ($loop->index % 4) * 100 }}">
                         <div class="card h-100 border-0 shadow-sm rounded-4 overflow-hidden film-card">
                             <div class="position-relative">
-                                <img src="{{ $film->cover_url }}" class="card-img-top" alt="{{ $film->title }}" style="aspect-ratio: 2/3; object-fit: cover;">
+                                <img src="{{ $film->cover_url }}" class="card-img-top" alt="{{ $film->title }}" style="aspect-ratio: 2/3; object-fit: fill;">
                                 <div class="card-img-overlay d-flex flex-column justify-content-end p-0">
                                     <div class="bg-dark bg-opacity-75 text-white p-3 backdrop-blur">
                                         <div class="d-flex justify-content-between align-items-center">

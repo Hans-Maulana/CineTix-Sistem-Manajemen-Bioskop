@@ -23,7 +23,7 @@
                                     <div class="col-4">
                                         <img src="{{ $film ? $film->cover_url : asset('storage/cover/default-cover.svg') }}" 
                                              alt="{{ $film->title ?? 'Film' }}" 
-                                             class="img-fluid h-100 object-fit-cover"
+                                             class="img-fluid h-100 object-fit-fill"
                                              style="min-height: 160px;">
                                     </div>
                                     <div class="col-8">

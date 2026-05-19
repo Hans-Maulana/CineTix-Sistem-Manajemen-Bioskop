@@ -32,7 +32,7 @@
                 @forelse($films as $film)
                 <tr>
                     <td class="px-4 py-3">
-                        <img src="{{ $film->cover_url }}" alt="Cover" class="rounded-3 shadow-sm" style="width: 50px; height: 75px; object-fit: cover;">
+                        <img src="{{ $film->cover_url }}" alt="Cover" class="rounded-3 shadow-sm" style="width: 120px; height: 80px; object-fit: cover;">
                     </td>
                     <td class="fw-bold text-dark">{{ $film->title }}</td>
                     <td>
@@ -40,7 +40,7 @@
                             <span class="badge bg-light text-primary border me-1">{{ $genre->name }}</span>
                         @endforeach
                     </td>
-                    <td><span class="text-warning fw-bold">⭐ {{ $film->rating }}</span></td>
+                    <td><span class="text-warning fw-bold">⭐ {{ number_format($film->reviews()->avg('rating') ?: 0, 1) }}</span></td>
                     <td><i class="bi bi-clock me-1"></i> {{ $film->duration }} mnt</td>
                     <td class="text-center">
                         <div class="btn-group">

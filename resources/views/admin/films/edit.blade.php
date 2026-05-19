@@ -51,20 +51,17 @@
                 <div class="mb-4">
                     <label class="form-label fw-bold">Poster Saat Ini</label>
                     <div class="mb-3 text-center">
-                        <img src="{{ $film->cover_url }}" class="rounded-4 shadow-sm" style="width: 150px; height: 225px; object-fit: cover;">
+                        <img src="{{ $film->cover_url }}" class="rounded-4 shadow-sm" style="width: 150px; height: 225px; object-fit: fill;">
                     </div>
                     <label class="form-label fw-bold">Ganti Poster (Opsional)</label>
                     <input type="file" name="cover" class="form-control" accept="image/*">
+                    <small class="text-muted d-block mt-2">Format: JPG, PNG, WEBP, AVIF (Max 2MB)</small>
                 </div>
 
                 <div class="row">
-                    <div class="col-6 mb-4">
+                    <div class="col-12 mb-4">
                         <label class="form-label fw-bold">Durasi (Menit)</label>
                         <input type="number" name="duration" class="form-control" value="{{ old('duration', $film->duration) }}" required>
-                    </div>
-                    <div class="col-6 mb-4">
-                        <label class="form-label fw-bold">Rating</label>
-                        <input type="number" step="0.1" name="rating" class="form-control" value="{{ old('rating', $film->rating) }}" required>
                     </div>
                 </div>
 
