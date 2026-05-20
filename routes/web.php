@@ -67,6 +67,7 @@ Route::middleware('auth')->group(function () {
         Route::get('history', [BookingController::class, 'history'])->name('history');
         Route::get('tickets', [BookingController::class, 'tickets'])->name('tickets');
         Route::post('cancel/{booking}', [BookingController::class, 'cancel'])->name('cancel');
+        Route::post('store-review', [BookingController::class, 'storeReview'])->name('store-review');
 
         // AJAX endpoints
         Route::get('available-seats/{schedule}', [BookingController::class, 'getAvailableSeats'])->name('available-seats');

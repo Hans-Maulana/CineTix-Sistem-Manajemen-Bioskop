@@ -5,6 +5,7 @@ namespace App\Http\Controllers;
 use App\Models\Film;
 use App\Models\Schedule;
 use Illuminate\Http\Request;
+use Carbon\Carbon;
 
 class HomeController extends Controller
 {
@@ -13,19 +14,28 @@ class HomeController extends Controller
      */
     public function index()
     {
+        $startOfWeek = Carbon::today();
+        $endOfWeek = Carbon::now()->endOfWeek();
+
         $nowPlayingFilms = Film::where('status', 'now_playing')
+            ->whereHas('schedules', function ($query) use ($startOfWeek, $endOfWeek) {
+                $query->whereBetween('schedule_date', [$startOfWeek->toDateString(), $endOfWeek->toDateString()]);
+            })
             ->with(['genres', 'reviews'])
             ->latest()
             ->take(8)
             ->get();
 
         $comingSoonFilms = Film::where('status', 'coming_soon')
+            ->whereHas('schedules', function ($query) use ($startOfWeek, $endOfWeek) {
+                $query->whereBetween('schedule_date', [$startOfWeek->toDateString(), $endOfWeek->toDateString()]);
+            })
             ->with(['genres'])
             ->latest()
             ->take(4)
             ->get();
 
-        $upcomingSchedules = Schedule::where('schedule_date', '>=', now())
+        $upcomingSchedules = Schedule::whereBetween('schedule_date', [$startOfWeek->toDateString(), $endOfWeek->toDateString()])
             ->with('film', 'studio')
             ->orderBy('schedule_date')
             ->take(10)
@@ -40,8 +50,13 @@ class HomeController extends Controller
     public function search(Request $request)
     {
         $query = $request->get('q');
+        $startOfWeek = Carbon::today();
+        $endOfWeek = Carbon::now()->endOfWeek();
         
-        $films = Film::where('status', 'active')
+        $films = Film::whereIn('status', ['now_playing', 'coming_soon'])
+            ->whereHas('schedules', function ($q) use ($startOfWeek, $endOfWeek) {
+                $q->whereBetween('schedule_date', [$startOfWeek->toDateString(), $endOfWeek->toDateString()]);
+            })
             ->where(function ($q) use ($query) {
                 $q->where('title', 'like', "%{$query}%")
                   ->orWhere('synopsis', 'like', "%{$query}%")
@@ -49,7 +64,11 @@ class HomeController extends Controller
                       $subQuery->where('genre_name', 'like', "%{$query}%");
                   });
             })
-            ->with('genres', 'schedules')
+            ->with(['genres', 'schedules' => function ($q) use ($startOfWeek, $endOfWeek) {
+                $q->whereBetween('schedule_date', [$startOfWeek->toDateString(), $endOfWeek->toDateString()])
+                  ->orderBy('schedule_date')
+                  ->with('studio');
+            }])
             ->paginate(12);
 
         return view('films.search', compact('films', 'query'));
@@ -60,10 +79,13 @@ class HomeController extends Controller
      */
     public function filmDetail(Film $film)
     {
+        $startOfWeek = Carbon::today();
+        $endOfWeek = Carbon::now()->endOfWeek();
+
         $film->load(['genres', 'reviews' => function ($q) {
             $q->orderBy('created_at', 'desc')->take(5);
-        }, 'schedules' => function ($q) {
-            $q->where('schedule_date', '>=', now())
+        }, 'schedules' => function ($q) use ($startOfWeek, $endOfWeek) {
+            $q->whereBetween('schedule_date', [$startOfWeek->toDateString(), $endOfWeek->toDateString()])
               ->orderBy('schedule_date')
               ->with('studio');
         }]);

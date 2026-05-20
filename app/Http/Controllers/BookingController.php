@@ -8,7 +8,11 @@ use App\Models\Seat;
 use App\Models\TicketBooking;
 use App\Models\Payment;
 use App\Models\Promo;
+use App\Models\Review;
 use App\Services\Payment\PaymentContext;
+use App\Services\ChainOfResponsibility\PaymentValidationChain;
+use App\Services\ChainOfResponsibility\BookingApprovalChain;
+use App\Services\ChainOfResponsibility\CancellationChain;
 use Illuminate\Http\Request;
 use Illuminate\Support\Facades\DB;
 use Illuminate\Support\Facades\Auth;
@@ -39,6 +43,7 @@ class BookingController extends Controller
     /**
      * Store booking dengan real-time seat locking
      * Menggunakan transaction untuk mencegah race condition
+     * CHAIN OF RESPONSIBILITY: BookingApprovalChain
      */
    public function store(Request $request)
     {
@@ -54,9 +59,20 @@ class BookingController extends Controller
         ]);
 
         try {
-            $booking = DB::transaction(function () use ($validated) {
-                $schedule = Schedule::with('film')->find($validated['schedule_id']);
-                $seatIds = $validated['seat_ids'];
+            // RUN BOOKING APPROVAL CHAIN
+            $chain = BookingApprovalChain::build();
+            $approval = $chain->handle($validated);
+
+            if (!$approval['approved']) {
+                return back()->with('error', $approval['message']);
+            }
+
+            // Jika approval result memiliki booking_data, gunakan itu (sudah tervalidasi)
+            $bookingData = $approval['booking_data'] ?? $validated;
+
+            $booking = DB::transaction(function () use ($bookingData) {
+                $schedule = Schedule::with('film')->find($bookingData['schedule_id']);
+                $seatIds = $bookingData['seat_ids'];
 
                 // 1. PESSIMISTIC LOCKING: Kunci kursi saat dicek
                 $seats = Seat::whereIn('id', $seatIds)
@@ -64,32 +80,26 @@ class BookingController extends Controller
                     ->lockForUpdate()
                     ->get();
 
-                // 2. STATE PATTERN: Cek apakah kursi masih available atau waktu pendingnya sudah habis
+                // 2. STATE PATTERN: Double-check apakah kursi masih available atau waktu pendingnya sudah habis
                 foreach ($seats as $seat) {
-                    if (!$seat->isAvailable()) { // Menggunakan method dari Model Seat yang kita buat
+                    if (!$seat->isAvailable()) {
                         throw new \Exception("Maaf, kursi {$seat->seat_code} baru saja diambil orang lain.");
                     }
                 }
 
-                // Kalkulasi harga & promo
+                // Kalkulasi harga & promo (dari data chain atau buat baru)
                 $totalAmount = $schedule->ticket_price * count($seatIds);
-                $promoId = null;
+                $promoId = $bookingData['promo_id'] ?? null;
 
-                if (!empty($validated['promo_code'])) {
-                    $promo = Promo::where('code', $validated['promo_code'])
-                        ->where('valid_until', '>=', now())
-                        ->first();
-                    if ($promo) {
-                        $totalAmount -= $promo->disc_amount;
-                        $promoId = $promo->id;
-                    }
+                if (isset($bookingData['discount_amount'])) {
+                    $totalAmount -= $bookingData['discount_amount'];
                 }
 
                 // Buat Booking
                 $booking = Booking::create([
-                    'user_id' => Auth::id(),
+                    'user_id' => $bookingData['user_id'],
                     'promo_id' => $promoId,
-                    'schedule_id' => $schedule->id,
+                    'schedule_id' => $bookingData['schedule_id'],
                     'booking_type' => 'ticket',
                     'total_amount' => max(0, $totalAmount),
                     'status' => 'pending',
@@ -142,7 +152,7 @@ class BookingController extends Controller
         }
 
         if ($booking->status === 'confirmed') {
-            return redirect()->route('booking.confirmation', $booking);
+            return redirect()->route('booking.history');
         }
 
         $booking->load(['ticketBookings.seat', 'ticketBookings.schedule.film', 'promo']);
@@ -202,9 +212,9 @@ class BookingController extends Controller
                 ->with('error', 'Waktu pembayaran telah habis. Silakan coba lagi.');
         }
 
-        // Jika sudah success, redirect ke confirmation
+        // Jika sudah success, redirect ke tickets
         if ($payment->status === 'success') {
-            return redirect()->route('booking.confirmation', $booking);
+            return redirect()->route('booking.tickets')->with('success_booking', $booking->id);
         }
 
         $booking->load(['ticketBookings.seat', 'ticketBookings.schedule.film', 'promo']);
@@ -218,6 +228,7 @@ class BookingController extends Controller
 
     /**
      * Selesaikan pembayaran (simulasi - tombol "Selesaikan Pembayaran")
+     * CHAIN OF RESPONSIBILITY: PaymentValidationChain
      */
     public function confirmPayment(Request $request, Booking $booking, Payment $payment)
     {
@@ -229,22 +240,21 @@ class BookingController extends Controller
             abort(404);
         }
 
-        // Cek apakah payment masih pending
-        if ($payment->status !== 'pending') {
-            return redirect()->route('booking.payment', $booking)
-                ->with('error', 'Payment ini sudah diproses sebelumnya.');
-        }
+        try {
+            // RUN PAYMENT VALIDATION CHAIN
+            $chain = PaymentValidationChain::build();
+            $validation = $chain->handle($booking, $payment);
 
-        // Cek expired
-        if ($payment->isExpired()) {
-            $payment->markAsFailed();
-            return redirect()->route('booking.payment', $booking)
-                ->with('error', 'Waktu pembayaran telah habis. Silakan coba lagi.');
-        }
+            if (!$validation['valid']) {
+                return redirect()->route('booking.payment', $booking)
+                    ->with('error', $validation['message']);
+            }
 
-      try {
+            // Jika ada warning, tampilkan tapi tetap lanjut
+            $warning = $validation['warning'] ?? null;
+
             DB::transaction(function () use ($payment, $booking) {
-                // Proses payment via Strategy Pattern Hasan
+                // Proses payment via Strategy Pattern
                 $strategy = PaymentContext::resolve($payment->method);
                 $strategy->process($payment);
 
@@ -267,7 +277,8 @@ class BookingController extends Controller
                 }
             });
 
-            return redirect()->route('booking.confirmation', $booking)
+            return redirect()->route('booking.tickets')
+                ->with('success_booking', $booking->id)
                 ->with('success', 'Pembayaran berhasil! Tiket Anda telah dikonfirmasi.');
 
         } catch (\Throwable $e) {
@@ -286,9 +297,7 @@ class BookingController extends Controller
             abort(403);
         }
 
-        $booking->load(['ticketBookings.seat', 'ticketBookings.schedule.film', 'ticketBookings.schedule.studio', 'user', 'payments']);
-
-        return view('booking.confirmation', compact('booking'));
+        return redirect()->route('booking.tickets')->with('success_booking', $booking->id);
     }
 
     /**
@@ -298,6 +307,9 @@ class BookingController extends Controller
     {
         $bookings = Auth::user()->bookings()
             ->where('status', 'confirmed')
+            ->whereHas('ticketBookings.schedule', function ($q) {
+                $q->where('status', '!=', 'complete');
+            })
             ->with('ticketBookings.schedule.film', 'ticketBookings.schedule.studio', 'payments')
             ->orderBy('created_at', 'desc')
             ->get();
@@ -406,5 +418,51 @@ class BookingController extends Controller
             'remaining_seconds' => $payment->remaining_seconds,
             'is_expired' => $payment->isExpired(),
         ]);
+    }
+
+    /**
+     * Store customer review from transaction history
+     */
+    public function storeReview(Request $request)
+    {
+        $validated = $request->validate([
+            'film_id' => 'required|exists:films,id',
+            'rating' => 'required|integer|between:1,5',
+            'comment' => 'nullable|string|max:1000',
+        ]);
+
+        $filmId = $validated['film_id'];
+        $userId = Auth::id();
+
+        // 1. Verify user has actually bought and watched the movie
+        $hasBoughtAndWatched = Booking::where('user_id', $userId)
+            ->where('status', 'confirmed')
+            ->whereHas('ticketBookings.schedule', function ($q) use ($filmId) {
+                $q->where('film_id', $filmId)->where('status', 'complete');
+            })
+            ->exists();
+
+        if (!$hasBoughtAndWatched) {
+            return back()->with('error', 'Anda hanya dapat memberikan ulasan untuk film yang tiketnya sudah dibeli dan jadwal tayangnya telah selesai.');
+        }
+
+        // 2. Prevent duplicate reviews for the same film by the same user
+        $existingReview = Review::where('user_id', $userId)
+            ->where('film_id', $filmId)
+            ->first();
+
+        if ($existingReview) {
+            return back()->with('error', 'Anda sudah memberikan ulasan untuk film ini.');
+        }
+
+        // 3. Create review
+        Review::create([
+            'user_id' => $userId,
+            'film_id' => $filmId,
+            'rating' => $validated['rating'],
+            'comment' => $validated['comment'] ?? '',
+        ]);
+
+        return back()->with('success', 'Ulasan Anda berhasil dikirim! Terima kasih atas masukan Anda.');
     }
 }

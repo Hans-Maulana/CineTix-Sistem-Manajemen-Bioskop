@@ -19,10 +19,10 @@ class SeatSeeder extends Seeder
             if ($studio->seat_layout) {
                 foreach ($studio->seat_layout as $rowIndex => $row) {
                     $rowLabel = chr(65 + $rowIndex); // 0 -> A, 1 -> B, ...
-                    
+                    $seatCounter = 1;
                     foreach ($row as $colIndex => $isSeat) {
                         if ($isSeat == 1) {
-                            $seatNumber = $colIndex + 1;
+                            $seatNumber = $seatCounter;
                             Seat::create([
                                 'studio_id' => $studio->id,
                                 'row_label' => $rowLabel,
@@ -30,6 +30,7 @@ class SeatSeeder extends Seeder
                                 'seat_code' => $rowLabel . $seatNumber,
                                 'status' => 'available',
                             ]);
+                            $seatCounter++;
                         }
                     }
                 }

@@ -105,9 +105,13 @@
                             </button>
                         </form>
 
-                        <a href="{{ route('booking.payment', $booking) }}" class="btn btn-link text-primary text-white text-decoration-none fw-bold">
-                            <iconify-icon icon="lucide:arrow-left" class="me-1"></iconify-icon> Ganti Metode Pembayaran
-                        </a>
+                        <form method="POST" action="{{ route('booking.cancel', $booking) }}" id="cancelForm" onsubmit="return confirm('Apakah Anda yakin ingin membatalkan pesanan ini?');">
+                            @csrf
+                            @method('POST')
+                            <button type="submit" class="btn btn-outline-danger btn-lg w-100 py-3 text-danger fw-bold rounded-4">
+                                <iconify-icon icon="lucide:trash-2" class="me-2"></iconify-icon> Batalkan Pesanan
+                            </button>
+                        </form>
                     </div>
                 </div>
             </div>
