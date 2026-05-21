@@ -5,10 +5,10 @@
   <meta charset="utf-8">
   <meta name="viewport" content="width=device-width, initial-scale=1">
   <title>CineTix</title>
-  <link rel="shortcut icon" type="image/png" href="{{asset("assets/images/logos/favicon.svg")}}" />
-  <link rel="stylesheet" href="{{asset("assets/libs/owl.carousel/dist/assets/owl.carousel.min.css")}}">
-  <link rel="stylesheet" href="{{asset("assets/libs/aos-master/dist/aos.css")}}">
-  <link rel="stylesheet" href="{{asset("assets/css/styles.css")}}" />
+  <link rel="shortcut icon" type="image/png" href="{{asset('assets/images/logos/favicon.svg')}}" />
+  <link rel="stylesheet" href="{{asset('assets/libs/owl.carousel/dist/assets/owl.carousel.min.css')}}">
+  <link rel="stylesheet" href="{{asset('assets/libs/aos-master/dist/aos.css')}}">
+  <link rel="stylesheet" href="{{asset('assets/css/styles.css')}}" />
   <style>
     .header {
       background: #1A1953 !important;
@@ -28,13 +28,12 @@
 
 <body>
 
-  <!-- Header -->
   <header class="header border-4 border-primary border-top position-fixed start-0 top-0 w-100">
     <div class="container">
       <div class="header-wrapper d-flex align-items-center justify-content-between">
         <div class="logo">
           <a href="{{ route('landing-page') }}">
-            <img src="{{asset("assets/images/logos/logo-white.svg")}}" alt="logo" class="img-fluid"
+            <img src="{{asset('assets/images/logos/logo-white.svg')}}" alt="logo" class="img-fluid"
               style="max-height: 40px;">
           </a>
         </div>
@@ -121,13 +120,11 @@
     </div>
   </header>
 
-  <!--  Page Wrapper -->
   <div class="page-wrapper overflow-hidden">
 
-    <!--  Banner Section -->
     <section class="banner-section position-relative d-flex align-items-end min-vh-100">
       <video class="position-absolute top-0 start-0 w-100 h-100 object-fit-cover" autoplay muted loop playsinline>
-        <source src="{{asset("assets/images/backgrounds/banner-video.mp4")}}" type="video/mp4" />
+        <source src="{{asset('assets/images/backgrounds/banner-video.mp4')}}" type="video/mp4" />
       </video>
       <div class="container">
         <div class="d-flex flex-column gap-4 pb-8 position-relative z-1">
@@ -153,7 +150,6 @@
       </div>
     </section>
 
-    <!--  Sedang Tayang Section -->
     <section class="featured-projects py-4 py-lg-8 py-xl-10 bg-light-gray">
       <div class="d-flex flex-column gap-5 gap-xl-11">
         <div class="container">
@@ -180,41 +176,36 @@
               </div>
             </div>
           </div>
+
+          <div class="row mt-4 mb-4">
+            <div class="col-12 d-flex gap-3 justify-content-start flex-wrap">
+              <select id="filter-genre" class="form-select w-auto shadow-sm border-secondary text-dark fw-semibold">
+                <option value="">Semua Genre</option>
+                <option value="Action">Action</option>
+                <option value="Comedy">Comedy</option>
+                <option value="Drama">Drama</option>
+                <option value="Horror">Horror</option>
+                <option value="Romance">Romance</option>
+              </select>
+
+              <select id="filter-classification" class="form-select w-auto shadow-sm border-secondary text-dark fw-semibold">
+                <option value="">Semua Rating Umur</option>
+                <option value="SU">SU</option>
+                <option value="13+">13+</option>
+                <option value="17+">17+</option>
+              </select>
+            </div>
+          </div>
+
         </div>
         <div class="featured-projects-slider px-3">
-          <div class="owl-carousel owl-theme">
-            @foreach($nowPlayingFilms as $film)
-              <div class="item">
-                <div class="portfolio d-flex flex-column gap-6">
-                  <div class="portfolio-img position-relative overflow-hidden">
-                    <img src="{{ $film->cover_url }}" alt="{{ $film->title }}"
-                      class="img-fluid w-100 object-fit-fill shadow-sm rounded-3" style="aspect-ratio: 2/3;">
-                    <div class="portfolio-overlay">
-                      <a href="{{ route('films.detail', $film) }}"
-                        class="position-absolute top-50 start-50 translate-middle bg-primary round-64 rounded-circle hstack justify-content-center">
-                        <iconify-icon icon="lucide:arrow-up-right" class="fs-8 text-dark"></iconify-icon>
-                      </a>
-                    </div>
-                  </div>
-                  <div class="portfolio-details d-flex flex-column gap-3">
-                    <h3 class="mb-0">{{ $film->title }}</h3>
-                    <div class="hstack gap-2">
-                      @foreach($film->genres as $genre)
-                        <span class="badge text-dark border">{{ $genre->genre_name }}</span>
-                      @endforeach
-                    </div>
-                  </div>
-                </div>
-              </div>
-            @endforeach
+          <div class="owl-carousel owl-theme" id="owl-now-playing">
+            @include('partials.film_items', ['nowPlayingFilms' => $nowPlayingFilms])
           </div>
         </div>
       </div>
     </section>
 
-
-
-    <!--  Segera Tayang Section -->
     <section class="meet-our-team py-4 py-lg-8 py-xl-10">
       <div class="container">
         <div class="d-flex flex-column gap-5 gap-xl-11">
@@ -241,39 +232,38 @@
               </div>
             </div>
           </div>
-          <div class="coming-soon-slider px-3">
-            <div class="owl-carousel owl-theme">
-              @foreach($comingSoonFilms as $film)
-                <div class="item">
-                  <div class="portfolio d-flex flex-column gap-6">
-                    <div class="portfolio-img position-relative overflow-hidden">
-                      <img src="{{ $film->cover_url }}" alt="{{ $film->title }}"
-                        class="img-fluid w-100 object-fit-fill shadow-sm rounded-3" style="aspect-ratio: 2/3;">
-                      <div class="portfolio-overlay">
-                        <a href="{{ route('films.detail', $film) }}"
-                          class="position-absolute top-50 start-50 translate-middle bg-primary round-64 rounded-circle hstack justify-content-center">
-                          <iconify-icon icon="lucide:arrow-up-right" class="fs-8 text-dark"></iconify-icon>
-                        </a>
-                      </div>
-                    </div>
-                    <div class="portfolio-details d-flex flex-column gap-3">
-                      <h3 class="mb-0">{{ $film->title }}</h3>
-                      <div class="hstack gap-2">
-                        @foreach($film->genres as $genre)
-                          <span class="badge text-dark border">{{ $genre->genre_name }}</span>
-                        @endforeach
-                      </div>
+          <div class="row">
+            @foreach($comingSoonFilms as $film)
+              <div class="col-md-6 col-xl-3 mb-7 mb-xl-0">
+                <div class="poster-film d-flex flex-column gap-4" data-aos="fade-up"
+                  data-aos-delay="{{ $loop->iteration * 100 }}" data-aos-duration="1000">
+                  <div class="poster-film-img position-relative overflow-hidden">
+                    <img src="{{ $film->cover_url }}" alt="{{ $film->title }}"
+                      class="img-fluid w-100 object-fit-cover shadow-sm rounded-3" style="aspect-ratio: 2/3;">
+                    <div class="poster-film-overlay p-7 d-flex flex-column justify-content-end">
+                      <ul class="social list-unstyled mb-0 hstack gap-2 justify-content-end">
+                        <li><a href="{{ route('films.detail', $film) }}"
+                            class="btn bg-white p-2 round-45 rounded-circle hstack justify-content-center">
+                            <iconify-icon icon="lucide:eye" class="text-dark fs-5"></iconify-icon>
+                          </a></li>
+                      </ul>
                     </div>
                   </div>
+                  <div class="poster-film-details">
+                    <h4 class="mb-0">{{ $film->title }}</h4>
+                    <p class="mb-0">
+                      @foreach($film->genres as $genre)
+                        {{ $genre->genre_name }}{{ !$loop->last ? ' / ' : '' }}
+                      @endforeach
+                    </p>
+                  </div>
                 </div>
-              @endforeach
-            </div>
+              </div>
+            @endforeach
           </div>
         </div>
       </div>
     </section>
-
-
 
   </div>
 
@@ -329,13 +319,53 @@
   </div>
 
 
-  <script src="{{asset("assets/libs/jquery/dist/jquery.min.js")}}"></script>
-  <script src="{{asset("assets/libs/bootstrap/dist/js/bootstrap.bundle.min.js")}}"></script>
-  <script src="{{asset("assets/libs/owl.carousel/dist/owl.carousel.min.js")}}"></script>
-  <script src="{{asset("assets/libs/aos-master/dist/aos.js")}}"></script>
-  <script src="{{asset("assets/js/custom.js")}}"></script>
-  <!-- solar icons -->
+  <script src="{{asset('assets/libs/jquery/dist/jquery.min.js')}}"></script>
+  <script src="{{asset('assets/libs/bootstrap/dist/js/bootstrap.bundle.min.js')}}"></script>
+  <script src="{{asset('assets/libs/owl.carousel/dist/owl.carousel.min.js')}}"></script>
+  <script src="{{asset('assets/libs/aos-master/dist/aos.js')}}"></script>
+  <script src="{{asset('assets/js/custom.js')}}"></script>
   <script src="https://cdn.jsdelivr.net/npm/iconify-icon@1.0.8/dist/iconify-icon.min.js"></script>
+
+  <script>
+    $(document).ready(function() {
+      // Encapsulation: Mengisolasi logika request filter ke dalam fungsi mandiri
+      function fetchFilteredFilms() {
+        let genre = $('#filter-genre').val();
+        let classification = $('#filter-classification').val();
+        let $carousel = $('#owl-now-playing');
+
+        $.ajax({
+          url: "{{ route('films.filter') }}",
+          type: "GET",
+          data: { genre: genre, classification: classification },
+          beforeSend: function() {
+            $carousel.css('opacity', '0.5'); 
+          },
+          success: function(data) {
+            $carousel.css('opacity', '1');
+
+            // State Reset: Menghancurkan instance Owl Carousel lama agar DOM HTML baru tidak mengalami freeze/bug
+            $carousel.trigger('destroy.owl.carousel');
+            $carousel.find('.owl-stage-outer').children().unwrap();
+            $carousel.removeClass('owl-loaded');
+
+            $carousel.html(data);
+
+            // Re-initialization: Menyalakan kembali plugin slider carousel dengan data baru
+            $carousel.owlCarousel({
+              loop: false, margin: 20, nav: false, dots: true,
+              responsive: { 0: { items: 1 }, 576: { items: 2 }, 992: { items: 3 }, 1200: { items: 4 } }
+            });
+          }
+        });
+      }
+
+      // Event Binding: Mengikat event listener 'change' pada elemen dropdown ke fungsi AJAX
+      $('#filter-genre, #filter-classification').on('change', function() {
+        fetchFilteredFilms();
+      });
+    });
+  </script>
 </body>
 
 </html>

@@ -74,4 +74,18 @@ class FilmController extends Controller
         $film->delete();
         return redirect()->route('films.index')->with('success', 'Film berhasil dihapus');
     }
+
+    // SOLID - SRP (Single Responsibility): mengurus request filter AJAX & return data partial HTML
+    public function filterNowPlaying(Request $request)
+    {
+        // Builder Pattern: Menyusun query filter dinamis menggunakan Scope dari Model
+        $nowPlayingFilms = Film::with('genres')
+            ->where('status', 'active')
+            ->filterGenre($request->genre)
+            ->filterClassification($request->classification)
+            ->get();
+
+        // Penerapan DRY: Menggunakan method render() pada partial view struktur kartu HTML tidak ditulis ulang
+        return view('partials.film_items', compact('nowPlayingFilms'))->render();
+    }
 }
