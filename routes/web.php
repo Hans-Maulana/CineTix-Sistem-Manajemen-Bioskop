@@ -38,6 +38,9 @@ Route::middleware('auth')->group(function () {
 
     Route::get('/customer', [HomeController::class, 'index'])->name('customer.dashboard');
 
+    // Clean Code: Konsistensi penamaan endpoint URL
+    Route::get('/films/filter-now-playing', [App\Http\Controllers\FilmController::class, 'filterNowPlaying'])->name('films.filter');
+
     // Proses saat user klik kursi
     Route::post('/seat/select', [BookingController::class, 'selectSeat'])->name('seat.select');
 

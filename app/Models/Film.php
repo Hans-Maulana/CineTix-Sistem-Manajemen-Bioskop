@@ -28,8 +28,6 @@ class Film extends Model
         'rating'   => 'decimal:1',
     ];
 
-    
-
     public function genres()
     {
         return $this->belongsToMany(Genre::class, 'genre_film', 'film_id', 'genre_id');
@@ -53,7 +51,23 @@ class Film extends Model
         if ($this->cover && (str_starts_with($this->cover, 'http') || file_exists(public_path('storage/cover/' . $this->cover)))) {
             return str_starts_with($this->cover, 'http') ? $this->cover : asset('storage/cover/' . $this->cover);
         }
-        
-        return asset('storage/cover/default-cover.svg'); // Default template image
+
+        return asset('storage/cover/default-cover.svg');
+    }
+
+    // Builder Pattern: scope untuk memfilter berdasarkan Genre
+    public function scopeFilterGenre($query, $genreName) {
+        if (!$genreName) return $query; // Penerapan KISS: Early Return
+
+        return $query->whereHas('genres', function ($q) use ($genreName) {
+            $q->where('genre_name', $genreName);
+        });
+    }
+
+    // Builder Pattern: scope untuk memfilter berdasarkan Rating Usia
+    public function scopeFilterClassification($query, $classification) {
+        if (!$classification) return $query; // Penerapan KISS: Early Return
+
+        return $query->where('classification', $classification);
     }
 }
