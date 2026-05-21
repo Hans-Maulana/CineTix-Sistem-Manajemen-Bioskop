@@ -50,8 +50,7 @@
                         @endphp
                         <div class="col-lg-6">
                             <div class="card shadow-sm border-0 h-100 overflow-hidden transaction-card" 
-                                 style="border-radius: 15px !important; @if($booking->status === 'confirmed' && $firstTicket && $firstTicket->schedule->status !== 'complete') cursor: pointer; @endif" 
-                                 @if($booking->status === 'confirmed' && $firstTicket && $firstTicket->schedule->status !== 'complete') onclick="if(!event.target.closest('.review-section') && !event.target.closest('button') && !event.target.closest('a')) { window.location.href='{{ route('booking.tickets') }}'; }" @endif>
+                                 style="border-radius: 15px !important;">
                                 <div class="row g-0 h-100">
                                     <div class="col-4">
                                         <img src="{{ $film ? $film->cover_url : asset('storage/cover/default-cover.svg') }}" 
@@ -130,7 +129,7 @@
                                                         @elseif($booking->status === 'pending')
                                                             <a href="{{ route('booking.payment', $booking) }}" class="btn btn-sm btn-success px-4 py-1.5 rounded-pill text-white fw-bold">Bayar</a>
                                                         @elseif($booking->status === 'confirmed' && $firstTicket && $firstTicket->schedule->status !== 'complete')
-                                                            <span class="text-primary small fw-bold" style="font-size: 0.8rem;">Lihat Tiket <iconify-icon icon="lucide:chevron-right"></iconify-icon></span>
+                                                            <a href="{{ route('booking.tickets') }}" class="text-primary small fw-bold text-decoration-none" style="font-size: 0.8rem;">Lihat Tiket <iconify-icon icon="lucide:chevron-right"></iconify-icon></a>
                                                         @endif
                                                     </div>
                                                 </div>

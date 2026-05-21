@@ -82,7 +82,7 @@ class BookingController extends Controller
 
                 // 2. STATE PATTERN: Double-check apakah kursi masih available atau waktu pendingnya sudah habis
                 foreach ($seats as $seat) {
-                    if (!$seat->isAvailable()) {
+                    if (!$seat->isAvailable($schedule->id)) {
                         throw new \Exception("Maaf, kursi {$seat->seat_code} baru saja diambil orang lain.");
                     }
                 }

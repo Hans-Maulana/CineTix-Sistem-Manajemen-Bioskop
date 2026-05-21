@@ -45,18 +45,23 @@ class Seat extends Model
     }
 
     // implementasi State Pattern
-    public function isAvailable(): bool
+    public function isAvailable(?int $scheduleId = null): bool
     {
-        // Tersedia jika statusnya 'available'
-        if ($this->status === 'available') {
-            return true;
+        // Jika statusnya 'pending' dan lock masih aktif oleh user lain
+        if ($this->status === 'pending' && $this->locked_until && $this->locked_until->isFuture()) {
+            return false;
         }
 
-        // jika statusnya 'pending' tapi waktu lock-nya sudah lewat
-        if ($this->status === 'pending' && $this->locked_until && $this->locked_until->isPast()) {
-            return true;
+        // Jika scheduleId dispesifikasikan, cek ketersediaan riil untuk schedule tersebut
+        if ($scheduleId) {
+            return $this->checkAvailability($scheduleId);
         }
 
-        return false;
+        // Fallback jika tidak ada scheduleId, gunakan status global
+        if ($this->status === 'booked') {
+            return false;
+        }
+
+        return true;
     }
 }

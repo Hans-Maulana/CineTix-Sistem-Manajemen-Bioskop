@@ -34,6 +34,25 @@ class ScheduleController extends Controller
             'ticket_price' => 'required|numeric',
         ]);
 
+        $startTime = \Carbon\Carbon::parse($request->start_time)->format('H:i:s');
+        $endTime = \Carbon\Carbon::parse($request->end_time)->format('H:i:s');
+
+        if ($startTime >= $endTime) {
+            return back()->with('error', 'Jam selesai harus setelah jam mulai.')->withInput();
+        }
+
+        $overlap = Schedule::where('studio_id', $request->studio_id)
+            ->where('schedule_date', $request->schedule_date)
+            ->where(function ($q) use ($startTime, $endTime) {
+                $q->where('start_time', '<', $endTime)
+                  ->where('end_time', '>', $startTime);
+            })
+            ->exists();
+
+        if ($overlap) {
+            return back()->with('error', 'Jadwal bentrok! Studio ini sudah memiliki film lain pada waktu tersebut.')->withInput();
+        }
+
         Schedule::create($request->all());
 
         return redirect()->route('admin.schedules.index')->with('success', 'Jadwal berhasil ditambahkan!');
@@ -56,6 +75,26 @@ class ScheduleController extends Controller
             'end_time' => 'required',
             'ticket_price' => 'required|numeric',
         ]);
+
+        $startTime = \Carbon\Carbon::parse($request->start_time)->format('H:i:s');
+        $endTime = \Carbon\Carbon::parse($request->end_time)->format('H:i:s');
+
+        if ($startTime >= $endTime) {
+            return back()->with('error', 'Jam selesai harus setelah jam mulai.')->withInput();
+        }
+
+        $overlap = Schedule::where('studio_id', $request->studio_id)
+            ->where('schedule_date', $request->schedule_date)
+            ->where('id', '!=', $schedule->id)
+            ->where(function ($q) use ($startTime, $endTime) {
+                $q->where('start_time', '<', $endTime)
+                  ->where('end_time', '>', $startTime);
+            })
+            ->exists();
+
+        if ($overlap) {
+            return back()->with('error', 'Jadwal bentrok! Studio ini sudah memiliki film lain pada waktu tersebut.')->withInput();
+        }
 
         $schedule->update($request->all());
 

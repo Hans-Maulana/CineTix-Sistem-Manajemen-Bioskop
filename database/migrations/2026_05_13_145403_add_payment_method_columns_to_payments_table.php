@@ -7,13 +7,12 @@ use Illuminate\Support\Facades\DB;
 
 return new class extends Migration
 {
-    /**
-     * Run the migrations.
-     */
     public function up(): void
     {
         // Change method enum to include qris and virtual_account
-        DB::statement("ALTER TABLE payments MODIFY COLUMN method ENUM('cash','transfer','ewallet','qris','virtual_account') NOT NULL");
+        if (Schema::getConnection()->getDriverName() === 'mysql') {
+            DB::statement("ALTER TABLE payments MODIFY COLUMN method ENUM('cash','transfer','ewallet','qris','virtual_account') NOT NULL");
+        }
 
         Schema::table('payments', function (Blueprint $table) {
             $table->string('va_number')->nullable()->after('method');
@@ -30,6 +29,8 @@ return new class extends Migration
             $table->dropColumn(['va_number', 'countdown_seconds']);
         });
 
-        DB::statement("ALTER TABLE payments MODIFY COLUMN method ENUM('cash','transfer','ewallet') NOT NULL");
+        if (Schema::getConnection()->getDriverName() === 'mysql') {
+            DB::statement("ALTER TABLE payments MODIFY COLUMN method ENUM('cash','transfer','ewallet') NOT NULL");
+        }
     }
 };
