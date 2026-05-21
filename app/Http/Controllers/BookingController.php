@@ -301,14 +301,15 @@ class BookingController extends Controller
     }
 
     /**
-     * Tampilkan daftar tiket aktif (confirmed)
+     * Tampilkan daftar tiket aktif (confirmed) - HANYA untuk schedule yang belum tayang
      */
     public function tickets()
     {
         $bookings = Auth::user()->bookings()
             ->where('status', 'confirmed')
             ->whereHas('ticketBookings.schedule', function ($q) {
-                $q->where('status', '!=', 'complete');
+                $q->where('status', '!=', 'complete')
+                  ->where('schedule_date', '>', now()); // Filter: hanya schedule yang belum tayang
             })
             ->with('ticketBookings.schedule.film', 'ticketBookings.schedule.studio', 'payments')
             ->orderBy('created_at', 'desc')
@@ -434,11 +435,12 @@ class BookingController extends Controller
         $filmId = $validated['film_id'];
         $userId = Auth::id();
 
-        // 1. Verify user has actually bought and watched the movie
+        // 1. Verify user has actually bought and watched the movie (check by schedule date, not status)
         $hasBoughtAndWatched = Booking::where('user_id', $userId)
             ->where('status', 'confirmed')
             ->whereHas('ticketBookings.schedule', function ($q) use ($filmId) {
-                $q->where('film_id', $filmId)->where('status', 'complete');
+                $q->where('film_id', $filmId)
+                  ->where('schedule_date', '<=', now()->toDateString());
             })
             ->exists();
 

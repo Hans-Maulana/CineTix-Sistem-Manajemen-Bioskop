@@ -104,8 +104,13 @@
                     <div class="display-1 mb-4 text-muted">🎬</div>
                     <h4 class="fw-bold text-dark">Belum Ada Tiket Aktif</h4>
                     <p class="text-muted">Semua tiket yang sudah dibayar dan belum tayang akan muncul di sini.</p>
-                    <div class="mt-3">
-                        <a href="{{ route('landing-page') }}" class="btn btn-primary px-5 py-2.5 rounded-pill fw-bold text-white shadow-sm" style="background: #1A1953 !important; border: none;">Pesan Tiket Sekarang</a>
+                    <div class="mt-4 d-flex flex-column gap-2 justify-content-center">
+                        <p class="text-muted small mb-0">
+                            Tiket yang sudah tayang? <a href="{{ route('booking.history') }}" class="text-primary fw-bold text-decoration-none">Lihat Riwayat Transaksi</a> untuk memberikan ulasan.
+                        </p>
+                        <div>
+                            <a href="{{ route('landing-page') }}" class="btn btn-primary px-5 py-2.5 rounded-pill fw-bold text-white shadow-sm" style="background: #1A1953 !important; border: none;">Pesan Tiket Sekarang</a>
+                        </div>
                     </div>
                 </div>
             @endif

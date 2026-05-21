@@ -39,8 +39,10 @@
                             // Cek apakah ada pending payment
                             $pendingPayment = $booking->payments()->where('status', 'pending')->first();
                             
-                            // Tampilkan review jika transaksi Berhasil dan status jadwal sudah complete
-                            $showReviewForm = $booking->status === 'confirmed' && $firstTicket && $firstTicket->schedule->status === 'complete';
+                            // Tampilkan review jika transaksi Berhasil dan jadwal tayang sudah lewat (based on date, not status)
+                            $showReviewForm = $booking->status === 'confirmed' && $firstTicket && 
+                                             $firstTicket->schedule && 
+                                             $firstTicket->schedule->schedule_date->toDateString() <= now()->toDateString();
                             $existingReview = null;
                             if ($showReviewForm && $film) {
                                 $existingReview = \App\Models\Review::where('user_id', auth()->id())->where('film_id', $film->id)->first();
@@ -89,8 +91,8 @@
                                             
                                             @if($firstTicket)
                                                 <div class="mb-2">
-                                                    <span class="badge bg-light text-dark border px-2 py-1 rounded small" style="font-size: 0.75rem;">
-                                                        <iconify-icon icon="solar:video-library-bold" class="me-1 align-middle text-primary"></iconify-icon>
+                                                    <span class="badge bg-light text-white border px-2 py-1 rounded small" style="font-size: 0.75rem;">
+                                                        <iconify-icon icon="solar:video-library-bold" class="me-1 align-middle text-white"></iconify-icon>
                                                         {{ $firstTicket->schedule->studio->name }} ({{ $firstTicket->schedule->studio->type->name ?? '2D' }})
                                                     </span>
                                                 </div>
@@ -153,7 +155,7 @@
                                                         @endif
                                                     @else
                                                         <!-- Button to trigger review form -->
-                                                        <button type="button" class="btn btn-sm btn-outline-primary rounded-pill px-3 py-1 fw-bold w-100 mb-2 toggle-review-btn" 
+                                                        <button type="button" class="btn btn-sm btn-outline-primary rounded-pill px-3 py-1 fw-bold w-100 mb-2 toggle-review-btn text-white" 
                                                                 onclick="toggleReviewForm({{ $booking->id }})">
                                                             <iconify-icon icon="solar:pen-bold" class="me-1 align-middle"></iconify-icon> Tulis Ulasan
                                                         </button>

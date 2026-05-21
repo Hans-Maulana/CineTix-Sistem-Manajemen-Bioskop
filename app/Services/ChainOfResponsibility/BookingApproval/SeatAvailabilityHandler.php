@@ -42,6 +42,11 @@ class SeatAvailabilityHandler extends BookingApprovalHandler
             );
         }
 
-        return $this->approved();
+        // Return dengan booking_data agar data terforward ke handler berikutnya
+        return [
+            'approved' => true,
+            'message' => 'Semua kursi tersedia',
+            'booking_data' => $bookingData,
+        ];
     }
 }

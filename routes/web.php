@@ -53,7 +53,7 @@ Route::middleware('auth')->group(function () {
     Route::delete('/profile', [ProfileController::class, 'destroy'])->name('profile.destroy');
 
     // Booking Routes - Only for authenticated customers
-    Route::prefix('booking')->name('booking.')->group(function () {
+    Route::prefix('booking')->name('booking.')->middleware('auth')->group(function () {
         Route::get('schedule/{schedule}', [BookingController::class, 'show'])->name('show');
         Route::post('store', [BookingController::class, 'store'])->name('store');
 

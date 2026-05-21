@@ -31,16 +31,19 @@ abstract class BookingApprovalHandler
             return $validation;
         }
 
-        // Jika approved dan ada next handler, pass ke next
+        // Gunakan booking_data yang sudah dimodifikasi dari handler ini (jika ada)
+        $updatedData = $validation['booking_data'] ?? $bookingData;
+
+        // Jika approved dan ada next handler, pass ke next dengan data yang sudah dimodifikasi
         if ($this->nextHandler) {
-            return $this->nextHandler->handle($bookingData);
+            return $this->nextHandler->handle($updatedData);
         }
 
-        // Jika semua disetujui, return success
+        // Jika semua disetujui, return success dengan data terakhir yang sudah dimodifikasi
         return [
             'approved' => true,
             'message' => 'Booking disetujui dan siap untuk pembayaran',
-            'booking_data' => $bookingData,
+            'booking_data' => $updatedData,
         ];
     }
 
