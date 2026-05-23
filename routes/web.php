@@ -21,7 +21,14 @@ Route::get('auth/google/callback', [GoogleController::class, 'handleGoogleCallba
 Route::middleware('auth')->group(function () {
 
     Route::get('/dashboard', function () {
-        return redirect('/admin');
+        $user = auth()->user();
+        if ($user?->role?->name === 'admin') {
+            return redirect('/admin');
+        }
+        if ($user?->role?->name === 'customer') {
+            return redirect('/customer');
+        }
+        return redirect('/');
     })->name('dashboard');
 
     Route::get('/admin', [App\Http\Controllers\AdminController::class, 'index'])->name('admin.dashboard');

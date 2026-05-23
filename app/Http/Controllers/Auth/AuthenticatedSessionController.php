@@ -23,19 +23,7 @@ class AuthenticatedSessionController extends Controller
 
         $request->session()->regenerate();
 
-        $user = Auth::user();
-
-        if ($user->role?->name === 'admin') {
-
-            return redirect('/admin');
-        }
-
-        if ($user->role?->name === 'customer') {
-
-            return redirect('/customer');
-        }
-
-        return redirect('/');
+        return redirect()->intended(route('dashboard', absolute: false));
     }
 
     public function destroy(Request $request): RedirectResponse
