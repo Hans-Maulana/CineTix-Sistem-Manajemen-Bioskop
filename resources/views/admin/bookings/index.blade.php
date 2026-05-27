@@ -27,9 +27,14 @@
                 @forelse($bookings as $booking)
                 <tr>
                     <td class="px-4 py-3 fw-bold">#{{ $booking->id }}</td>
-                    <td>
-                        <div class="fw-bold">{{ $booking->user->name }}</div>
-                        <small class="text-muted">{{ $booking->user->email }}</small>
+                   <td>
+                        @if($booking->user)
+                            <div class="fw-bold">{{ $booking->user->name }} <span class="badge bg-primary" style="font-size: 0.7em;">Member</span></div>
+                            <small class="text-muted">{{ $booking->user->email }}</small>
+                        @else
+                            <div class="fw-bold">{{ $booking->guest_name }} <span class="badge bg-secondary" style="font-size: 0.7em;">Guest</span></div>
+                            <small class="text-muted">{{ $booking->guest_email }}</small>
+                        @endif
                     </td>
                     <td>
                         {{ $booking->ticketBookings->first()?->schedule->film->title ?? 'N/A' }}

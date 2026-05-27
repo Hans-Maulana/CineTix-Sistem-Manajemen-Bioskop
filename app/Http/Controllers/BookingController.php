@@ -40,23 +40,33 @@ class BookingController extends Controller
      * Store booking dengan real-time seat locking
      * Menggunakan transaction untuk mencegah race condition
      */
-   public function store(Request $request)
-    {
-        if (is_string($request->seat_ids)) {
-            $request->merge(['seat_ids' => explode(',', $request->seat_ids)]);
-        }
+    public function store(Request $request)
+        {
+            if (is_string($request->seat_ids)) {
+                $request->merge(['seat_ids' => explode(',', $request->seat_ids)]);
+            }
 
-        $validated = $request->validate([
-            'schedule_id' => 'required|exists:schedules,id',
-            'seat_ids' => 'required|array|min:1',
-            'seat_ids.*' => 'exists:seats,id',
-            'promo_code' => 'nullable|string',
-        ]);
+        $rules = [
+        'schedule_id' => 'required|exists:schedules,id',
+        'seat_ids' => 'required|array|min:1',
+        'seat_ids.*' => 'exists:seats,id',
+        'promo_code' => 'nullable|string',
+    ];
 
-        try {
-            $booking = DB::transaction(function () use ($validated) {
-                $schedule = Schedule::with('film')->find($validated['schedule_id']);
-                $seatIds = $validated['seat_ids'];
+    // guest -> belum login
+    if (!Auth::check()) {
+        $rules['guest_name'] = 'required|string|max:255';
+        $rules['guest_email'] = 'required|email|max:255';
+    }
+
+    $validated = $request->validate($rules);
+
+    try {
+
+        $booking = DB::transaction(function () use ($validated) {
+
+            $schedule = Schedule::with('film')->find($validated['schedule_id']);
+            $seatIds = $validated['seat_ids'];
 
                 // 1. PESSIMISTIC LOCKING: Kunci kursi saat dicek
                 $seats = Seat::whereIn('id', $seatIds)
@@ -86,8 +96,12 @@ class BookingController extends Controller
                 }
 
                 // Buat Booking
-                $booking = Booking::create([
-                    'user_id' => Auth::id(),
+               $booking = Booking::create([
+                    // Jika login pakai user_id, jika tidak (guest) maka null
+                    'user_id' => Auth::check() ? Auth::id() : null,
+                    // guest simpan nama & email
+                    'guest_name' => Auth::check() ? null : $validated['guest_name'],
+                    'guest_email' => Auth::check() ? null : $validated['guest_email'],
                     'promo_id' => $promoId,
                     'schedule_id' => $schedule->id,
                     'booking_type' => 'ticket',
@@ -106,9 +120,13 @@ class BookingController extends Controller
                     ]);
 
                     $seat->update([
-                        'status' => 'pending',
-                        'locked_until' => now()->addMinutes(5), // Timer anti-nyangkut
-                        'locked_by_user_id' => Auth::id()
+                         'status' => 'pending',
+                         'locked_until' => now()->addMinutes(5),
+
+                         // guest tidak punya user_id
+                         'locked_by_user_id' => Auth::check()
+                            ? Auth::id()
+                            : null
                     ]);
 
                     // 4. OBSERVER PATTERN: Broadcast agar layar user lain jadi abu-abu
@@ -123,6 +141,13 @@ class BookingController extends Controller
                 return $booking;
             }, 3);
 
+            //SIMPAN SESSION KHUSUS GUEST
+            if (!Auth::check()) {
+                session([
+                    'guest_booking_id' => $booking->id
+                ]);
+            }
+
             return redirect()->route('booking.payment', $booking)
                 ->with('success', 'Kursi berhasil di-lock sementara. Segera lakukan pembayaran dalam 5 menit.');
 
@@ -136,9 +161,16 @@ class BookingController extends Controller
      */
     public function payment(Booking $booking)
     {
-        // Pastikan hanya pemilik booking yang bisa akses
-        if ($booking->user_id !== Auth::id()) {
-            abort(403);
+       // Cek Hak Akses
+        $isAuthorized = false;
+        if (Auth::check() && $booking->user_id === Auth::id()) {
+            $isAuthorized = true;
+        } elseif (!Auth::check() && session('guest_booking_id') === $booking->id) {
+            $isAuthorized = true;
+        }
+
+        if (!$isAuthorized) {
+            abort(403, 'Anda tidak memiliki akses ke halaman transaksi ini.');
         }
 
         if ($booking->status === 'confirmed') {
@@ -157,8 +189,16 @@ class BookingController extends Controller
      */
     public function initiatePayment(Request $request, Booking $booking)
     {
-        if ($booking->user_id !== Auth::id()) {
-            abort(403);
+       // Cek Hak Akses
+        $isAuthorized = false;
+        if (Auth::check() && $booking->user_id === Auth::id()) {
+            $isAuthorized = true;
+        } elseif (!Auth::check() && session('guest_booking_id') === $booking->id) {
+            $isAuthorized = true;
+        }
+
+        if (!$isAuthorized) {
+            abort(403, 'Anda tidak memiliki akses ke halaman transaksi ini.');
         }
 
         $validated = $request->validate([
@@ -187,8 +227,16 @@ class BookingController extends Controller
      */
     public function processPayment(Booking $booking, Payment $payment)
     {
-        if ($booking->user_id !== Auth::id()) {
-            abort(403);
+       // Cek Hak Akses
+        $isAuthorized = false;
+        if (Auth::check() && $booking->user_id === Auth::id()) {
+            $isAuthorized = true;
+        } elseif (!Auth::check() && session('guest_booking_id') === $booking->id) {
+            $isAuthorized = true;
+        }
+
+        if (!$isAuthorized) {
+            abort(403, 'Anda tidak memiliki akses ke halaman transaksi ini.');
         }
 
         if ($payment->booking_id !== $booking->id) {
@@ -221,8 +269,16 @@ class BookingController extends Controller
      */
     public function confirmPayment(Request $request, Booking $booking, Payment $payment)
     {
-        if ($booking->user_id !== Auth::id()) {
-            abort(403);
+        // Cek Hak Akses
+        $isAuthorized = false;
+        if (Auth::check() && $booking->user_id === Auth::id()) {
+            $isAuthorized = true;
+        } elseif (!Auth::check() && session('guest_booking_id') === $booking->id) {
+            $isAuthorized = true;
+        }
+
+        if (!$isAuthorized) {
+            abort(403, 'Anda tidak memiliki akses ke halaman transaksi ini.');
         }
 
         if ($payment->booking_id !== $booking->id) {
@@ -282,8 +338,16 @@ class BookingController extends Controller
      */
     public function confirmation(Booking $booking)
     {
-        if ($booking->user_id !== Auth::id()) {
-            abort(403);
+        // Cek Hak Akses
+        $isAuthorized = false;
+        if (Auth::check() && $booking->user_id === Auth::id()) {
+            $isAuthorized = true;
+        } elseif (!Auth::check() && session('guest_booking_id') === $booking->id) {
+            $isAuthorized = true;
+        }
+
+        if (!$isAuthorized) {
+            abort(403, 'Anda tidak memiliki akses ke halaman transaksi ini.');
         }
 
         $booking->load(['ticketBookings.seat', 'ticketBookings.schedule.film', 'ticketBookings.schedule.studio', 'user', 'payments']);

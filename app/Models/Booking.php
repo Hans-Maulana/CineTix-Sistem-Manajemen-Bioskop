@@ -12,13 +12,15 @@ class Booking extends Model
 
     protected $fillable = [
         'user_id',
+        'guest_name',
+        'guest_email',
         'promo_id',
         'schedule_id',
         'booking_type',
         'total_amount',
         'status',
         'qr_redeem',
-        'status_redeem',  
+        'status_redeem',
     ];
 
     protected $casts = [

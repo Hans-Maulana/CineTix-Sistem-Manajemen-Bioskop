@@ -124,6 +124,24 @@
                         @csrf
                         <input type="hidden" name="schedule_id" value="{{ $schedule->id }}">
 
+                        @if(!Auth::check())
+                            <div class="card p-3 mb-4 bg-light border-0 rounded-3 shadow-sm text-start">
+                                <div class="d-flex align-items-center mb-2 text-primary">
+                                    <iconify-icon icon="lucide:user" class="me-2 fs-5"></iconify-icon>
+                                    <h6 class="mb-0 fw-bold">Informasi Kontak Tamu</h6>
+                                </div>
+                                <div class="mb-2">
+                                    <label class="form-label small fw-bold text-muted mb-1">Nama Lengkap</label>
+                                    <input type="text" name="guest_name" class="form-control form-control-sm rounded-2" placeholder="Masukkan nama Anda" required>
+                                </div>
+                                <div>
+                                    <label class="form-label smash fw-bold text-muted mb-1">Alamat Email</label>
+                                    <input type="email" name="guest_email" class="form-control form-control-sm rounded-2" placeholder="nama@email.com" required>
+                                    <div class="form-text text-muted" style="font-size: 0.75rem;">E-Ticket akan dikirimkan ke email ini.</div>
+                                </div>
+                            </div>
+                        @endif
+
                         <div class="mb-3">
                             <label class="form-label"><strong>Kursi Pilihanmu</strong></label>
                             <div id="selectedSeats" class="p-3 bg-light rounded-3 mb-2 min-vh-10" style="min-height: 50px; border: 1px dashed #ced4da;">
@@ -328,7 +346,7 @@
             alert('Silakan pilih minimal 1 kursi');
             return;
         }
-        
+
         // Show loading state
         const btn = document.getElementById('bookingBtn');
         btn.disabled = true;
