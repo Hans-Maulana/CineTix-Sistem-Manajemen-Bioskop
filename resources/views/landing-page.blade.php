@@ -87,6 +87,11 @@
                     </li>
                   @endif
                   <li class="header-item">
+                    <a href="{{ route('customer.promos') }}" class="header-link hstack gap-2 fs-6 fw-bold text-dark">
+                      <iconify-icon icon="lucide:ticket-percent" class="text-secondary fs-5"></iconify-icon>{{ auth()->check() ? 'Kode Promo Saya' : 'Kode Promo' }}
+                    </a>
+                  </li>
+                  <li class="header-item">
                     <a href="{{ route('films.search') }}" class="header-link hstack gap-2 fs-6 fw-bold text-dark">
                       <iconify-icon icon="lucide:film" class="text-secondary fs-5"></iconify-icon>Cari Film
                     </a>
@@ -298,8 +303,9 @@
         </div>
         <div class="col-md-4 col-xl-2 mb-8 mb-xl-0">
           <ul class="footer-menu list-unstyled mb-0 d-flex flex-column gap-2">
-            <li><a class="link-hover fs-5 text-white" href="index.html">Beranda</a></li>
-            <li><a class="link-hover fs-5 text-white" href="about-us.html">Tentang</a></li>
+            <li><a class="link-hover fs-5 text-white" href="{{ route('landing-page') }}">Beranda</a></li>
+            <li><a class="link-hover fs-5 text-white" href="{{ route('customer.promos') }}">Kode Promo</a></li>
+            <li><a class="link-hover fs-5 text-white" href="{{ route('about') }}">Tentang</a></li>
             <li><a class="link-hover fs-5 text-white" id="services" href="#services">Layanan</a></li>
             <li><a class="link-hover fs-5 text-white" href="projects.html">Bioskop</a></li>
             <li><a class="link-hover fs-5 text-white" href="terms-and-conditions.html">Syarat & Ketentuan</a></li>

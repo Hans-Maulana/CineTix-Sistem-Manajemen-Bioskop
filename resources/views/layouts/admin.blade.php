@@ -131,6 +131,8 @@
                     class="menu-link {{ request()->segment(2) == 'studios' ? 'active' : '' }}">Studio</a>
                 <a href="{{ route('admin.schedules.index') }}"
                     class="menu-link {{ request()->segment(2) == 'schedules' ? 'active' : '' }}">Schedule</a>
+                <a href="{{ route('admin.promos.index') }}"
+                    class="menu-link {{ request()->segment(2) == 'promos' ? 'active' : '' }}">Promo</a>
                 <a href="{{ route('admin.bookings.index') }}"
                     class="menu-link {{ request()->segment(2) == 'bookings' ? 'active' : '' }}">Booking</a>
                 <a href="{{ route('admin.customers.index') }}"

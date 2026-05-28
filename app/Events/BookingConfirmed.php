@@ -31,6 +31,10 @@ class BookingConfirmed implements ShouldBroadcast
      */
     public function broadcastOn(): array
     {
+        if (!$this->booking->user_id) {
+            return [];
+        }
+
         return [
             new PrivateChannel('user.' . $this->booking->user_id),
         ];

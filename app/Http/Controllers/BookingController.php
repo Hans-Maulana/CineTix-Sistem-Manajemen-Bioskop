@@ -9,9 +9,20 @@ use App\Models\TicketBooking;
 use App\Models\Payment;
 use App\Models\Promo;
 use App\Services\Payment\PaymentContext;
+<<<<<<< Updated upstream
+=======
+use App\Services\ChainOfResponsibility\PaymentValidationChain;
+use App\Services\ChainOfResponsibility\BookingApprovalChain;
+use App\Services\ChainOfResponsibility\CancellationChain;
+use App\Mail\TicketConfirmationMail;
+use App\Support\GuestBookingAccess;
+>>>>>>> Stashed changes
 use Illuminate\Http\Request;
 use Illuminate\Support\Facades\DB;
 use Illuminate\Support\Facades\Auth;
+use Illuminate\Support\Facades\Log;
+use Illuminate\Support\Facades\Mail;
+use Illuminate\Support\Str;
 
 class BookingController extends Controller
 {
@@ -33,17 +44,50 @@ class BookingController extends Controller
         // Map seats by code untuk lookup cepat di view
         $seatsByCode = $schedule->studio->seats->keyBy('seat_code');
 
-        return view('booking.show', compact('schedule', 'bookedSeatIds', 'seatsByCode'));
+        // Check if user is authenticated
+        $isAuthenticated = Auth::check();
+        $user = Auth::user();
+
+        return view('booking.show', compact('schedule', 'bookedSeatIds', 'seatsByCode', 'isAuthenticated', 'user'));
     }
 
     /**
      * Store booking dengan real-time seat locking
      * Menggunakan transaction untuk mencegah race condition
      */
+<<<<<<< Updated upstream
     public function store(Request $request)
         {
             if (is_string($request->seat_ids)) {
                 $request->merge(['seat_ids' => explode(',', $request->seat_ids)]);
+=======
+   public function store(Request $request)
+    {
+        if (is_string($request->seat_ids)) {
+            $request->merge(['seat_ids' => explode(',', $request->seat_ids)]);
+        }
+
+        $rules = [
+            'schedule_id' => 'required|exists:schedules,id',
+            'seat_ids' => 'required|array|min:1',
+            'seat_ids.*' => 'exists:seats,id',
+            'promo_code' => 'nullable|string',
+        ];
+
+        if (!Auth::check()) {
+            $rules['guest_email'] = 'required|email:rfc,filter|max:255';
+        }
+
+        $validated = $request->validate($rules);
+
+        try {
+            // RUN BOOKING APPROVAL CHAIN
+            $chain = BookingApprovalChain::build();
+            $approval = $chain->handle($validated);
+
+            if (!$approval['approved']) {
+                return back()->with('error', $approval['message']);
+>>>>>>> Stashed changes
             }
 
         $rules = [
@@ -95,20 +139,41 @@ class BookingController extends Controller
                     }
                 }
 
+                $isGuest = empty($bookingData['user_id']);
+
                 // Buat Booking
+<<<<<<< Updated upstream
                $booking = Booking::create([
                     // Jika login pakai user_id, jika tidak (guest) maka null
                     'user_id' => Auth::check() ? Auth::id() : null,
                     // guest simpan nama & email
                     'guest_name' => Auth::check() ? null : $validated['guest_name'],
                     'guest_email' => Auth::check() ? null : $validated['guest_email'],
+=======
+                $booking = Booking::create([
+                    'user_id' => $bookingData['user_id'] ?? null,
+                    'guest_email' => $isGuest ? ($bookingData['guest_email'] ?? null) : null,
+                    'access_token' => $isGuest ? Str::random(64) : null,
+>>>>>>> Stashed changes
                     'promo_id' => $promoId,
                     'schedule_id' => $schedule->id,
                     'booking_type' => 'ticket',
                     'total_amount' => max(0, $totalAmount),
                     'status' => 'pending',
-                    'qr_redeem' => \Illuminate\Support\Str::random(15),
+                    'qr_redeem' => Str::random(15),
                 ]);
+
+                if ($isGuest) {
+                    GuestBookingAccess::grant($booking);
+                }
+
+                // Mark promo as used jika ada (hanya user login)
+                if ($promoId && Auth::check()) {
+                    $promo = Promo::find($promoId);
+                    if ($promo) {
+                        $promo->recordUsage(Auth::id(), $booking->id);
+                    }
+                }
 
                 // 3. UBAH STATE & SET TIMER
                 foreach ($seats as $seat) {
@@ -120,6 +185,7 @@ class BookingController extends Controller
                     ]);
 
                     $seat->update([
+<<<<<<< Updated upstream
                          'status' => 'pending',
                          'locked_until' => now()->addMinutes(5),
 
@@ -127,6 +193,11 @@ class BookingController extends Controller
                          'locked_by_user_id' => Auth::check()
                             ? Auth::id()
                             : null
+=======
+                        'status' => 'pending',
+                        'locked_until' => now()->addMinutes(5),
+                        'locked_by_user_id' => Auth::id(),
+>>>>>>> Stashed changes
                     ]);
 
                     // 4. OBSERVER PATTERN: Broadcast agar layar user lain jadi abu-abu
@@ -141,6 +212,7 @@ class BookingController extends Controller
                 return $booking;
             }, 3);
 
+<<<<<<< Updated upstream
             //SIMPAN SESSION KHUSUS GUEST
             if (!Auth::check()) {
                 session([
@@ -149,6 +221,9 @@ class BookingController extends Controller
             }
 
             return redirect()->route('booking.payment', $booking)
+=======
+            return redirect()->route('booking.payment', $this->bookingRouteParams($booking))
+>>>>>>> Stashed changes
                 ->with('success', 'Kursi berhasil di-lock sementara. Segera lakukan pembayaran dalam 5 menit.');
 
         } catch (\Throwable $e) {
@@ -159,8 +234,9 @@ class BookingController extends Controller
     /**
      * Tampilkan pilihan metode pembayaran (Strategy Pattern)
      */
-    public function payment(Booking $booking)
+    public function payment(Request $request, Booking $booking)
     {
+<<<<<<< Updated upstream
        // Cek Hak Akses
         $isAuthorized = false;
         if (Auth::check() && $booking->user_id === Auth::id()) {
@@ -175,12 +251,19 @@ class BookingController extends Controller
 
         if ($booking->status === 'confirmed') {
             return redirect()->route('booking.confirmation', $booking);
+=======
+        GuestBookingAccess::authorize($booking, $request);
+
+        if ($booking->status === 'confirmed') {
+            return $this->redirectAfterConfirmed($booking);
+>>>>>>> Stashed changes
         }
 
         $booking->load(['ticketBookings.seat', 'ticketBookings.schedule.film', 'promo']);
         $paymentMethods = PaymentContext::availableMethods();
+        $isGuest = GuestBookingAccess::isGuestBooking($booking);
 
-        return view('booking.payment', compact('booking', 'paymentMethods'));
+        return view('booking.payment', compact('booking', 'paymentMethods', 'isGuest'));
     }
 
     /**
@@ -189,6 +272,7 @@ class BookingController extends Controller
      */
     public function initiatePayment(Request $request, Booking $booking)
     {
+<<<<<<< Updated upstream
        // Cek Hak Akses
         $isAuthorized = false;
         if (Auth::check() && $booking->user_id === Auth::id()) {
@@ -200,6 +284,9 @@ class BookingController extends Controller
         if (!$isAuthorized) {
             abort(403, 'Anda tidak memiliki akses ke halaman transaksi ini.');
         }
+=======
+        GuestBookingAccess::authorize($booking, $request);
+>>>>>>> Stashed changes
 
         $validated = $request->validate([
             'payment_method' => 'required|in:qris,virtual_account',
@@ -212,10 +299,10 @@ class BookingController extends Controller
             // Buat payment baru (selalu buat baru dengan status pending)
             $payment = $strategy->initiate($booking);
 
-            return redirect()->route('booking.process-payment', [
-                'booking' => $booking,
-                'payment' => $payment,
-            ]);
+            return redirect()->route('booking.process-payment', array_merge(
+                $this->bookingRouteParams($booking),
+                ['payment' => $payment]
+            ));
 
         } catch (\Throwable $e) {
             return back()->with('error', 'Gagal memulai pembayaran: ' . $e->getMessage());
@@ -225,8 +312,9 @@ class BookingController extends Controller
     /**
      * Tampilkan halaman proses pembayaran (QR code / VA number + countdown)
      */
-    public function processPayment(Booking $booking, Payment $payment)
+    public function processPayment(Request $request, Booking $booking, Payment $payment)
     {
+<<<<<<< Updated upstream
        // Cek Hak Akses
         $isAuthorized = false;
         if (Auth::check() && $booking->user_id === Auth::id()) {
@@ -238,6 +326,9 @@ class BookingController extends Controller
         if (!$isAuthorized) {
             abort(403, 'Anda tidak memiliki akses ke halaman transaksi ini.');
         }
+=======
+        GuestBookingAccess::authorize($booking, $request);
+>>>>>>> Stashed changes
 
         if ($payment->booking_id !== $booking->id) {
             abort(404);
@@ -246,13 +337,17 @@ class BookingController extends Controller
         // Jika payment sudah expired, mark as failed
         if ($payment->status === 'pending' && $payment->isExpired()) {
             $payment->markAsFailed();
-            return redirect()->route('booking.payment', $booking)
+            return redirect()->route('booking.payment', $this->bookingRouteParams($booking))
                 ->with('error', 'Waktu pembayaran telah habis. Silakan coba lagi.');
         }
 
         // Jika sudah success, redirect ke confirmation
         if ($payment->status === 'success') {
+<<<<<<< Updated upstream
             return redirect()->route('booking.confirmation', $booking);
+=======
+            return $this->redirectAfterConfirmed($booking);
+>>>>>>> Stashed changes
         }
 
         $booking->load(['ticketBookings.seat', 'ticketBookings.schedule.film', 'promo']);
@@ -269,6 +364,7 @@ class BookingController extends Controller
      */
     public function confirmPayment(Request $request, Booking $booking, Payment $payment)
     {
+<<<<<<< Updated upstream
         // Cek Hak Akses
         $isAuthorized = false;
         if (Auth::check() && $booking->user_id === Auth::id()) {
@@ -280,6 +376,9 @@ class BookingController extends Controller
         if (!$isAuthorized) {
             abort(403, 'Anda tidak memiliki akses ke halaman transaksi ini.');
         }
+=======
+        GuestBookingAccess::authorize($booking, $request);
+>>>>>>> Stashed changes
 
         if ($payment->booking_id !== $booking->id) {
             abort(404);
@@ -291,12 +390,22 @@ class BookingController extends Controller
                 ->with('error', 'Payment ini sudah diproses sebelumnya.');
         }
 
+<<<<<<< Updated upstream
         // Cek expired
         if ($payment->isExpired()) {
             $payment->markAsFailed();
             return redirect()->route('booking.payment', $booking)
                 ->with('error', 'Waktu pembayaran telah habis. Silakan coba lagi.');
         }
+=======
+            if (!$validation['valid']) {
+                return redirect()->route('booking.payment', $this->bookingRouteParams($booking))
+                    ->with('error', $validation['message']);
+            }
+
+            // Jika ada warning, tampilkan tapi tetap lanjut
+            $warning = $validation['warning'] ?? null;
+>>>>>>> Stashed changes
 
       try {
             DB::transaction(function () use ($payment, $booking) {
@@ -323,12 +432,18 @@ class BookingController extends Controller
                 }
             });
 
+<<<<<<< Updated upstream
             return redirect()->route('booking.confirmation', $booking)
                 ->with('success', 'Pembayaran berhasil! Tiket Anda telah dikonfirmasi.');
+=======
+            $this->sendTicketEmail($booking->fresh());
+
+            return $this->redirectAfterConfirmed($booking, 'Pembayaran berhasil! Tiket Anda telah dikonfirmasi.');
+>>>>>>> Stashed changes
 
         } catch (\Throwable $e) {
             $payment->markAsFailed();
-            return redirect()->route('booking.payment', $booking)
+            return redirect()->route('booking.payment', $this->bookingRouteParams($booking))
                 ->with('error', 'Pembayaran gagal: ' . $e->getMessage());
         }
     }
@@ -336,8 +451,9 @@ class BookingController extends Controller
     /**
      * Tampilkan confirmation ticket
      */
-    public function confirmation(Booking $booking)
+    public function confirmation(Request $request, Booking $booking)
     {
+<<<<<<< Updated upstream
         // Cek Hak Akses
         $isAuthorized = false;
         if (Auth::check() && $booking->user_id === Auth::id()) {
@@ -353,6 +469,28 @@ class BookingController extends Controller
         $booking->load(['ticketBookings.seat', 'ticketBookings.schedule.film', 'ticketBookings.schedule.studio', 'user', 'payments']);
 
         return view('booking.confirmation', compact('booking'));
+=======
+        GuestBookingAccess::authorize($booking, $request);
+
+        return $this->redirectAfterConfirmed($booking);
+    }
+
+    /**
+     * Halaman tiket untuk guest (akses via session atau token di URL)
+     */
+    public function guestTicket(Request $request, Booking $booking)
+    {
+        GuestBookingAccess::authorize($booking, $request);
+
+        if ($booking->status !== 'confirmed') {
+            return redirect()->route('booking.payment', $this->bookingRouteParams($booking))
+                ->with('error', 'Pembayaran belum selesai. Selesaikan pembayaran terlebih dahulu.');
+        }
+
+        $booking->load(['ticketBookings.seat', 'ticketBookings.schedule.film', 'ticketBookings.schedule.studio', 'promo']);
+
+        return view('booking.guest-ticket', compact('booking'));
+>>>>>>> Stashed changes
     }
 
     /**
@@ -445,11 +583,9 @@ class BookingController extends Controller
     /**
      * Get booking details (AJAX)
      */
-    public function getBookingDetails(Booking $booking)
+    public function getBookingDetails(Request $request, Booking $booking)
     {
-        if ($booking->user_id !== Auth::id()) {
-            abort(403);
-        }
+        GuestBookingAccess::authorize($booking, $request);
 
         return response()->json(
             $booking->load('ticketBookings.seat', 'ticketBookings.schedule', 'payments', 'promo')
@@ -459,11 +595,9 @@ class BookingController extends Controller
     /**
      * Check payment status (AJAX - untuk auto-check dari frontend)
      */
-    public function checkPaymentStatus(Payment $payment)
+    public function checkPaymentStatus(Request $request, Payment $payment)
     {
-        if ($payment->booking->user_id !== Auth::id()) {
-            abort(403);
-        }
+        GuestBookingAccess::authorize($payment->booking, $request);
 
         return response()->json([
             'status' => $payment->status,
@@ -471,4 +605,100 @@ class BookingController extends Controller
             'is_expired' => $payment->isExpired(),
         ]);
     }
+<<<<<<< Updated upstream
+=======
+
+    /**
+     * Store customer review from transaction history
+     */
+    public function storeReview(Request $request)
+    {
+        $validated = $request->validate([
+            'film_id' => 'required|exists:films,id',
+            'rating' => 'required|integer|between:1,5',
+            'comment' => 'nullable|string|max:1000',
+        ]);
+
+        $filmId = $validated['film_id'];
+        $userId = Auth::id();
+
+        // 1. Verify user has actually bought and watched the movie (check by schedule date, not status)
+        $hasBoughtAndWatched = Booking::where('user_id', $userId)
+            ->where('status', 'confirmed')
+            ->whereHas('ticketBookings.schedule', function ($q) use ($filmId) {
+                $q->where('film_id', $filmId)
+                  ->where('schedule_date', '<=', now()->toDateString());
+            })
+            ->exists();
+
+        if (!$hasBoughtAndWatched) {
+            return back()->with('error', 'Anda hanya dapat memberikan ulasan untuk film yang tiketnya sudah dibeli dan jadwal tayangnya telah selesai.');
+        }
+
+        // 2. Prevent duplicate reviews for the same film by the same user
+        $existingReview = Review::where('user_id', $userId)
+            ->where('film_id', $filmId)
+            ->first();
+
+        if ($existingReview) {
+            return back()->with('error', 'Anda sudah memberikan ulasan untuk film ini.');
+        }
+
+        // 3. Create review
+        Review::create([
+            'user_id' => $userId,
+            'film_id' => $filmId,
+            'rating' => $validated['rating'],
+            'comment' => $validated['comment'] ?? '',
+        ]);
+
+        return back()->with('success', 'Ulasan Anda berhasil dikirim! Terima kasih atas masukan Anda.');
+    }
+
+    private function redirectAfterConfirmed(Booking $booking, ?string $message = null)
+    {
+        if (GuestBookingAccess::isGuestBooking($booking)) {
+            return redirect()->route('booking.guest-ticket', [
+                'booking' => $booking->id,
+                'token' => $booking->access_token,
+            ])->with('success', $message ?? 'Pembayaran berhasil! Tiket telah dikirim ke email Anda.');
+        }
+
+        return redirect()->route('booking.tickets')
+            ->with('success_booking', $booking->id)
+            ->with('success', $message ?? 'Pembayaran berhasil!');
+    }
+
+    private function bookingRouteParams(Booking $booking): array
+    {
+        $params = ['booking' => $booking];
+
+        if (GuestBookingAccess::isGuestBooking($booking) && $booking->access_token) {
+            $params['token'] = $booking->access_token;
+        }
+
+        return $params;
+    }
+
+    private function sendTicketEmail(Booking $booking): void
+    {
+        if ($booking->status !== 'confirmed') {
+            return;
+        }
+
+        $email = $booking->customerEmail();
+        if (!$email) {
+            return;
+        }
+
+        try {
+            Mail::to($email)->send(new TicketConfirmationMail($booking));
+        } catch (\Throwable $e) {
+            Log::error('Gagal kirim email tiket: ' . $e->getMessage(), [
+                'booking_id' => $booking->id,
+                'email' => $email,
+            ]);
+        }
+    }
+>>>>>>> Stashed changes
 }

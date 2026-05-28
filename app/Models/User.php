@@ -48,6 +48,11 @@ class User extends Authenticatable
         return $this->hasMany(Review::class);
     }
 
+    public function promoUsages()
+    {
+        return $this->hasMany(PromoUsage::class);
+    }
+
 
 
     public function isAdmin(): bool

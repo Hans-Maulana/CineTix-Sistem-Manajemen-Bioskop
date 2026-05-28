@@ -12,8 +12,13 @@ class Booking extends Model
 
     protected $fillable = [
         'user_id',
+<<<<<<< Updated upstream
         'guest_name',
         'guest_email',
+=======
+        'guest_email',
+        'access_token',
+>>>>>>> Stashed changes
         'promo_id',
         'schedule_id',
         'booking_type',
@@ -32,6 +37,42 @@ class Booking extends Model
     public function user()
     {
         return $this->belongsTo(User::class);
+    }
+
+    public function isGuest(): bool
+    {
+        return $this->user_id === null && filled($this->guest_email);
+    }
+
+    public function customerEmail(): ?string
+    {
+        return $this->isGuest() ? $this->guest_email : $this->user?->email;
+    }
+
+    public function customerName(): string
+    {
+        if ($this->isGuest()) {
+            $email = $this->guest_email ?? '';
+            $local = explode('@', $email)[0] ?? 'Guest';
+
+            return 'Guest (' . ucfirst(str_replace(['.', '_', '-'], ' ', $local)) . ')';
+        }
+
+        return $this->user?->name ?? '-';
+    }
+
+    public function customerPhone(): ?string
+    {
+        if ($this->isGuest()) {
+            return null;
+        }
+
+        return $this->user?->contact ?? null;
+    }
+
+    public function customerTypeLabel(): string
+    {
+        return $this->isGuest() ? 'Guest' : 'Member';
     }
 
     public function promo()

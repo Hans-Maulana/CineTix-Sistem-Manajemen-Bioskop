@@ -57,6 +57,7 @@
             <h5 class="fw-bold mb-4">Booking Terbaru (Pending)</h5>
             <div class="list-group list-group-flush">
                 @forelse($recentBookings as $rb)
+<<<<<<< Updated upstream
                 <div class="list-group list-group-flush">
                     <div class="list-group-item px-0 border-0 mb-3">
                         <div class="d-flex justify-content-between">
@@ -67,6 +68,12 @@
                         </div>
                         <p class="mb-1 text-muted small">ID: #{{ $rb->id }} • {{ $rb->created_at->diffForHumans() }}</p>
                         <small class="fw-bold text-primary">Rp {{ number_format($rb->payments->first()?->amount ?? 0, 0, ',', '.') }}</small>
+=======
+                <div class="list-group-item px-0 border-0 mb-3">
+                    <div class="d-flex justify-content-between">
+                        <h6 class="mb-1 fw-bold">{{ $rb->customerName() }}</h6>
+                        <span class="badge bg-warning text-dark small">Pending</span>
+>>>>>>> Stashed changes
                     </div>
                 </div>
                 @empty
