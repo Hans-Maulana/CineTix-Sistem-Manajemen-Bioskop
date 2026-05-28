@@ -96,8 +96,11 @@
                             {{ $booking->qr_redeem }}
                         </td>
                         <td>
-                            <div class="fw-bold text-dark">{{ $booking->user->name }}</div>
-                            <small class="text-muted">{{ $booking->user->email }}</small>
+                            <div class="fw-bold text-dark">{{ $booking->customerName() }}</div>
+                            <small class="text-muted">{{ $booking->customerEmail() ?? '-' }}</small>
+                            @if($booking->isGuest())
+                                <span class="badge bg-info text-dark mt-1">Guest</span>
+                            @endif
                         </td>
                         <td>
                             <div class="fw-bold text-dark">{{ $schedule?->film->title ?? 'N/A' }}</div>

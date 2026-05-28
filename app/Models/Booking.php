@@ -12,24 +12,60 @@ class Booking extends Model
 
     protected $fillable = [
         'user_id',
+        'guest_email',
+        'access_token',
         'promo_id',
         'schedule_id',
         'booking_type',
         'total_amount',
         'status',
         'qr_redeem',
-        'status_redeem',  
+        'status_redeem',
     ];
 
     protected $casts = [
         'total_amount' => 'decimal:2',
     ];
 
-
-
     public function user()
     {
         return $this->belongsTo(User::class);
+    }
+
+    public function isGuest(): bool
+    {
+        return $this->user_id === null && filled($this->guest_email);
+    }
+
+    public function customerEmail(): ?string
+    {
+        return $this->isGuest() ? $this->guest_email : $this->user?->email;
+    }
+
+    public function customerName(): string
+    {
+        if ($this->isGuest()) {
+            $email = $this->guest_email ?? '';
+            $local = explode('@', $email)[0] ?? 'Guest';
+
+            return 'Guest (' . ucfirst(str_replace(['.', '_', '-'], ' ', $local)) . ')';
+        }
+
+        return $this->user?->name ?? '-';
+    }
+
+    public function customerPhone(): ?string
+    {
+        if ($this->isGuest()) {
+            return null;
+        }
+
+        return $this->user?->contact ?? null;
+    }
+
+    public function customerTypeLabel(): string
+    {
+        return $this->isGuest() ? 'Guest' : 'Member';
     }
 
     public function promo()
@@ -57,15 +93,10 @@ class Booking extends Model
         return $this->hasMany(Payment::class);
     }
 
-    /**
-     * Get the latest payment for this booking.
-     */
     public function latestPayment()
     {
         return $this->hasOne(Payment::class)->latestOfMany();
     }
-
-
 
     public function calculateTotal(): float
     {
@@ -74,7 +105,7 @@ class Booking extends Model
         $subtotal    = $ticketTotal + $fnbTotal;
 
         if ($this->promo && $this->promo->isValid()) {
-            $subtotal -= $this->promo->disc_amount;
+            $subtotal -= $this->promo->calculateDiscount($ticketTotal);
         }
 
         return max(0, $subtotal);

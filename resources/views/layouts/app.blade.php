@@ -108,6 +108,13 @@
                                         </li>
                                     @endif
                                     <li class="header-item">
+                                        <a href="{{ route('customer.promos') }}"
+                                            class="header-link hstack gap-2 fs-6 fw-bold text-dark">
+                                            <iconify-icon icon="lucide:ticket-percent"
+                                                class="text-secondary fs-5"></iconify-icon><span class="text-black">{{ auth()->check() ? 'Kode Promo Saya' : 'Kode Promo' }}</span>
+                                        </a>
+                                    </li>
+                                    <li class="header-item">
                                         <a href="{{ route('films.search') }}"
                                             class="header-link hstack gap-2 fs-6 fw-bold text-dark">
                                             <iconify-icon icon="lucide:film"
@@ -166,7 +173,7 @@
                     <ul class="footer-menu list-unstyled mb-0 d-flex flex-column gap-2">
                         <li><a class="link-hover fs-5 text-white" href="{{ route('landing-page') }}">Beranda</a></li>
                         <li><a class="link-hover fs-5 text-white" href="{{ route('films.search') }}">Film</a></li>
-                        <li><a class="link-hover fs-5 text-white" href="#!">Promo</a></li>
+                        <li><a class="link-hover fs-5 text-white" href="{{ route('customer.promos') }}">Kode Promo</a></li>
                     </ul>
                 </div>
                 <div class="col-md-4 col-xl-2 mb-8 mb-xl-0">

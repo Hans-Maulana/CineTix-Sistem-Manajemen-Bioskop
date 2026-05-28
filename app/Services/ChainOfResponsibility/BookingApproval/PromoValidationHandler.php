@@ -3,43 +3,56 @@
 namespace App\Services\ChainOfResponsibility\BookingApproval;
 
 use App\Models\Promo;
+use App\Models\Schedule;
 use App\Services\ChainOfResponsibility\BookingApprovalHandler;
+use Illuminate\Support\Facades\Auth;
 
 class PromoValidationHandler extends BookingApprovalHandler
 {
-    /**
-     * Validasi: apakah promo code valid jika diberikan?
-     */
     protected function approve(array $bookingData): array
     {
-        $promoCode = $bookingData['promo_code'] ?? null;
+        $promoCode = trim($bookingData['promo_code'] ?? '');
 
-        // Jika tidak ada promo code, skip handler ini
-        if (empty($promoCode)) {
-            return $this->approved();
+        if ($promoCode === '') {
+            return [
+                'approved' => true,
+                'message' => 'OK',
+                'booking_data' => $bookingData,
+            ];
         }
 
-        // Cari promo code
-        $promo = Promo::where('code', $promoCode)
-            ->where('valid_until', '>=', now())
-            ->first();
+        if (!Auth::check()) {
+            return $this->reject(
+                'Silakan login untuk menggunakan kode promo. Pengguna baru mendapat diskon Rp 20.000 dengan kode WELCOME2026.'
+            );
+        }
+
+        $schedule = Schedule::find($bookingData['schedule_id'] ?? null);
+        if ($schedule) {
+            $seatCount = count($bookingData['seat_ids'] ?? []);
+            $bookingData['subtotal'] = $schedule->ticket_price * $seatCount;
+        }
+
+        $promo = Promo::where('code', strtoupper($promoCode))->first();
 
         if (!$promo) {
-            return $this->reject(
-                'Promo code "' . $promoCode . '" tidak valid atau sudah kadaluarsa.'
-            );
+            return $this->reject('Promo code "' . $promoCode . '" tidak ditemukan.');
         }
 
-        // Validasi tambahan: cek max usage jika ada
-        if ($promo->max_usage && $promo->usage_count >= $promo->max_usage) {
-            return $this->reject(
-                'Promo code "' . $promoCode . '" sudah mencapai batas penggunaan.'
-            );
+        if (!$promo->isValid()) {
+            return $this->reject('Promo code "' . $promoCode . '" tidak valid atau sudah expired.');
         }
 
-        // Store promo ke booking data untuk digunakan di step selanjutnya
+        if (!$promo->canBeUsedBy(Auth::id())) {
+            return $this->reject('Anda sudah mencapai batas penggunaan kode promo ini.');
+        }
+
+        $discountAmount = $promo->calculateDiscount(
+            $bookingData['subtotal'] ?? ($bookingData['total_amount'] ?? 0)
+        );
+
         $bookingData['promo_id'] = $promo->id;
-        $bookingData['discount_amount'] = $promo->disc_amount;
+        $bookingData['discount_amount'] = $discountAmount;
 
         return [
             'approved' => true,

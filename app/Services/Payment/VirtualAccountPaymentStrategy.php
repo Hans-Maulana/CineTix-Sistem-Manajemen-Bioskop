@@ -19,7 +19,7 @@ class VirtualAccountPaymentStrategy implements PaymentStrategyInterface
 
     public function initiate(Booking $booking): Payment
     {
-        $vaNumber = $this->generateVANumber($booking->user_id);
+        $vaNumber = $this->generateVANumber($booking);
 
         return Payment::create([
             'booking_id' => $booking->id,
@@ -69,10 +69,10 @@ class VirtualAccountPaymentStrategy implements PaymentStrategyInterface
     }
 
     /**
-     * Generate VA number: prefix 7708 + user ID (padded to 8 digits)
+     * Generate VA number: prefix 7708 + booking ID (guest & member)
      */
-    private function generateVANumber(int $userId): string
+    private function generateVANumber(Booking $booking): string
     {
-        return self::VA_PREFIX . str_pad($userId, 8, '0', STR_PAD_LEFT);
+        return self::VA_PREFIX . str_pad((string) $booking->id, 8, '0', STR_PAD_LEFT);
     }
 }

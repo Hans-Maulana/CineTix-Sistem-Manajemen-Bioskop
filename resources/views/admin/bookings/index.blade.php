@@ -21,7 +21,6 @@
                     <th class="py-3">Total Bayar</th>
                     <th class="py-3">Status</th>
                     <th class="py-3">Waktu Transaksi</th>
-                    <th class="py-3 text-center">Aksi</th>
                 </tr>
             </thead>
             <tbody>
@@ -29,8 +28,13 @@
                 <tr>
                     <td class="px-4 py-3 fw-bold">#{{ $booking->id }}</td>
                     <td>
-                        <div class="fw-bold">{{ $booking->user->name }}</div>
-                        <small class="text-muted">{{ $booking->user->email }}</small>
+                        <div class="fw-bold">{{ $booking->customerName() }}</div>
+                        <small class="text-muted">{{ $booking->customerEmail() ?? '-' }}</small>
+                        @if($booking->isGuest())
+                            <span class="badge bg-info text-dark mt-1">Guest</span>
+                        @else
+                            <span class="badge bg-primary mt-1">Member</span>
+                        @endif
                     </td>
                     <td>
                         {{ $booking->ticketBookings->first()?->schedule->film->title ?? 'N/A' }}
@@ -51,15 +55,10 @@
                         @endif
                     </td>
                     <td>{{ $booking->created_at->format('d M Y, H:i') }}</td>
-                    <td class="text-center">
-                        <button type="button" class="btn btn-sm btn-outline-primary" data-bs-toggle="modal" data-bs-target="#bookingDetail{{ $booking->id }}">
-                            Detail
-                        </button>
-                    </td>
                 </tr>
                 @empty
                 <tr>
-                    <td colspan="7" class="text-center py-5 text-muted">Belum ada transaksi.</td>
+                    <td colspan="6" class="text-center py-5 text-muted">Belum ada transaksi.</td>
                 </tr>
                 @endforelse
             </tbody>
@@ -84,16 +83,20 @@
                         <h6 class="fw-bold text-muted mb-3">Informasi Customer</h6>
                         <table class="table table-sm table-borderless">
                             <tr>
-                                <td class="text-muted" width="100">Nama</td>
-                                <td class="fw-bold">: {{ $booking->user->name }}</td>
+                                <td class="text-muted" width="100">Tipe</td>
+                                <td class="fw-bold">: {{ $booking->customerTypeLabel() }}</td>
+                            </tr>
+                            <tr>
+                                <td class="text-muted">Nama</td>
+                                <td class="fw-bold">: {{ $booking->customerName() }}</td>
                             </tr>
                             <tr>
                                 <td class="text-muted">Email</td>
-                                <td class="fw-bold">: {{ $booking->user->email }}</td>
+                                <td class="fw-bold">: {{ $booking->customerEmail() ?? '-' }}</td>
                             </tr>
                             <tr>
                                 <td class="text-muted">No. HP</td>
-                                <td class="fw-bold">: {{ $booking->user->phone_number ?? '-' }}</td>
+                                <td class="fw-bold">: {{ $booking->customerPhone() ?? '-' }}</td>
                             </tr>
                         </table>
                     </div>

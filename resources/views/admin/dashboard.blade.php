@@ -59,7 +59,7 @@
                 @forelse($recentBookings as $rb)
                 <div class="list-group-item px-0 border-0 mb-3">
                     <div class="d-flex justify-content-between">
-                        <h6 class="mb-1 fw-bold">{{ $rb->user->name }}</h6>
+                        <h6 class="mb-1 fw-bold">{{ $rb->customerName() }}</h6>
                         <span class="badge bg-warning text-dark small">Pending</span>
                     </div>
                     <p class="mb-1 text-muted small">ID: #{{ $rb->id }} • {{ $rb->created_at->diffForHumans() }}</p>

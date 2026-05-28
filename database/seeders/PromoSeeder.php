@@ -12,12 +12,26 @@ class PromoSeeder extends Seeder
     {
         $promos = [
             [
+                'code' => 'WELCOME2026',
+                'description' => 'Diskon Rp20.000 untuk pengguna baru (1x per akun)',
+                'discount_type' => 'fixed',
+                'discount_value' => 20000,
+                'valid_from' => Carbon::now()->startOfYear(),
+                'valid_until' => Carbon::now()->addYear(),
+                'max_usage' => null,
+                'max_usage_per_customer' => 1,
+                'usage_count' => 0,
+            ],
+            [
                 'code' => 'PROMO10',
                 'description' => 'Diskon Rp10.000',
                 'discount_type' => 'fixed',
                 'discount_value' => 10000,
                 'valid_from' => Carbon::now(),
                 'valid_until' => Carbon::now()->addDays(30),
+                'max_usage' => null,
+                'max_usage_per_customer' => 1,
+                'usage_count' => 0,
             ],
             [
                 'code' => 'PROMO20',
@@ -26,32 +40,14 @@ class PromoSeeder extends Seeder
                 'discount_value' => 20000,
                 'valid_from' => Carbon::now(),
                 'valid_until' => Carbon::now()->addDays(60),
-            ],
-            [
-                'code' => 'WEEKEND50',
-                'description' => 'Diskon Rp50.000 untuk weekend',
-                'discount_type' => 'fixed',
-                'discount_value' => 50000,
-                'valid_from' => Carbon::now(),
-                'valid_until' => Carbon::now()->addDays(90),
-            ],
-            [
-                'code' => 'STUDENT15',
-                'description' => 'Diskon Rp15.000 untuk pelajar',
-                'discount_type' => 'fixed',
-                'discount_value' => 15000,
-                'valid_from' => Carbon::now(),
-                'valid_until' => Carbon::now()->addDays(45),
+                'max_usage' => null,
+                'max_usage_per_customer' => 2,
+                'usage_count' => 0,
             ],
         ];
 
         foreach ($promos as $promo) {
-            Promo::firstOrCreate(['code' => $promo['code']], $promo);
-        }
-
-
-        foreach ($promos as $promo) {
-            Promo::firstOrCreate(
+            Promo::updateOrCreate(
                 ['code' => $promo['code']],
                 $promo
             );

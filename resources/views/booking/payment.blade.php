@@ -27,7 +27,7 @@
                             </div>
                         </div>
                         <div class="card-body p-4 bg-white">
-                            <form method="POST" action="{{ route('booking.initiate-payment', $booking) }}" id="paymentForm">
+                            <form method="POST" action="{{ route('booking.initiate-payment', array_filter(['booking' => $booking, 'token' => request('token')])) }}" id="paymentForm">
                                 @csrf
 
                                 <div class="d-flex flex-column gap-3">
@@ -72,6 +72,18 @@
                             <h5 class="mb-0 fw-bold text-dark">Ringkasan Pesanan</h5>
                         </div>
                         <div class="card-body p-4">
+                            @if(!empty($isGuest))
+                            <div class="alert alert-info border-0 rounded-3 mb-4 py-3">
+                                <div class="d-flex gap-2 align-items-start">
+                                    <iconify-icon icon="lucide:mail" class="fs-5 mt-1"></iconify-icon>
+                                    <div>
+                                        <div class="small text-muted mb-1">Tiket akan dikirim ke</div>
+                                        <strong class="text-dark">{{ $booking->guest_email }}</strong>
+                                    </div>
+                                </div>
+                            </div>
+                            @endif
+
                             {{-- Film Info --}}
                             <div class="d-flex gap-3 mb-4 pb-4 border-bottom">
                                 <div class="bg-light rounded-3 hstack justify-content-center" style="width: 80px; height: 110px; flex-shrink: 0;">
@@ -123,12 +135,16 @@
                                 </div>
                                 
                                 @if($booking->promo)
+                                    @php
+                                        $ticketSubtotal = $booking->ticketBookings->sum('price_at_sale');
+                                        $promoDiscount = $booking->promo->calculateDiscount($ticketSubtotal);
+                                    @endphp
                                     <div class="d-flex justify-content-between text-success">
                                         <span class="small fw-medium">
                                             <iconify-icon icon="lucide:ticket" class="me-1"></iconify-icon>
                                             Promo ({{ $booking->promo->code }})
                                         </span>
-                                        <span class="small fw-bold">- Rp {{ number_format($booking->promo->disc_amount, 0, ',', '.') }}</span>
+                                        <span class="small fw-bold">- Rp {{ number_format($promoDiscount, 0, ',', '.') }}</span>
                                     </div>
                                 @endif
 

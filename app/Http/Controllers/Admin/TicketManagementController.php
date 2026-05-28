@@ -25,6 +25,7 @@ class TicketManagementController extends Controller
             $search = $request->search;
             $query->where(function ($q) use ($search) {
                 $q->where('qr_redeem', 'like', "%{$search}%")
+                  ->orWhere('guest_email', 'like', "%{$search}%")
                   ->orWhereHas('user', function ($uq) use ($search) {
                       $uq->where('name', 'like', "%{$search}%")->orWhere('email', 'like', "%{$search}%");
                   });
@@ -63,7 +64,7 @@ class TicketManagementController extends Controller
         $booking->save();
 
         $filmTitle = $booking->ticketBookings->first()?->schedule->film->title ?? 'Film';
-        $customer = $booking->user->name ?? 'Customer';
+        $customer = $booking->customerName();
 
         return redirect()->route('admin.tickets.index')->with('success', "Berhasil! Tiket untuk {$filmTitle} (Customer: {$customer}) telah di-scan dan dinyatakan valid.");
     }

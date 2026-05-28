@@ -3,60 +3,191 @@
 namespace App\Http\Controllers;
 
 use App\Models\Promo;
+use App\Models\PromoUsage;
 use Illuminate\Http\Request;
+use Illuminate\Support\Facades\Auth;
 
 class PromoController extends Controller
 {
+    private function ensureAdmin(): void
+    {
+        abort_unless(auth()->user()?->isAdmin(), 403, 'Akses ditolak. Hanya admin yang dapat mengelola promo.');
+    }
+
+    /**
+     * Admin: List semua promo
+     */
     public function index()
     {
-        $promos = Promo::paginate(10);
-        return view('promos.index', compact('promos'));
+        $this->ensureAdmin();
+        $promos = Promo::orderBy('created_at', 'desc')->paginate(10);
+        return view('admin.promos.index', compact('promos'));
     }
 
+    /**
+     * Admin: Create promo form
+     */
     public function create()
     {
-        return view('promos.create');
+        $this->ensureAdmin();
+        return view('admin.promos.create');
     }
 
+    /**
+     * Admin: Store promo baru
+     */
     public function store(Request $request)
     {
+        $this->ensureAdmin();
         $validated = $request->validate([
             'code' => 'required|string|max:50|unique:promos,code',
-            'disc_amount' => 'required|decimal:0,2|min:0',
-            'valid_until' => 'required|date|after:today',
+            'description' => 'nullable|string|max:255',
+            'discount_type' => 'required|in:percentage,fixed',
+            'discount_value' => 'required|numeric|min:0',
+            'valid_from' => 'required|date',
+            'valid_until' => 'required|date|after:valid_from',
+            'max_usage' => 'nullable|integer|min:1',
+            'max_usage_per_customer' => 'required|integer|min:1',
         ]);
 
+        $validated['code'] = strtoupper($validated['code']);
         Promo::create($validated);
 
-        return redirect()->route('promos.index')->with('success', 'Promo berhasil ditambahkan');
+        return redirect()->route('admin.promos.index')->with('success', 'Promo berhasil ditambahkan');
     }
 
+    /**
+     * Admin: Show promo detail dengan usage info
+     */
     public function show(Promo $promo)
     {
-        return view('promos.show', compact('promo'));
+        $this->ensureAdmin();
+        $promo->load('usages.user');
+        return view('admin.promos.show', compact('promo'));
     }
 
+    /**
+     * Admin: Edit promo form
+     */
     public function edit(Promo $promo)
     {
-        return view('promos.edit', compact('promo'));
+        $this->ensureAdmin();
+        return view('admin.promos.edit', compact('promo'));
     }
 
+    /**
+     * Admin: Update promo
+     */
     public function update(Request $request, Promo $promo)
     {
+        $this->ensureAdmin();
         $validated = $request->validate([
             'code' => 'required|string|max:50|unique:promos,code,' . $promo->id,
-            'disc_amount' => 'required|decimal:0,2|min:0',
-            'valid_until' => 'required|date',
+            'description' => 'nullable|string|max:255',
+            'discount_type' => 'required|in:percentage,fixed',
+            'discount_value' => 'required|numeric|min:0',
+            'valid_from' => 'required|date',
+            'valid_until' => 'required|date|after:valid_from',
+            'max_usage' => 'nullable|integer|min:1',
+            'max_usage_per_customer' => 'required|integer|min:1',
         ]);
 
+        $validated['code'] = strtoupper($validated['code']);
         $promo->update($validated);
 
-        return redirect()->route('promos.show', $promo)->with('success', 'Promo berhasil diperbarui');
+        return redirect()->route('admin.promos.show', $promo)->with('success', 'Promo berhasil diperbarui');
     }
 
+    /**
+     * Admin: Delete promo
+     */
     public function destroy(Promo $promo)
     {
+        $this->ensureAdmin();
+        // Delete related usages
+        $promo->usages()->delete();
         $promo->delete();
-        return redirect()->route('promos.index')->with('success', 'Promo berhasil dihapus');
+        
+        return redirect()->route('admin.promos.index')->with('success', 'Promo berhasil dihapus');
+    }
+
+    /**
+     * Customer: daftar kode promo yang bisa dipakai
+     */
+    public function myPromos()
+    {
+        $userId = Auth::id();
+
+        $promos = Promo::query()
+            ->where('valid_until', '>=', now()->startOfDay())
+            ->orderByDesc('created_at')
+            ->get()
+            ->map(fn (Promo $promo) => [
+                'promo' => $promo,
+                'status' => $promo->statusForUser($userId),
+                'remaining' => $promo->remainingUsesFor($userId),
+                'user_usage' => $userId ? $promo->getUserUsageCount($userId) : 0,
+            ]);
+
+        return view('customer.promos', [
+            'promos' => $promos,
+            'isAuthenticated' => Auth::check(),
+        ]);
+    }
+
+    /**
+     * AJAX: Check apakah promo code valid untuk authenticated user
+     * Guest akan redirect ke login
+     */
+    public function validate(Request $request)
+    {
+        $request->validate([
+            'code' => 'required|string'
+        ]);
+
+        // Jika user tidak login (guest), tidak bisa pakai promo
+        if (!Auth::check()) {
+            return response()->json([
+                'valid' => false,
+                'message' => 'Silakan login untuk menggunakan kode promo. Dapatkan diskon Rp 20.000 dengan kode WELCOME2026!'
+            ]);
+        }
+
+        $promo = Promo::where('code', strtoupper(trim($request->code)))->first();
+
+        if (!$promo) {
+            return response()->json([
+                'valid' => false,
+                'message' => 'Kode promo tidak ditemukan'
+            ]);
+        }
+
+        // Check validity
+        if (!$promo->isValid()) {
+            return response()->json([
+                'valid' => false,
+                'message' => 'Kode promo tidak valid atau sudah expired'
+            ]);
+        }
+
+        // Check apakah user sudah mencapai max usage
+        if (!$promo->canBeUsedBy(Auth::id())) {
+            return response()->json([
+                'valid' => false,
+                'message' => 'Anda sudah mencapai batas penggunaan kode promo ini'
+            ]);
+        }
+
+        return response()->json([
+            'valid' => true,
+            'code' => $promo->code,
+            'discount_type' => $promo->discount_type,
+            'discount_value' => $promo->discount_value,
+            'description' => $promo->description,
+            'message' => 'Kode promo valid! ' . 
+                ($promo->discount_type === 'percentage' 
+                    ? 'Diskon ' . $promo->discount_value . '%' 
+                    : 'Diskon Rp ' . number_format($promo->discount_value, 0, ',', '.'))
+        ]);
     }
 }

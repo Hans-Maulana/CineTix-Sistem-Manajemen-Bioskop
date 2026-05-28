@@ -150,14 +150,34 @@
 
                         <hr>
 
-                        <div class="mb-4">
+                        @if($isAuthenticated)
+                        <div class="mb-4" id="promoSection">
                             <label for="promoCode" class="form-label fw-bold text-dark small">Kode Promo (Opsional)</label>
                             <div class="input-group input-group-sm">
-                                <input type="text" class="form-control border-primary-subtle" id="promoCode" name="promo_code" placeholder="Masukkan kode promo">
+                                <input type="text" class="form-control border-primary-subtle" id="promoCode" name="promo_code" placeholder="Masukkan kode promo" autocomplete="off">
                                 <button class="btn btn-primary fw-bold text-white px-3" type="button" id="applyPromo">Terapkan</button>
                             </div>
                             <div id="promoMessage" class="small mt-2"></div>
+                            <div id="discountRow" class="d-none justify-content-between text-success small mt-2">
+                                <span>Diskon promo:</span>
+                                <span id="discountAmount">- Rp 0</span>
+                            </div>
                         </div>
+                        @else
+                        <div class="mb-4" id="promoSection">
+                            <div class="alert alert-info border-0 mb-3 py-3">
+                                <p class="mb-0 small">
+                                    <a href="{{ route('login') }}" class="link-primary fw-bold">Login</a> untuk pakai kode promo
+                                    <strong>WELCOME2026</strong> (diskon Rp 20.000).
+                                </p>
+                            </div>
+                            <label for="guestEmail" class="form-label fw-bold text-dark small">Email untuk kirim tiket <span class="text-danger">*</span></label>
+                            <input type="email" class="form-control" id="guestEmail" name="guest_email"
+                                   placeholder="contoh@email.com" required autocomplete="email"
+                                   value="{{ old('guest_email') }}">
+                            <div class="form-text">Tiket digital akan dikirim ke email ini setelah pembayaran.</div>
+                        </div>
+                        @endif
 
                         <hr class="my-4 opacity-10">
 
@@ -166,9 +186,15 @@
                             <span id="totalPrice" class="fs-4 fw-bold" style="color: #1A1953;">Rp 0</span>
                         </div>
 
+                        @if($isAuthenticated)
                         <button type="submit" class="btn btn-primary text-white w-100 py-3 fw-bold rounded-3 shadow-sm" id="bookingBtn" disabled>
                             Lanjutkan ke Pembayaran <i class="iconify" data-icon="lucide:arrow-right"></i>
                         </button>
+                        @else
+                        <button type="button" class="btn btn-primary text-white w-100 py-3 fw-bold rounded-3 shadow-sm" id="bookingBtn" disabled>
+                            Lanjutkan ke Pembayaran <i class="iconify" data-icon="lucide:arrow-right"></i>
+                        </button>
+                        @endif
                     </form>
                 </div>
             </div>
@@ -176,12 +202,42 @@
     </div>
 </div>
 
+@if(!$isAuthenticated)
+{{-- Modal konfirmasi email guest --}}
+<div class="modal fade" id="emailConfirmModal" tabindex="-1" aria-labelledby="emailConfirmModalLabel" aria-hidden="true">
+    <div class="modal-dialog modal-dialog-centered">
+        <div class="modal-content rounded-4 border-0 shadow">
+            <div class="modal-header border-0 pb-0">
+                <h5 class="modal-title fw-bold" id="emailConfirmModalLabel">Konfirmasi Email</h5>
+                <button type="button" class="btn-close" data-bs-dismiss="modal" aria-label="Tutup"></button>
+            </div>
+            <div class="modal-body pt-2">
+                <p class="mb-2">Tiket akan dikirim ke:</p>
+                <p class="fs-5 fw-bold text-primary mb-3" id="modalEmailDisplay">—</p>
+                <p class="text-muted small mb-0">Apakah alamat email sudah benar?</p>
+            </div>
+            <div class="modal-footer border-0 flex-nowrap gap-2">
+                <button type="button" class="btn btn-outline-secondary flex-fill py-2 fw-bold" id="btnRecheckEmail" data-bs-dismiss="modal">
+                    Cek kembali!
+                </button>
+                <button type="button" class="btn btn-primary flex-fill py-2 fw-bold text-white" id="btnConfirmEmail" style="background: #1A1953;">
+                    Kirim!
+                </button>
+            </div>
+        </div>
+    </div>
+</div>
+@endif
+
 <script src="https://js.pusher.com/8.2.0/pusher.min.js"></script>
 <script src="https://cdn.socket.io/4.5.4/socket.io.min.js"></script>
 <script>
     const scheduleId = {{ $schedule->id }};
     const ticketPrice = {{ $schedule->ticket_price }};
+    const isAuthenticated = {{ $isAuthenticated ? 'true' : 'false' }};
     let selectedSeats = [];
+    let appliedDiscount = 0;
+    let promoApplied = false;
 
     // Initialize Pusher untuk Real-Time Seat Updates
     try {
@@ -213,7 +269,60 @@
     // Initialize styles
     document.addEventListener('DOMContentLoaded', function() {
         attachSeatStyles();
+        if (isAuthenticated) {
+            initPromoHandler();
+        } else {
+            initGuestCheckout();
+        }
     });
+
+    function initGuestCheckout() {
+        const guestEmail = document.getElementById('guestEmail');
+        const bookingBtn = document.getElementById('bookingBtn');
+        const bookingForm = document.getElementById('bookingForm');
+        const emailModalEl = document.getElementById('emailConfirmModal');
+        if (!guestEmail || !bookingBtn || !bookingForm) return;
+
+        let emailModal = null;
+        if (emailModalEl && typeof bootstrap !== 'undefined') {
+            emailModal = new bootstrap.Modal(emailModalEl);
+        }
+
+        guestEmail.addEventListener('input', updateSummary);
+
+        bookingBtn.addEventListener('click', function(e) {
+            e.preventDefault();
+            if (selectedSeats.length === 0) {
+                alert('Silakan pilih minimal 1 kursi');
+                return;
+            }
+            const email = guestEmail.value.trim();
+            if (!email || !/^[^\s@]+@[^\s@]+\.[^\s@]+$/.test(email)) {
+                guestEmail.classList.add('is-invalid');
+                guestEmail.focus();
+                return;
+            }
+            guestEmail.classList.remove('is-invalid');
+            document.getElementById('modalEmailDisplay').textContent = email;
+            if (emailModal) {
+                emailModal.show();
+            } else if (confirm('Tiket akan dikirim ke ' + email + '. Lanjutkan?')) {
+                bookingForm.submit();
+            }
+        });
+
+        document.getElementById('btnRecheckEmail')?.addEventListener('click', function() {
+            setTimeout(() => guestEmail.focus(), 300);
+        });
+
+        document.getElementById('btnConfirmEmail')?.addEventListener('click', function() {
+            const btn = document.getElementById('btnConfirmEmail');
+            btn.disabled = true;
+            btn.innerHTML = '<span class="spinner-border spinner-border-sm"></span>';
+            if (emailModal) emailModal.hide();
+            bookingForm.submit();
+        });
+    }
 
     function attachSeatStyles() {
         const style = document.createElement('style');
@@ -286,7 +395,15 @@
 
     function updateSummary() {
         const seatCount = selectedSeats.length;
-        const totalPrice = seatCount * ticketPrice;
+        const subtotal = seatCount * ticketPrice;
+        let discount = promoApplied ? appliedDiscount : 0;
+
+        if (promoApplied && seatCount > 0) {
+            discount = calculateDiscount(subtotal);
+            appliedDiscount = discount;
+        }
+
+        const totalPrice = Math.max(0, subtotal - discount);
 
         document.getElementById('seatCount').textContent = seatCount;
         document.getElementById('totalPrice').innerHTML = `Rp ${totalPrice.toLocaleString('id-ID')}`;
@@ -295,7 +412,37 @@
             ? selectedSeats.map(s => `<span class="badge px-3 py-2 rounded-pill shadow-sm me-1 mb-1" style="background: #1A1953; color: white;">${s.code}</span>`).join('')
             : '<small class="text-secondary opacity-75">Belum ada kursi yang dipilih</small>';
 
-        document.getElementById('bookingBtn').disabled = seatCount === 0;
+        const discountRow = document.getElementById('discountRow');
+        const discountAmount = document.getElementById('discountAmount');
+        if (discountRow && discountAmount) {
+            if (discount > 0) {
+                discountRow.classList.remove('d-none');
+                discountRow.classList.add('d-flex');
+                discountAmount.textContent = '- Rp ' + discount.toLocaleString('id-ID');
+            } else {
+                discountRow.classList.add('d-none');
+                discountRow.classList.remove('d-flex');
+            }
+        }
+
+        const bookingBtn = document.getElementById('bookingBtn');
+        if (bookingBtn) {
+            if (!isAuthenticated) {
+                const email = document.getElementById('guestEmail')?.value.trim() || '';
+                const validEmail = /^[^\s@]+@[^\s@]+\.[^\s@]+$/.test(email);
+                bookingBtn.disabled = seatCount === 0 || !validEmail;
+            } else {
+                bookingBtn.disabled = seatCount === 0;
+            }
+        }
+    }
+
+    function calculateDiscount(subtotal) {
+        if (!window.activePromo) return 0;
+        if (window.activePromo.discount_type === 'percentage') {
+            return Math.floor(subtotal * window.activePromo.discount_value / 100);
+        }
+        return Math.min(window.activePromo.discount_value, subtotal);
     }
 
     function updateSeatStatus(seatId, status) {
@@ -313,33 +460,86 @@
         }
     }
 
-    // Apply promo code
-    document.getElementById('applyPromo').addEventListener('click', function() {
-        const code = document.getElementById('promoCode').value;
-        const message = document.getElementById('promoMessage');
+    function initPromoHandler() {
+        const applyBtn = document.getElementById('applyPromo');
+        if (!applyBtn) return;
 
-        if (!code) {
-            message.innerHTML = '<span class="text-danger">Masukkan kode promo</span>';
-            return;
-        }
+        applyBtn.addEventListener('click', function() {
+            const code = document.getElementById('promoCode').value.trim();
+            const message = document.getElementById('promoMessage');
 
-        // Simulate promo validation (replace with actual API call)
-        message.innerHTML = '<span class="text-success">Promo berhasil diterapkan</span>';
-    });
+            if (!code) {
+                message.innerHTML = '<span class="text-danger">Masukkan kode promo</span>';
+                return;
+            }
 
-    // Form submission
-    document.getElementById('bookingForm').addEventListener('submit', function(e) {
-        if (selectedSeats.length === 0) {
-            e.preventDefault();
-            alert('Silakan pilih minimal 1 kursi');
-            return;
-        }
-        
-        // Show loading state
-        const btn = document.getElementById('bookingBtn');
-        btn.disabled = true;
-        btn.innerHTML = '<span class="spinner-border spinner-border-sm me-2"></span> Memproses...';
-    });
+            fetch('{{ route('promo.validate') }}', {
+                method: 'POST',
+                headers: {
+                    'Content-Type': 'application/json',
+                    'X-CSRF-TOKEN': '{{ csrf_token() }}',
+                    'Accept': 'application/json',
+                },
+                body: JSON.stringify({ code: code })
+            })
+            .then(response => response.json())
+            .then(data => {
+                if (data.valid) {
+                    window.activePromo = {
+                        code: data.code,
+                        discount_type: data.discount_type,
+                        discount_value: parseFloat(data.discount_value),
+                    };
+                    promoApplied = true;
+                    document.getElementById('promoCode').readOnly = true;
+                    applyBtn.disabled = true;
+                    message.innerHTML = `<span class="text-success">✓ ${data.message}</span>`;
+                    updateSummary();
+                } else {
+                    window.activePromo = null;
+                    promoApplied = false;
+                    appliedDiscount = 0;
+                    message.innerHTML = `<span class="text-danger">✗ ${data.message}</span>`;
+                    updateSummary();
+                }
+            })
+            .catch(error => {
+                console.error('Error:', error);
+                message.innerHTML = '<span class="text-danger">Terjadi kesalahan saat validasi promo</span>';
+            });
+        });
+    }
+
+    const bookingForm = document.getElementById('bookingForm');
+    if (bookingForm && isAuthenticated) {
+        bookingForm.addEventListener('submit', function(e) {
+            if (selectedSeats.length === 0) {
+                e.preventDefault();
+                alert('Silakan pilih minimal 1 kursi');
+                return;
+            }
+
+            const btn = document.getElementById('bookingBtn');
+            if (btn) {
+                btn.disabled = true;
+                btn.innerHTML = '<span class="spinner-border spinner-border-sm me-2"></span> Memproses...';
+            }
+        });
+    }
+
+    if (bookingForm && !isAuthenticated) {
+        bookingForm.addEventListener('submit', function(e) {
+            if (selectedSeats.length === 0) {
+                e.preventDefault();
+                return;
+            }
+            const btn = document.getElementById('bookingBtn');
+            if (btn) {
+                btn.disabled = true;
+                btn.innerHTML = '<span class="spinner-border spinner-border-sm me-2"></span> Memproses...';
+            }
+        });
+    }
 </script>
 
 <style>
@@ -377,4 +577,5 @@
         margin-bottom: 0.5rem;
     }
 </style>
+
 @endsection

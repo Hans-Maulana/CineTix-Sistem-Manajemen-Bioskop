@@ -30,7 +30,7 @@ class SeatAvailabilityHandler extends BookingApprovalHandler
                 continue;
             }
 
-            if (!$seat->isAvailable($scheduleId)) {
+            if (!$seat->isAvailable()) {
                 $unavailableSeats[] = $seat->seat_code;
             }
         }
