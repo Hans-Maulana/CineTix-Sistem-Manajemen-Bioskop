@@ -16,6 +16,10 @@
 </div>
 
 <div class="card-custom">
+    @if(session('error'))
+        <div class="alert alert-danger">{{ session('error') }}</div>
+    @endif
+
     <form action="{{ route('admin.schedules.store') }}" method="POST">
         @csrf
         <div class="row">
@@ -37,18 +41,15 @@
                     @endforeach
                 </select>
             </div>
-            <div class="col-md-4 mb-4">
+            <div class="col-md-6 mb-4">
                 <label class="form-label fw-bold">Tanggal Tayang</label>
                 <input type="date" name="schedule_date" class="form-control" required>
             </div>
-            <div class="col-md-4 mb-4">
+            <div class="col-md-6 mb-4">
                 <label class="form-label fw-bold">Jam Mulai</label>
                 <input type="time" name="start_time" class="form-control" required>
             </div>
-            <div class="col-md-4 mb-4">
-                <label class="form-label fw-bold">Jam Selesai</label>
-                <input type="time" name="end_time" class="form-control" required>
-            </div>
+
             <div class="col-md-6 mb-4">
                 <label class="form-label fw-bold">Harga Tiket (Rp)</label>
                 <input type="number" name="ticket_price" class="form-control" placeholder="Contoh: 50000" required>
