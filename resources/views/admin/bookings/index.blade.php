@@ -27,21 +27,13 @@
                 @forelse($bookings as $booking)
                 <tr>
                     <td class="px-4 py-3 fw-bold">#{{ $booking->id }}</td>
-<<<<<<< Updated upstream
-                   <td>
-                        @if($booking->user)
-                            <div class="fw-bold">{{ $booking->user->name }} <span class="badge bg-primary" style="font-size: 0.7em;">Member</span></div>
-                            <small class="text-muted">{{ $booking->user->email }}</small>
-                        @else
-                            <div class="fw-bold">{{ $booking->guest_name }} <span class="badge bg-secondary" style="font-size: 0.7em;">Guest</span></div>
-                            <small class="text-muted">{{ $booking->guest_email }}</small>
-=======
                     <td>
                         <div class="fw-bold">{{ $booking->customerName() }}</div>
                         <small class="text-muted">{{ $booking->customerEmail() ?? '-' }}</small>
                         @if($booking->isGuest())
                             <span class="badge bg-info text-dark mt-1">Guest</span>
->>>>>>> Stashed changes
+                        @else
+                            <span class="badge bg-primary mt-1">Member</span>
                         @endif
                     </td>
                     <td>
@@ -76,8 +68,6 @@
         {{ $bookings->links() }}
     </div>
 </div>
-<<<<<<< Updated upstream
-=======
 
 @foreach($bookings as $booking)
 <div class="modal fade" id="bookingDetail{{ $booking->id }}" tabindex="-1" aria-hidden="true">
@@ -174,5 +164,4 @@
 </div>
 @endforeach
 
->>>>>>> Stashed changes
 @endsection

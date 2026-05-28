@@ -105,26 +105,19 @@
                             </button>
                         </form>
 
-<<<<<<< Updated upstream
-                        <a href="{{ route('booking.payment', $booking) }}" class="btn btn-link text-primary text-white text-decoration-none fw-bold">
-                            <iconify-icon icon="lucide:arrow-left" class="me-1"></iconify-icon> Ganti Metode Pembayaran
+                        <a href="{{ route('booking.payment', array_filter(['booking' => $booking, 'token' => request('token')])) }}" class="btn btn-outline-secondary btn-lg w-100 py-3 fw-bold rounded-4 text-decoration-none">
+                            <iconify-icon icon="lucide:arrow-left" class="me-2"></iconify-icon> Ganti Metode Pembayaran
                         </a>
-=======
                         @auth
                         @if($booking->user_id === auth()->id())
-                        <form method="POST" action="{{ route('booking.cancel', $booking) }}" id="cancelForm" onsubmit="return confirm('Apakah Anda yakin ingin membatalkan pesanan ini?');">
+                        <form method="POST" action="{{ route('booking.cancel', $booking) }}" onsubmit="return confirm('Apakah Anda yakin ingin membatalkan pesanan ini?');">
                             @csrf
                             <button type="submit" class="btn btn-outline-danger btn-lg w-100 py-3 text-danger fw-bold rounded-4">
                                 <iconify-icon icon="lucide:trash-2" class="me-2"></iconify-icon> Batalkan Pesanan
                             </button>
                         </form>
                         @endif
-                        @else
-                        <a href="{{ route('booking.payment', $booking) }}" class="btn btn-outline-secondary btn-lg w-100 py-3 fw-bold rounded-4 text-decoration-none">
-                            <iconify-icon icon="lucide:arrow-left" class="me-2"></iconify-icon> Kembali
-                        </a>
                         @endauth
->>>>>>> Stashed changes
                     </div>
                 </div>
             </div>

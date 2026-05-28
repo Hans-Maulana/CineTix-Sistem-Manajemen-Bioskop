@@ -12,13 +12,8 @@ class Booking extends Model
 
     protected $fillable = [
         'user_id',
-<<<<<<< Updated upstream
-        'guest_name',
-        'guest_email',
-=======
         'guest_email',
         'access_token',
->>>>>>> Stashed changes
         'promo_id',
         'schedule_id',
         'booking_type',
@@ -31,8 +26,6 @@ class Booking extends Model
     protected $casts = [
         'total_amount' => 'decimal:2',
     ];
-
-
 
     public function user()
     {
@@ -100,15 +93,10 @@ class Booking extends Model
         return $this->hasMany(Payment::class);
     }
 
-    /**
-     * Get the latest payment for this booking.
-     */
     public function latestPayment()
     {
         return $this->hasOne(Payment::class)->latestOfMany();
     }
-
-
 
     public function calculateTotal(): float
     {
@@ -117,7 +105,7 @@ class Booking extends Model
         $subtotal    = $ticketTotal + $fnbTotal;
 
         if ($this->promo && $this->promo->isValid()) {
-            $subtotal -= $this->promo->disc_amount;
+            $subtotal -= $this->promo->calculateDiscount($ticketTotal);
         }
 
         return max(0, $subtotal);
