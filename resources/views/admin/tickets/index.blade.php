@@ -108,8 +108,8 @@
                         </td>
                         <td>
                             @if($schedule)
-                                <div class="fw-bold text-dark">{{ \Carbon\Carbon::parse($schedule->showtime)->format('d M Y') }}</div>
-                                <small class="text-muted"><i class="bi bi-clock me-1"></i> {{ \Carbon\Carbon::parse($schedule->showtime)->format('H:i') }} WIB</small>
+                                <div class="fw-bold text-dark">{{ $schedule->schedule_date->format('d M Y') }}</div>
+                                <small class="text-muted"><i class="bi bi-clock me-1"></i> {{ $schedule->start_time->format('H:i') }} WIB</small>
                             @else
                                 -
                             @endif

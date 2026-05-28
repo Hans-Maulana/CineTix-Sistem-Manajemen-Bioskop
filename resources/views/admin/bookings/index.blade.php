@@ -116,7 +116,7 @@
                             </tr>
                             <tr>
                                 <td class="text-muted">Jadwal</td>
-                                <td class="fw-bold">: {{ $schedule ? \Carbon\Carbon::parse($schedule->showtime)->format('d M Y, H:i') : '-' }}</td>
+                                <td class="fw-bold">: {{ $schedule ? $schedule->schedule_date->format('d M Y') . ', ' . $schedule->start_time->format('H:i') : '-' }}</td>
                             </tr>
                         </table>
                     </div>
