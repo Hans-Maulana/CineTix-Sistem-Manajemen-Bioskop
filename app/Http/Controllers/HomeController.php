@@ -41,7 +41,7 @@ class HomeController extends Controller
     {
         $query = $request->get('q');
         
-        $films = Film::where('status', 'active')
+        $films = Film::whereIn('status', ['now_playing', 'coming_soon'])
             ->where(function ($q) use ($query) {
                 $q->where('title', 'like', "%{$query}%")
                   ->orWhere('synopsis', 'like', "%{$query}%")

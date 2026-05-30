@@ -28,7 +28,7 @@
         }
         body {
             padding-top: 100px;
-            background-color: #f8f9fa;
+            background-color: #f5f7fb;
         }
         .main-content {
             min-height: 80vh;

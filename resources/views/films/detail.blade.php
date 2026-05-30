@@ -21,12 +21,23 @@
                     <div class="card-body bg-dark text-white p-4">
                         <div class="d-flex justify-content-between align-items-center mb-3">
                             <span class="badge bg-primary px-3 py-2 fs-6">{{ $film->classification }}</span>
-                            <div class="text-warning fs-5">
-                                <iconify-icon icon="solar:star-bold" class="me-1"></iconify-icon>
-                                <strong>{{ number_format($avgRating, 1) }}</strong><span
-                                    class="text-white text-opacity-50 fs-7">/5</span>
-                            </div>
+                            @if($film->status !== 'coming_soon')
+                                <div class="text-warning fs-5">
+                                    <iconify-icon icon="solar:star-bold" class="me-1"></iconify-icon>
+                                    <strong>{{ number_format($avgRating, 1) }}</strong><span
+                                        class="text-white text-opacity-50 fs-7">/5</span>
+                                </div>
+                            @endif
                         </div>
+
+                        @if($film->status === 'coming_soon')
+                            <h5 class="fw-bold mb-1">Tanggal Rilis</h5>
+                            <p class="text-white text-opacity-70 mb-3">
+                                <iconify-icon icon="lucide:calendar" class="me-2 text-warning"></iconify-icon>
+                                {{ \Carbon\Carbon::parse($film->release_date)->translatedFormat('d F Y') }}
+                            </p>
+                        @endif
+
                         <h5 class="fw-bold mb-1">Durasi</h5>
                         <p class="text-white text-opacity-70 mb-3"><iconify-icon icon="lucide:clock"
                                 class="me-2"></iconify-icon>{{ $film->duration }} Menit</p>
@@ -100,18 +111,37 @@
 
                 <hr class="my-5 opacity-10">
 
-                <!-- Jadwal Tayang -->
+                <!-- Jadwal Tayang / Status Rilis -->
                 <div class="d-flex align-items-center gap-3 mb-4">
                     <div class="round-12 bg-primary rounded-pill" style="width: 10px; height: 30px;"></div>
-                    <h3 class="mb-0 fw-bold">Jadwal Tayang</h3>
+                    <h3 class="mb-0 fw-bold">{{ $film->status === 'coming_soon' ? 'Informasi Rilis' : 'Jadwal Tayang' }}</h3>
                 </div>
 
                 @if($film->status === 'coming_soon')
-                    <div class="card border-0 shadow-sm rounded-4 p-5 text-center bg-light-custom">
-                        <iconify-icon icon="solar:calendar-broken"
-                            class="display-1 text-warning opacity-50 mb-3"></iconify-icon>
-                        <h4 class="fw-bold">Akan Segera Tayang</h4>
-                        <p class="text-muted">Nantikan film ini di bioskop CineTix kesayangan Anda!</p>
+                    <div class="card border-0 shadow-sm p-4 p-md-5 text-center bg-gradient-coming-soon text-white position-relative overflow-hidden">
+                        <div class="position-absolute top-0 end-0 opacity-10" style="transform: translate(20%, -20%);">
+                            <iconify-icon icon="solar:videocamera-bold" style="font-size: 15rem;"></iconify-icon>
+                        </div>
+                        <div class="position-relative z-1">
+                            <iconify-icon icon="solar:calendar-date-bold" class="display-3 text-warning mb-3"></iconify-icon>
+                            <h3 class="fw-bold mb-2 text-white">Film ini Akan Segera Tayang!</h3>
+                            <p class="text-white-50 mb-4 mx-auto" style="max-width: 500px;">
+                                Film <strong>{{ $film->title }}</strong> dijadwalkan untuk rilis pada tanggal 
+                                <span class="text-warning fw-bold">{{ \Carbon\Carbon::parse($film->release_date)->translatedFormat('d F Y') }}</span>. 
+                                Dapatkan pengalaman menonton terbaik hanya di bioskop CineTix.
+                            </p>
+                            
+                            <hr class="border-light opacity-20 my-4">
+                            
+                            <h5 class="fw-bold mb-3 text-white">Ingin Menjadi Yang Pertama Menonton?</h5>
+                            <form action="#" class="d-flex flex-column flex-sm-row gap-2 justify-content-center align-items-center mx-auto" style="max-width: 450px;" onsubmit="event.preventDefault(); alert('Terima kasih! Kami akan mengirimkan notifikasi ke email Anda ketika penjualan tiket dibuka.'); this.reset();">
+                                <input type="email" class="form-control rounded-pill px-4 py-2 border-0 bg-white" placeholder="Masukkan email Anda..." required>
+                                <button type="submit" class="btn btn-warning rounded-pill px-4 py-2 fw-bold text-white d-flex align-items-center gap-2 flex-shrink-0 transition-all hover-scale">
+                                    <iconify-icon icon="lucide:bell" class="fs-5"></iconify-icon>
+                                    <span>Ingatkan Saya</span>
+                                </button>
+                            </form>
+                        </div>
                     </div>
                 @elseif($film->schedules->isNotEmpty())
                     <div class="card border-0 shadow-sm rounded-4 overflow-hidden">
@@ -193,48 +223,50 @@
                     </div>
                 @endif
 
-                <!-- Reviews -->
-                <div class="d-flex align-items-center justify-content-between mt-10 mb-4">
-                    <div class="d-flex align-items-center gap-3">
-                        <div class="round-12 bg-primary rounded-pill" style="width: 10px; height: 30px;"></div>
-                        <h3 class="mb-0 fw-bold">Ulasan Penonton</h3>
+                @if($film->status !== 'coming_soon')
+                    <!-- Reviews -->
+                    <div class="d-flex align-items-center justify-content-between mt-10 mb-4">
+                        <div class="d-flex align-items-center gap-3">
+                            <div class="round-12 bg-primary rounded-pill" style="width: 10px; height: 30px;"></div>
+                            <h3 class="mb-0 fw-bold">Ulasan Penonton</h3>
+                        </div>
+                        <span class="badge bg-light-custom text-dark px-3 py-2">{{ $film->reviews->count() }} Ulasan</span>
                     </div>
-                    <span class="badge bg-light-custom text-dark px-3 py-2">{{ $film->reviews->count() }} Ulasan</span>
-                </div>
 
-                @if($film->reviews->isNotEmpty())
-                    <div class="row g-4">
-                        @foreach($film->reviews as $review)
-                            <div class="col-md-6">
-                                <div class="card border-0 shadow-sm h-100 rounded-4">
-                                    <div class="card-body p-4">
-                                        <div class="d-flex justify-content-between align-items-center mb-3">
-                                            <div class="hstack gap-2">
-                                                <div
-                                                    class="round-32 bg-primary text-dark rounded-circle hstack justify-content-center small fw-bold">
-                                                    {{ substr($review->user->name, 0, 1) }}
+                    @if($film->reviews->isNotEmpty())
+                        <div class="row g-4">
+                            @foreach($film->reviews as $review)
+                                <div class="col-md-6">
+                                    <div class="card border-0 shadow-sm h-100 rounded-4">
+                                        <div class="card-body p-4">
+                                            <div class="d-flex justify-content-between align-items-center mb-3">
+                                                <div class="hstack gap-2">
+                                                    <div
+                                                        class="round-32 bg-primary text-dark rounded-circle hstack justify-content-center small fw-bold">
+                                                        {{ substr($review->user->name, 0, 1) }}
+                                                    </div>
+                                                    <h6 class="mb-0 fw-bold">{{ $review->user->name }}</h6>
                                                 </div>
-                                                <h6 class="mb-0 fw-bold">{{ $review->user->name }}</h6>
+                                                <div class="text-warning">
+                                                    @for($i = 1; $i <= 5; $i++)
+                                                        <iconify-icon
+                                                            icon="solar:star-{{ $i <= $review->rating ? 'bold' : 'linear' }}"></iconify-icon>
+                                                    @endfor
+                                                </div>
                                             </div>
-                                            <div class="text-warning">
-                                                @for($i = 1; $i <= 5; $i++)
-                                                    <iconify-icon
-                                                        icon="solar:star-{{ $i <= $review->rating ? 'bold' : 'linear' }}"></iconify-icon>
-                                                @endfor
-                                            </div>
+                                            <p class="text-muted mb-0">{{ $review->comment }}</p>
+                                            <hr class="my-3 opacity-5">
+                                            <small class="text-muted">{{ $review->created_at->diffForHumans() }}</small>
                                         </div>
-                                        <p class="text-muted mb-0">{{ $review->comment }}</p>
-                                        <hr class="my-3 opacity-5">
-                                        <small class="text-muted">{{ $review->created_at->diffForHumans() }}</small>
                                     </div>
                                 </div>
-                            </div>
-                        @endforeach
-                    </div>
-                @else
-                    <div class="text-center py-5 bg-light-custom rounded-4">
-                        <p class="text-muted mb-0">Belum ada ulasan untuk film ini.</p>
-                    </div>
+                            @endforeach
+                        </div>
+                    @else
+                        <div class="text-center py-5 bg-light-custom rounded-4">
+                            <p class="text-muted mb-0">Belum ada ulasan untuk film ini.</p>
+                        </div>
+                    @endif
                 @endif
             </div>
         </div>
@@ -243,6 +275,19 @@
     <style>
         .bg-light-primary {
             background-color: rgba(var(--bs-primary-rgb), 0.1);
+        }
+
+        .bg-gradient-coming-soon {
+            background: linear-gradient(135deg, #1A1953 0%, #162E93 100%) !important;
+            border-radius: 20px;
+        }
+
+        .hover-scale {
+            transition: all 0.3s ease;
+        }
+        .hover-scale:hover {
+            transform: scale(1.03);
+            box-shadow: 0 8px 25px rgba(255, 193, 7, 0.3) !important;
         }
 
         .round-45 {

@@ -69,12 +69,12 @@
 
                 <div class="mb-4">
                     <label class="form-label fw-bold">Genre</label>
-                    <div class="border rounded-4 p-3" style="max-height: 200px; overflow-y: auto;">
+                    <div class="genre-tags-container">
                         @foreach($genres as $genre)
-                        <div class="form-check mb-2">
-                            <input class="form-check-input" type="checkbox" name="genres[]" value="{{ $genre->id }}" id="genre{{ $genre->id }}">
-                            <label class="form-check-label" for="genre{{ $genre->id }}">
-                                {{ $genre->name }}
+                        <div class="genre-tag-item">
+                            <input class="genre-checkbox-hidden" type="checkbox" name="genres[]" value="{{ $genre->id }}" id="genre{{ $genre->id }}">
+                            <label class="genre-tag-label" for="genre{{ $genre->id }}">
+                                {{ $genre->genre_name }}
                             </label>
                         </div>
                         @endforeach

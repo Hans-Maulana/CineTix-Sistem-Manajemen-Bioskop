@@ -45,5 +45,39 @@ class GenreFilmSeeder extends Seeder
         if ($toyStory && $animation && $family) {
             $toyStory->genres()->syncWithoutDetaching([$animation->id, $family->id]);
         }
+
+        // Genres variables
+        $action = Genre::where('genre_name', 'Action')->first();
+        $adventure = Genre::where('genre_name', 'Adventure')->first();
+        $scifi = Genre::where('genre_name', 'Sci-Fi')->first();
+        $comedy = Genre::where('genre_name', 'Comedy')->first();
+
+        // Avatar 3 → Sci-Fi, Adventure, Action
+        $avatar3 = Film::where('title', 'Avatar 3')->first();
+        if ($avatar3) {
+            $genreIds = array_filter([$scifi?->id, $adventure?->id, $action?->id]);
+            $avatar3->genres()->syncWithoutDetaching($genreIds);
+        }
+
+        // Deadpool & Wolverine → Action, Comedy, Sci-Fi
+        $deadpool = Film::where('title', 'Deadpool & Wolverine')->first();
+        if ($deadpool) {
+            $genreIds = array_filter([$action?->id, $comedy?->id, $scifi?->id]);
+            $deadpool->genres()->syncWithoutDetaching($genreIds);
+        }
+
+        // Frozen 3 → Animation, Adventure, Comedy
+        $frozen3 = Film::where('title', 'Frozen 3')->first();
+        if ($frozen3) {
+            $genreIds = array_filter([$animation?->id, $adventure?->id, $comedy?->id]);
+            $frozen3->genres()->syncWithoutDetaching($genreIds);
+        }
+
+        // Spider-Man: No Way Home → Action, Adventure, Sci-Fi
+        $spiderman = Film::where('title', 'Spider-Man: No Way Home')->first();
+        if ($spiderman) {
+            $genreIds = array_filter([$action?->id, $adventure?->id, $scifi?->id]);
+            $spiderman->genres()->syncWithoutDetaching($genreIds);
+        }
     }
 }

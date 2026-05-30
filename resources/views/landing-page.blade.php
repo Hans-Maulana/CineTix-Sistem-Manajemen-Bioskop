@@ -23,6 +23,220 @@
     .header .fw-bold.text-white {
       color: #ffffff !important;
     }
+    body {
+      background-color: #f5f7fb !important;
+    }
+
+    .bg-light-gray {
+      background-color: #ebedf3 !important;
+    }
+    .banner-section {
+      background-color: #0c0b24 !important;
+    }
+
+    /* Fullscreen YouTube Background Video */
+    .banner-video-container {
+      position: absolute;
+      top: 0;
+      left: 0;
+      width: 100%;
+      height: 100%;
+      overflow: hidden;
+      z-index: 0;
+    }
+
+    .banner-video-iframe {
+      position: absolute;
+      top: 50%;
+      left: 50%;
+      width: 100vw;
+      height: 56.25vw;
+      min-height: 100vh;
+      min-width: 177.77vh;
+      transform: translate(-50%, -50%);
+      pointer-events: none;
+      border: none;
+      opacity: 0;
+      animation: videoFadeIn 1.2s ease-in forwards;
+      animation-delay: 2.5s;
+    }
+
+    @keyframes videoFadeIn {
+      to {
+        opacity: 1;
+      }
+    }
+
+    .banner-overlay {
+      position: absolute;
+      top: 0;
+      left: 0;
+      width: 100%;
+      height: 100%;
+      background: linear-gradient(to bottom, rgba(12, 11, 36, 0.1) 0%, rgba(12, 11, 36, 0.5) 100%);
+      z-index: 1;
+    }
+
+    /* Coming Soon Card Styles */
+    .poster-film {
+      transition: transform 0.3s ease;
+    }
+    .poster-film:hover {
+      transform: translateY(-5px);
+    }
+    .poster-film-img {
+      position: relative;
+      overflow: hidden;
+      border-radius: 12px;
+      box-shadow: 0 4px 15px rgba(0, 0, 0, 0.1);
+    }
+    .poster-film-img::before {
+      content: "";
+      display: block;
+      padding-top: 72% !important; /* Matches Now Playing landscape aspect ratio */
+    }
+    .poster-film-img img {
+      position: absolute !important;
+      top: 0 !important;
+      left: 0 !important;
+      width: 100% !important;
+      height: 100% !important;
+      object-fit: fill !important; /* Stretches the image to fill the box completely without cropping or black bars */
+      transition: transform 0.5s ease;
+    }
+    .poster-film-img:hover img {
+      transform: scale(1.05);
+    }
+    .poster-film-overlay {
+      position: absolute;
+      top: 0;
+      left: 0;
+      width: 100%;
+      height: 100%;
+      background: rgba(26, 25, 83, 0.85) !important; /* CineTix deep purple-blue with transparency */
+      display: flex;
+      flex-direction: column;
+      align-items: center;
+      justify-content: center;
+      opacity: 0;
+      visibility: hidden;
+      transition: opacity 0.3s ease, visibility 0.3s ease;
+      z-index: 2;
+    }
+    .poster-film-img:hover .poster-film-overlay {
+      opacity: 1;
+      visibility: visible;
+    }
+    .poster-film-overlay .btn-detail {
+      background: #ffffff;
+      color: #1A1953;
+      font-weight: 700;
+      padding: 10px 20px;
+      border-radius: 50px;
+      text-decoration: none;
+      display: inline-flex;
+      align-items: center;
+      gap: 8px;
+      box-shadow: 0 10px 20px rgba(0,0,0,0.2);
+      transition: all 0.3s ease;
+      transform: translateY(15px);
+    }
+    .poster-film-img:hover .poster-film-overlay .btn-detail {
+      transform: translateY(0);
+    }
+    .poster-film-overlay .btn-detail:hover {
+      background: #1A1953;
+      color: #ffffff;
+      transform: scale(1.05);
+    }
+
+    /* Override Now Playing images to fit without cropping */
+    .portfolio-img > img {
+      object-fit: fill !important; /* Stretches the image to fill the box completely without cropping or black bars */
+    }
+
+    /* Now Playing (Sedang Tayang) Hover Overlay Styling */
+    .portfolio-img .portfolio-overlay {
+      position: absolute;
+      top: 0;
+      left: 0;
+      width: 100%;
+      height: 100%;
+      background: rgba(26, 25, 83, 0.85) !important; /* CineTix deep purple-blue with transparency */
+      display: flex;
+      flex-direction: column;
+      align-items: center;
+      justify-content: center;
+      opacity: 0;
+      visibility: hidden;
+      transition: opacity 0.3s ease, visibility 0.3s ease;
+      z-index: 2;
+      transform: none !important; /* Overrides default template slide transition */
+    }
+    .portfolio-img:hover .portfolio-overlay {
+      opacity: 1 !important;
+      visibility: visible !important;
+    }
+    .portfolio-overlay .btn-detail-playing {
+      background: #ffffff;
+      color: #1A1953;
+      font-weight: 700;
+      padding: 10px 20px;
+      border-radius: 50px;
+      text-decoration: none;
+      display: inline-flex;
+      align-items: center;
+      gap: 8px;
+      box-shadow: 0 10px 20px rgba(0,0,0,0.2);
+      transition: all 0.3s ease;
+      transform: translateY(15px);
+    }
+    .portfolio-img:hover .portfolio-overlay .btn-detail-playing {
+      transform: translateY(0);
+    }
+    .portfolio-overlay .btn-detail-playing:hover {
+      background: #1A1953;
+      color: #ffffff;
+      transform: scale(1.05);
+    }
+
+    /* Style for static 'Pesan' button inside now playing cards */
+    .btn-pesan {
+      background-color: #1A1953;
+      color: #ffffff;
+      font-weight: 700;
+      font-size: 0.8rem;
+      padding: 6px 14px;
+      border-radius: 50px;
+      text-decoration: none;
+      display: inline-flex;
+      align-items: center;
+      gap: 6px;
+      transition: all 0.3s ease;
+      border: 1px solid #1A1953;
+    }
+    .btn-pesan:hover {
+      background-color: #ffffff;
+      color: #1A1953;
+      border-color: #1A1953;
+      transform: translateY(-2px);
+      box-shadow: 0 4px 10px rgba(26, 25, 83, 0.2);
+    }
+    .btn-pesan iconify-icon {
+      font-size: 0.95rem;
+    }
+
+    /* Style for Coming Soon film details to match Now Playing details */
+    .poster-film-details {
+      padding: 10px 5px;
+      text-align: left;
+    }
+    .poster-film-details h3 {
+      font-size: 1.15rem !important;
+      font-weight: 700 !important;
+      margin-bottom: 8px !important;
+      color: #1F2A2E !important;
+    }
   </style>
 </head>
 
@@ -131,9 +345,14 @@
 
     <!--  Banner Section -->
     <section class="banner-section position-relative d-flex align-items-end min-vh-100">
-      <video class="position-absolute top-0 start-0 w-100 h-100 object-fit-cover" autoplay muted loop playsinline>
-        <source src="{{asset("assets/images/backgrounds/banner-video.mp4")}}" type="video/mp4" />
-      </video>
+      <div class="banner-video-container">
+        <iframe class="banner-video-iframe" 
+                src="https://www.youtube.com/embed/yMqDgbZmBdk?autoplay=1&mute=1&loop=1&playlist=yMqDgbZmBdk&controls=0&showinfo=0&rel=0&iv_load_policy=3&playsinline=1&enablejsapi=1&vq=hd1080" 
+                allow="autoplay; encrypted-media" 
+                allowfullscreen>
+        </iframe>
+        <div class="banner-overlay"></div>
+      </div>
       <div class="container">
         <div class="d-flex flex-column gap-4 pb-8 position-relative z-1">
           <div class="row align-items-center">
@@ -193,20 +412,26 @@
                 <div class="portfolio d-flex flex-column gap-6">
                   <div class="portfolio-img position-relative overflow-hidden">
                     <img src="{{ $film->cover_url }}" alt="{{ $film->title }}"
-                      class="img-fluid w-100 object-fit-cover shadow-sm rounded-3" style="aspect-ratio: 2/3;">
+                      class="img-fluid w-100 object-fit-cover shadow-sm rounded-3">
                     <div class="portfolio-overlay">
-                      <a href="{{ route('films.detail', $film) }}"
-                        class="position-absolute top-50 start-50 translate-middle bg-primary round-64 rounded-circle hstack justify-content-center">
-                        <iconify-icon icon="lucide:arrow-up-right" class="fs-8 text-dark"></iconify-icon>
+                      <a href="{{ route('films.detail', $film) }}" class="btn-detail-playing">
+                        <iconify-icon icon="lucide:ticket" class="fs-5"></iconify-icon>
+                        <span>Pesan Tiket</span>
                       </a>
                     </div>
                   </div>
                   <div class="portfolio-details d-flex flex-column gap-3">
                     <h3 class="mb-0">{{ $film->title }}</h3>
-                    <div class="hstack gap-2">
-                      @foreach($film->genres as $genre)
-                        <span class="badge text-dark border">{{ $genre->genre_name }}</span>
-                      @endforeach
+                    <div class="d-flex align-items-center justify-content-between gap-2 mt-1">
+                      <div class="hstack gap-2 flex-wrap">
+                        @foreach($film->genres as $genre)
+                          <span class="badge text-dark border">{{ $genre->genre_name }}</span>
+                        @endforeach
+                      </div>
+                      <a href="{{ route('films.detail', $film) }}" class="btn-pesan flex-shrink-0">
+                        <iconify-icon icon="lucide:ticket" class="fs-5"></iconify-icon>
+                        <span>Pesan Sekarang</span>
+                      </a>
                     </div>
                   </div>
                 </div>
@@ -249,27 +474,25 @@
           <div class="row">
             @foreach($comingSoonFilms as $film)
               <div class="col-md-6 col-xl-3 mb-7 mb-xl-0">
-                <div class="poster-film d-flex flex-column gap-4" data-aos="fade-up"
+                <div class="poster-film d-flex flex-column gap-6" data-aos="fade-up"
                   data-aos-delay="{{ $loop->iteration * 100 }}" data-aos-duration="1000">
                   <div class="poster-film-img position-relative overflow-hidden">
                     <img src="{{ $film->cover_url }}" alt="{{ $film->title }}"
-                      class="img-fluid w-100 object-fit-cover shadow-sm rounded-3" style="aspect-ratio: 2/3;">
-                    <div class="poster-film-overlay p-7 d-flex flex-column justify-content-end">
-                      <ul class="social list-unstyled mb-0 hstack gap-2 justify-content-end">
-                        <li><a href="{{ route('films.detail', $film) }}"
-                            class="btn bg-white p-2 round-45 rounded-circle hstack justify-content-center">
-                            <iconify-icon icon="lucide:eye" class="text-dark fs-5"></iconify-icon>
-                          </a></li>
-                      </ul>
+                      class="img-fluid w-100 object-fit-cover shadow-sm rounded-3">
+                    <div class="poster-film-overlay">
+                      <a href="{{ route('films.detail', $film) }}" class="btn-detail">
+                        <iconify-icon icon="lucide:eye" class="fs-5"></iconify-icon>
+                        <span>Detail Film</span>
+                      </a>
                     </div>
                   </div>
-                  <div class="poster-film-details">
-                    <h4 class="mb-0">{{ $film->title }}</h4>
-                    <p class="mb-0">
+                  <div class="poster-film-details d-flex flex-column gap-3">
+                    <h3 class="mb-0">{{ $film->title }}</h3>
+                    <div class="hstack gap-2 flex-wrap">
                       @foreach($film->genres as $genre)
-                        {{ $genre->genre_name }}{{ !$loop->last ? ' / ' : '' }}
+                        <span class="badge text-dark border">{{ $genre->genre_name }}</span>
                       @endforeach
-                    </p>
+                    </div>
                   </div>
                 </div>
               </div>

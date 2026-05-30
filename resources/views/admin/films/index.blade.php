@@ -37,7 +37,7 @@
                     <td class="fw-bold text-dark">{{ $film->title }}</td>
                     <td>
                         @foreach($film->genres as $genre)
-                            <span class="badge bg-light text-primary border me-1">{{ $genre->name }}</span>
+                            <span class="badge bg-light text-primary border me-1">{{ $genre->genre_name }}</span>
                         @endforeach
                     </td>
                     <td><span class="text-warning fw-bold">⭐ {{ $film->rating }}</span></td>
