@@ -4,19 +4,93 @@
 <head>
   <meta charset="utf-8">
   <meta name="viewport" content="width=device-width, initial-scale=1">
-  <title>Studiova</title>
+  <title>CineTix - Sign In</title>
 
   <link rel="shortcut icon" type="image/png" href="{{ asset("assets/images/logos/favicon.svg") }}" />
   <link rel="stylesheet" href="{{ asset("assets/libs/owl.carousel/dist/assets/owl.carousel.min.css") }}">
   <link rel="stylesheet" href="{{ asset("assets/libs/aos-master/dist/aos.css") }}">
   <link rel="stylesheet" href="{{ asset("assets/css/styles.css") }}" />
+  
+  <style>
+    body {
+      background: linear-gradient(135deg, #0c0b24 0%, #1A1953 100%) !important;
+      font-family: 'Manrope', sans-serif;
+      min-height: 100vh;
+    }
+    
+    .bg-light-gray {
+      background: transparent !important;
+      border-top: none !important;
+    }
+    
+    .sign-in.card {
+      background: rgba(255, 255, 255, 0.98);
+      border-radius: 24px;
+      border: 0;
+      box-shadow: 0 20px 40px rgba(0, 0, 0, 0.3) !important;
+      max-width: 440px;
+      width: 100%;
+    }
+    
+    .form-control.border-bottom {
+      border-top: 0 !important;
+      border-left: 0 !important;
+      border-right: 0 !important;
+      border-bottom: 2px solid rgba(26, 25, 83, 0.1) !important;
+      border-radius: 0 !important;
+      background: transparent !important;
+      padding: 12px 4px !important;
+      transition: all 0.3s ease;
+      font-size: 0.95rem;
+    }
+    
+    .form-control.border-bottom:focus {
+      box-shadow: none !important;
+      border-bottom-color: #1A1953 !important;
+    }
+    
+    .btn-outline-light {
+      border: 1px solid rgba(26, 25, 83, 0.15) !important;
+      border-radius: 50px !important;
+      transition: all 0.3s ease;
+    }
+    
+    .btn-outline-light:hover {
+      background-color: #f8f9fa !important;
+      border-color: #1A1953 !important;
+      transform: translateY(-2px);
+      box-shadow: 0 4px 10px rgba(0, 0, 0, 0.05);
+    }
+    
+    .btn-dark {
+      background-color: #1A1953 !important;
+      border: 1px solid #1A1953 !important;
+      border-radius: 50px !important;
+      transition: all 0.3s ease;
+    }
+    
+    .btn-dark:hover {
+      background-color: #162E93 !important;
+      border-color: #162E93 !important;
+      transform: translateY(-2px);
+      box-shadow: 0 8px 20px rgba(26, 25, 83, 0.3);
+    }
+    
+    .text-dark {
+      color: #1A1953 !important;
+    }
+    
+    .text-dark:hover {
+      color: #162E93 !important;
+    }
+  </style>
 </head>
 
 <body>
 
   <div class="page-wrapper overflow-hidden">
 
-    <section class="bg-light-gray border-top border-primary border-4 d-flex align-items-center justify-content-center min-vh-100">
+    <section class="bg-light-gray d-flex align-items-center justify-content-center min-vh-100">
 
       <div class="container py-3">
 
@@ -25,8 +99,8 @@
           <div class="card-body py-8 px-lg-5">
 
             <!-- Logo -->
-            <a href="index.html" class="mb-8 hstack justify-content-center">
-              <img src="../assets/images/logos/logo-dark.svg" alt="logo-dark" class="img-fluid">
+            <a href="{{ route('landing-page') }}" class="mb-8 hstack justify-content-center">
+              <img src="{{ asset('assets/images/logos/logo-dark.svg') }}" alt="logo-dark" class="img-fluid" style="max-height: 55px;">
             </a>
 
 
@@ -80,11 +154,11 @@
     </div>
 
   <!-- Scripts -->
-  <script src="../assets/libs/jquery/dist/jquery.min.js"></script>
-  <script src="../assets/libs/bootstrap/dist/js/bootstrap.bundle.min.js"></script>
-  <script src="../assets/libs/owl.carousel/dist/owl.carousel.min.js"></script>
-  <script src="../assets/libs/aos-master/dist/aos.js"></script>
-  <script src="../assets/js/custom.js"></script>
+  <script src="{{ asset('assets/libs/jquery/dist/jquery.min.js') }}"></script>
+  <script src="{{ asset('assets/libs/bootstrap/dist/js/bootstrap.bundle.min.js') }}"></script>
+  <script src="{{ asset('assets/libs/owl.carousel/dist/owl.carousel.min.js') }}"></script>
+  <script src="{{ asset('assets/libs/aos-master/dist/aos.js') }}"></script>
+  <script src="{{ asset('assets/js/custom.js') }}"></script>
 
 </body>
 </html>

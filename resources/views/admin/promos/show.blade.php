@@ -3,144 +3,86 @@
 @section('title', 'Detail Promo')
 
 @section('content')
-    <div class="row mb-4">
-        <div class="col-md-8">
-            <h1 class="mb-1">{{ $promo->code }}</h1>
-            <p class="text-muted">{{ $promo->description ?? 'Promo tanpa deskripsi' }}</p>
-        </div>
-        <div class="col-md-4 text-end">
-            <a href="{{ route('admin.promos.edit', $promo) }}" class="btn btn-warning me-2">Edit</a>
-            <a href="{{ route('admin.promos.index') }}" class="btn btn-secondary">← Kembali</a>
+<div class="row mb-4 align-items-center">
+    <div class="col-md-6">
+        <h1 class="fw-bold text-primary">Kupon: {{ $promo->code }}</h1>
+        <p class="text-muted">{{ $promo->description ?? 'Detail dan statistik penggunaan kode promo.' }}</p>
+    </div>
+    <div class="col-md-6 text-md-end">
+        <a href="{{ route('admin.promos.edit', $promo) }}" class="btn btn-warning fw-bold text-decoration-none me-2">
+            <i class="bi bi-pencil-square me-1"></i> Edit Data
+        </a>
+        <a href="{{ route('admin.promos.index') }}" class="btn btn-outline-secondary text-decoration-none">
+            <i class="bi bi-arrow-left me-1"></i> Kembali
+        </a>
+    </div>
+</div>
+
+<div class="row">
+    <div class="col-md-6 mb-4">
+        <div class="card-custom h-100 p-4">
+            <h5 class="fw-bold mb-4"><i class="bi bi-ticket-detailed me-2 text-primary"></i>Informasi Dasar</h5>
+
+            <table class="table table-borderless mb-0">
+                <tr>
+                    <td class="text-muted px-0 py-2 w-50">Kode Kupon</td>
+                    <td class="fw-bold px-0 py-2">{{ $promo->code }}</td>
+                </tr>
+                <tr>
+                    <td class="text-muted px-0 py-2">Tipe Potongan</td>
+                    <td class="fw-bold px-0 py-2">{{ $promo->discount_type === 'percentage' ? 'Persentase' : 'Nominal Tetap (Rupiah)' }}</td>
+                </tr>
+                <tr>
+                    <td class="text-muted px-0 py-2">Besaran Diskon</td>
+                    <td class="fw-bold px-0 py-2 text-success">
+                        {{ $promo->discount_type === 'percentage' ? $promo->discount_value . '%' : 'Rp ' . number_format($promo->discount_value, 0, ',', '.') }}
+                    </td>
+                </tr>
+                <tr>
+                    <td class="text-muted px-0 py-2">Periode Valid</td>
+                    <td class="fw-bold px-0 py-2">{{ $promo->valid_from->format('d M Y') }} s/d {{ $promo->valid_until->format('d M Y') }}</td>
+                </tr>
+                <tr>
+                    <td class="text-muted px-0 py-2 border-bottom-0">Status Aktif</td>
+                    <td class="px-0 py-2 border-bottom-0">
+                        @if($promo->isValid())
+                            <span class="badge bg-success">Aktif</span>
+                        @else
+                            <span class="badge bg-secondary">Tidak Aktif</span>
+                        @endif
+                    </td>
+                </tr>
+            </table>
         </div>
     </div>
 
-    <div class="row">
-        <div class="col-md-6">
-            <div class="card mb-4">
-                <div class="card-header bg-light">
-                    <h5 class="mb-0">Informasi Promo</h5>
+    <div class="col-md-6 mb-4">
+        <div class="card-custom h-100 p-4">
+            <h5 class="fw-bold mb-4"><i class="bi bi-bar-chart-fill me-2 text-primary"></i>Kuota & Limit</h5>
+
+            <div class="mb-4">
+                <div class="d-flex justify-content-between mb-1">
+                    <span class="text-muted">Total Penggunaan Sistem</span>
+                    <span class="fw-bold">{{ $promo->usage_count }} / {{ $promo->max_usage ?? '∞' }}</span>
                 </div>
-                <div class="card-body">
-                    <div class="mb-3">
-                        <label class="text-muted small">Kode Promo</label>
-                        <p class="badge bg-primary px-3 py-2 font-monospace">{{ $promo->code }}</p>
-                    </div>
-
-                    <div class="mb-3">
-                        <label class="text-muted small">Tipe & Nilai Diskon</label>
-                        <p>
-                            <strong>
-                                @if($promo->discount_type === 'percentage')
-                                    {{ $promo->discount_value }}%
-                                @else
-                                    Rp {{ number_format($promo->discount_value, 0, ',', '.') }}
-                                @endif
-                            </strong>
-                            <span class="text-muted">({{ $promo->discount_type === 'percentage' ? 'Persentase' : 'Fixed Amount' }})</span>
-                        </p>
-                    </div>
-
-                    <div class="mb-3">
-                        <label class="text-muted small">Berlaku</label>
-                        <p>
-                            {{ $promo->valid_from->format('d M Y') }} hingga {{ $promo->valid_until->format('d M Y') }}
-                        </p>
-                    </div>
-
-                    <div class="mb-3">
-                        <label class="text-muted small">Status</label>
-                        <p>
-                            @if($promo->isValid())
-                                <span class="badge bg-success">Aktif</span>
-                            @else
-                                <span class="badge bg-secondary">Tidak Aktif</span>
-                            @endif
-                        </p>
+                <div class="progress" style="height: 8px;">
+                    <div class="progress-bar {{ $promo->max_usage && $promo->usage_count >= $promo->max_usage ? 'bg-danger' : 'bg-primary' }}"
+                         style="width: {{ $promo->max_usage ? ($promo->usage_count / $promo->max_usage * 100) : 0 }}%">
                     </div>
                 </div>
             </div>
-        </div>
 
-        <div class="col-md-6">
-            <div class="card mb-4">
-                <div class="card-header bg-light">
-                    <h5 class="mb-0">Penggunaan & Limit</h5>
-                </div>
-                <div class="card-body">
-                    <div class="mb-3">
-                        <label class="text-muted small">Total Penggunaan</label>
-                        <div class="progress" style="height: 25px;">
-                            <div class="progress-bar {{ $promo->max_usage && $promo->usage_count >= $promo->max_usage ? 'bg-danger' : 'bg-success' }}"
-                                role="progressbar"
-                                style="width: {{ $promo->max_usage ? ($promo->usage_count / $promo->max_usage * 100) : 0 }}%"
-                                aria-valuenow="{{ $promo->usage_count }}"
-                                aria-valuemin="0"
-                                aria-valuemax="{{ $promo->max_usage ?? 100 }}">
-                                {{ $promo->usage_count }} / {{ $promo->max_usage ?? '∞' }}
-                            </div>
-                        </div>
-                    </div>
-
-                    <div class="mb-3">
-                        <label class="text-muted small">Max Usage Total</label>
-                        <p>
-                            <strong>{{ $promo->max_usage ?? 'Unlimited' }}</strong>
-                            <small class="text-muted">(Total berapa kali promo bisa digunakan)</small>
-                        </p>
-                    </div>
-
-                    <div class="mb-3">
-                        <label class="text-muted small">Max Usage Per Customer</label>
-                        <p>
-                            <strong>{{ $promo->max_usage_per_customer }}</strong>
-                            <small class="text-muted">(Max per customer)</small>
-                        </p>
-                    </div>
-                </div>
-            </div>
+            <table class="table table-borderless mb-0">
+                <tr>
+                    <td class="text-muted px-0 py-2 w-75">Batas Pakai Per Akun User</td>
+                    <td class="fw-bold px-0 py-2 text-end">{{ $promo->max_usage_per_customer }}x</td>
+                </tr>
+                <tr>
+                    <td class="text-muted px-0 py-2 w-75">Maksimal Total Penggunaan</td>
+                    <td class="fw-bold px-0 py-2 text-end">{{ $promo->max_usage ?? 'Tidak Terbatas' }}</td>
+                </tr>
+            </table>
         </div>
     </div>
-
-    @if($promo->usages->count() > 0)
-        <div class="card">
-            <div class="card-header bg-light">
-                <h5 class="mb-0">Riwayat Penggunaan ({{ $promo->usages->count() }} customer)</h5>
-            </div>
-            <div class="table-responsive">
-                <table class="table table-hover mb-0">
-                    <thead class="table-light">
-                        <tr>
-                            <th>Customer</th>
-                            <th>Email</th>
-                            <th>Penggunaan</th>
-                            <th>Booking ID</th>
-                            <th>Tanggal</th>
-                        </tr>
-                    </thead>
-                    <tbody>
-                        @foreach($promo->usages as $usage)
-                            <tr>
-                                <td>{{ $usage->user?->name ?? '-' }}</td>
-                                <td>{{ $usage->user?->email ?? '-' }}</td>
-                                <td>{{ $usage->usage_count }}x</td>
-                                <td>
-                                    @if($usage->booking_id)
-                                        <a href="#" class="text-primary">{{ $usage->booking_id }}</a>
-                                    @else
-                                        <span class="text-muted">-</span>
-                                    @endif
-                                </td>
-                                <td>{{ $usage->updated_at->format('d M Y H:i') }}</td>
-                            </tr>
-                        @endforeach
-                    </tbody>
-                </table>
-            </div>
-        </div>
-    @else
-        <div class="alert alert-info">
-            Promo ini belum pernah digunakan oleh customer manapun.
-        </div>
-    @endif
 </div>
 @endsection
