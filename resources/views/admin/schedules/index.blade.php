@@ -33,7 +33,7 @@
                 <tr>
                     <td class="px-4 py-3">
                         <div class="d-flex align-items-center">
-                            <img src="{{ $schedule->film->cover_url }}" class="rounded me-3" style="width: 35px; height: 50px; object-fit: cover;">
+                            <img src="{{ $schedule->film->cover_url }}" class="rounded me-3" style="width: 35px; height: 50px; object-fit: fill;">
                             <span class="fw-bold">{{ $schedule->film->title }}</span>
                         </div>
                     </td>

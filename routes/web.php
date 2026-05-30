@@ -11,6 +11,7 @@ use App\Http\Controllers\Admin\ScheduleController;
 use App\Http\Controllers\Admin\BookingManagementController;
 use App\Http\Controllers\Admin\CustomerController;
 use App\Http\Controllers\Admin\TicketManagementController;
+use App\Http\Controllers\Admin\ReportController;
 use App\Http\Controllers\Auth\GoogleController;
 use App\Http\Controllers\FilmController;
 use Illuminate\Support\Facades\Route;
@@ -66,6 +67,9 @@ Route::middleware('auth')->group(function () {
     Route::get('admin/customers', [CustomerController::class, 'index'])->name('admin.customers.index');
     Route::get('admin/tickets', [TicketManagementController::class, 'index'])->name('admin.tickets.index');
     Route::post('admin/tickets/scan', [TicketManagementController::class, 'scan'])->name('admin.tickets.scan');
+    Route::get('admin/reports', [ReportController::class, 'index'])->name('admin.reports.index');
+    Route::get('admin/reports/export', [ReportController::class, 'export'])->name('admin.reports.export');
+
     Route::get('/customer', [HomeController::class, 'index'])->name('customer.dashboard');
 
     Route::get('/films/filter-now-playing', [FilmController::class, 'filterNowPlaying'])->name('films.filter');
@@ -81,7 +85,7 @@ Route::middleware('auth')->group(function () {
     Route::patch('/profile', [ProfileController::class, 'update'])->name('profile.update');
     Route::delete('/profile', [ProfileController::class, 'destroy'])->name('profile.destroy');
 
-    // Booking — hanya member terdaftar
+    // Booking — hanya member terdaftar (pilih kursi & bayar ada di route publik di atas)
     Route::prefix('booking')->name('booking.')->group(function () {
         Route::get('confirmation/{booking}', [BookingController::class, 'confirmation'])->name('confirmation');
         Route::get('history', [BookingController::class, 'history'])->name('history');

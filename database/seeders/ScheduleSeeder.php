@@ -17,6 +17,9 @@ class ScheduleSeeder extends Seeder
 
         $films = Film::all();
         $studios = Studio::all();
+        $studioA = $studios->first();
+        $studioB = $studios->skip(1)->first();
+        $studioC = $studios->skip(2)->first();
 
         if ($films->isEmpty() || $studios->isEmpty()) {
             return;

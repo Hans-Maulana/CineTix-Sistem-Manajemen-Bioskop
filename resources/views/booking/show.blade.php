@@ -53,20 +53,23 @@
 
                     <hr>
 
-                    <div class="cinema-screen bg-dark text-white text-center py-2 mb-5 rounded shadow-sm">
-                        <small>LAYAR BIOSKOP</small>
+                    <div class="cinema-screen mb-5">
+                        LAYAR BIOSKOP
                     </div>
 
                     <div class="seat-map d-flex flex-column gap-2 align-items-center mb-4" id="seatsContainer">
                         @if($schedule->studio->seat_layout)
-                            @foreach($schedule->studio->seat_layout as $rowIndex => $row)
+                            @foreach(array_reverse($schedule->studio->seat_layout, true) as $rowIndex => $row)
+                                @php
+                                    $seatCounter = 1;
+                                @endphp
                                 <div class="d-flex gap-2 align-items-center">
                                     <div class="row-label fw-bold text-muted me-2" style="width: 20px;">{{ chr(65 + $rowIndex) }}</div>
 
                                     @foreach($row as $colIndex => $isSeat)
                                         @if($isSeat == 1)
                                             @php
-                                                $seatCode = chr(65 + $rowIndex) . ($colIndex + 1);
+                                                $seatCode = chr(65 + $rowIndex) . $seatCounter;
                                                 $seat = $seatsByCode->get($seatCode);
                                                 $isBooked = $seat && in_array($seat->id, $bookedSeatIds);
                                             @endphp
@@ -78,11 +81,14 @@
                                                         data-seat-code="{{ $seatCode }}"
                                                         onclick="toggleSeat({{ $seat->id }}, '{{ $seatCode }}', '{{ $isBooked ? 'booked' : 'available' }}')"
                                                         {{ $isBooked ? 'disabled' : '' }}>
-                                                    {{ $colIndex + 1 }}
+                                                    {{ $seatCounter }}
                                                 </button>
                                             @else
                                                 <div class="seat-placeholder bg-danger opacity-25 rounded" style="width: 28px; height: 28px;" title="Seat Missing from DB"></div>
                                             @endif
+                                            @php
+                                                $seatCounter++;
+                                            @endphp
                                         @else
                                             <div class="empty-space" style="width: 28px;"></div>
                                         @endif
@@ -537,6 +543,33 @@
 </script>
 
 <style>
+    .cinema-screen {
+        position: relative;
+        height: 48px;
+        background: linear-gradient(180deg, #1e293b 0%, #0f172a 100%);
+        border-bottom: 5px solid #3b82f6;
+        border-radius: 0 0 50% 50% / 0 0 24px 24px;
+        box-shadow: 0 14px 28px rgba(59, 130, 246, 0.25);
+        display: flex;
+        align-items: center;
+        justify-content: center;
+        color: #e2e8f0;
+        font-weight: 800;
+        font-size: 0.85rem;
+        letter-spacing: 0.2em;
+        text-transform: uppercase;
+        overflow: hidden;
+    }
+    .cinema-screen::after {
+        content: '';
+        position: absolute;
+        bottom: -25px;
+        left: 15%;
+        right: 15%;
+        height: 25px;
+        background: radial-gradient(ellipse at center, rgba(59, 130, 246, 0.25) 0%, rgba(59, 130, 246, 0) 70%);
+        pointer-events: none;
+    }
     .seat-row {
         display: flex;
         justify-content: center;

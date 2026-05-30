@@ -28,10 +28,9 @@ class FilmController extends Controller
             'title' => 'required|string|max:255',
             'synopsis' => 'required',
             'duration' => 'required|integer',
-            'rating' => 'required|numeric',
             'director' => 'required|string',
             'release_date' => 'required|date',
-            'cover' => 'nullable|image|mimes:jpeg,png,jpg,gif|max:2048',
+            'cover' => 'nullable|image|mimes:jpeg,png,jpg,gif,webp,avif|max:2048',
             'genres' => 'required|array',
         ]);
 
@@ -43,6 +42,8 @@ class FilmController extends Controller
             $file->storeAs('public/cover', $filename);
             $data['cover'] = $filename;
         }
+
+        $data['rating'] = 0; // Default rating for new films
 
         $film = Film::create($data);
         $film->genres()->sync($request->genres);
@@ -63,10 +64,9 @@ class FilmController extends Controller
             'title' => 'required|string|max:255',
             'synopsis' => 'required',
             'duration' => 'required|integer',
-            'rating' => 'required|numeric',
             'director' => 'required|string',
             'release_date' => 'required|date',
-            'cover' => 'nullable|image|mimes:jpeg,png,jpg,gif|max:2048',
+            'cover' => 'nullable|image|mimes:jpeg,png,jpg,gif,webp,avif|max:2048',
             'genres' => 'required|array',
         ]);
 

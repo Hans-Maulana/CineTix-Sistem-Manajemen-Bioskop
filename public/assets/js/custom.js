@@ -17,11 +17,43 @@ $(function () {
         center: true,
         loop: true,
         margin: 30,
-        nav: false,
+        nav: true,
+        navText: [
+            "<button class='btn btn-primary rounded-circle p-2 hstack justify-content-center shadow-sm'><iconify-icon icon='lucide:chevron-left' class='fs-6'></iconify-icon></button>",
+            "<button class='btn btn-primary rounded-circle p-2 hstack justify-content-center shadow-sm'><iconify-icon icon='lucide:chevron-right' class='fs-6'></iconify-icon></button>"
+        ],
         dots: false,
         autoplay: true,
         autoplayTimeout: 5000,
         autoplayHoverPause: false,
+        responsive: {
+            0: {
+                items: 1
+            },
+            600: {
+                items: 2
+            },
+            1000: {
+                items: 3
+            },
+            1200: {
+                items: 4
+            }
+        }
+    })
+
+    // Coming Soon Owl Carousel
+    $('.coming-soon-slider .owl-carousel').owlCarousel({
+        center: false,
+        loop: false,
+        margin: 30,
+        nav: true,
+        navText: [
+            "<button class='btn btn-primary rounded-circle p-2 hstack justify-content-center shadow-sm'><iconify-icon icon='lucide:chevron-left' class='fs-6'></iconify-icon></button>",
+            "<button class='btn btn-primary rounded-circle p-2 hstack justify-content-center shadow-sm'><iconify-icon icon='lucide:chevron-right' class='fs-6'></iconify-icon></button>"
+        ],
+        dots: false,
+        autoplay: false,
         responsive: {
             0: {
                 items: 1

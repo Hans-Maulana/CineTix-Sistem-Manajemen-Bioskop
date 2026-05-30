@@ -5,10 +5,10 @@
   <meta charset="utf-8">
   <meta name="viewport" content="width=device-width, initial-scale=1">
   <title>CineTix</title>
-  <link rel="shortcut icon" type="image/png" href="{{asset("assets/images/logos/favicon.svg")}}" />
-  <link rel="stylesheet" href="{{asset("assets/libs/owl.carousel/dist/assets/owl.carousel.min.css")}}">
-  <link rel="stylesheet" href="{{asset("assets/libs/aos-master/dist/aos.css")}}">
-  <link rel="stylesheet" href="{{asset("assets/css/styles.css")}}" />
+  <link rel="shortcut icon" type="image/png" href="{{asset('assets/images/logos/favicon.svg')}}" />
+  <link rel="stylesheet" href="{{asset('assets/libs/owl.carousel/dist/assets/owl.carousel.min.css')}}">
+  <link rel="stylesheet" href="{{asset('assets/libs/aos-master/dist/aos.css')}}">
+  <link rel="stylesheet" href="{{asset('assets/css/styles.css')}}" />
   <style>
     .header {
       background: #1A1953 !important;
@@ -242,13 +242,12 @@
 
 <body>
 
-  <!-- Header -->
   <header class="header border-4 border-primary border-top position-fixed start-0 top-0 w-100">
     <div class="container">
       <div class="header-wrapper d-flex align-items-center justify-content-between">
         <div class="logo">
           <a href="{{ route('landing-page') }}">
-            <img src="{{asset("assets/images/logos/logo-white.svg")}}" alt="logo" class="img-fluid"
+            <img src="{{asset('assets/images/logos/logo-white.svg')}}" alt="logo" class="img-fluid"
               style="max-height: 40px;">
           </a>
         </div>
@@ -340,10 +339,8 @@
     </div>
   </header>
 
-  <!--  Page Wrapper -->
   <div class="page-wrapper overflow-hidden">
 
-    <!--  Banner Section -->
     <section class="banner-section position-relative d-flex align-items-end min-vh-100">
       <div class="banner-video-container">
         <iframe class="banner-video-iframe" 
@@ -377,7 +374,6 @@
       </div>
     </section>
 
-    <!--  Sedang Tayang Section -->
     <section class="featured-projects py-4 py-lg-8 py-xl-10 bg-light-gray">
       <div class="d-flex flex-column gap-5 gap-xl-11">
         <div class="container">
@@ -404,6 +400,27 @@
               </div>
             </div>
           </div>
+
+          <div class="row mt-4 mb-4">
+            <div class="col-12 d-flex gap-3 justify-content-start flex-wrap">
+              <select id="filter-genre" class="form-select w-auto shadow-sm border-secondary text-dark fw-semibold">
+                <option value="">Semua Genre</option>
+                <option value="Action">Action</option>
+                <option value="Comedy">Comedy</option>
+                <option value="Drama">Drama</option>
+                <option value="Horror">Horror</option>
+                <option value="Romance">Romance</option>
+              </select>
+
+              <select id="filter-classification" class="form-select w-auto shadow-sm border-secondary text-dark fw-semibold">
+                <option value="">Semua Rating Umur</option>
+                <option value="SU">SU</option>
+                <option value="13+">13+</option>
+                <option value="17+">17+</option>
+              </select>
+            </div>
+          </div>
+
         </div>
         <div class="featured-projects-slider px-3">
           <div class="owl-carousel owl-theme">
@@ -442,9 +459,6 @@
       </div>
     </section>
 
-
-
-    <!--  Segera Tayang Section -->
     <section class="meet-our-team py-4 py-lg-8 py-xl-10">
       <div class="container">
         <div class="d-flex flex-column gap-5 gap-xl-11">
@@ -502,8 +516,6 @@
       </div>
     </section>
 
-
-
   </div>
 
   <footer class="footer bg-dark py-4 py-lg-8 py-xl-10">
@@ -559,13 +571,53 @@
   </div>
 
 
-  <script src="{{asset("assets/libs/jquery/dist/jquery.min.js")}}"></script>
-  <script src="{{asset("assets/libs/bootstrap/dist/js/bootstrap.bundle.min.js")}}"></script>
-  <script src="{{asset("assets/libs/owl.carousel/dist/owl.carousel.min.js")}}"></script>
-  <script src="{{asset("assets/libs/aos-master/dist/aos.js")}}"></script>
-  <script src="{{asset("assets/js/custom.js")}}"></script>
-  <!-- solar icons -->
+  <script src="{{asset('assets/libs/jquery/dist/jquery.min.js')}}"></script>
+  <script src="{{asset('assets/libs/bootstrap/dist/js/bootstrap.bundle.min.js')}}"></script>
+  <script src="{{asset('assets/libs/owl.carousel/dist/owl.carousel.min.js')}}"></script>
+  <script src="{{asset('assets/libs/aos-master/dist/aos.js')}}"></script>
+  <script src="{{asset('assets/js/custom.js')}}"></script>
   <script src="https://cdn.jsdelivr.net/npm/iconify-icon@1.0.8/dist/iconify-icon.min.js"></script>
+
+  <script>
+    $(document).ready(function() {
+      // Encapsulation: Mengisolasi logika request filter ke dalam fungsi mandiri
+      function fetchFilteredFilms() {
+        let genre = $('#filter-genre').val();
+        let classification = $('#filter-classification').val();
+        let $carousel = $('#owl-now-playing');
+
+        $.ajax({
+          url: "{{ route('films.filter') }}",
+          type: "GET",
+          data: { genre: genre, classification: classification },
+          beforeSend: function() {
+            $carousel.css('opacity', '0.5'); 
+          },
+          success: function(data) {
+            $carousel.css('opacity', '1');
+
+            // State Reset: Menghancurkan instance Owl Carousel lama agar DOM HTML baru tidak mengalami freeze/bug
+            $carousel.trigger('destroy.owl.carousel');
+            $carousel.find('.owl-stage-outer').children().unwrap();
+            $carousel.removeClass('owl-loaded');
+
+            $carousel.html(data);
+
+            // Re-initialization: Menyalakan kembali plugin slider carousel dengan data baru
+            $carousel.owlCarousel({
+              loop: false, margin: 20, nav: false, dots: true,
+              responsive: { 0: { items: 1 }, 576: { items: 2 }, 992: { items: 3 }, 1200: { items: 4 } }
+            });
+          }
+        });
+      }
+
+      // Event Binding: Mengikat event listener 'change' pada elemen dropdown ke fungsi AJAX
+      $('#filter-genre, #filter-classification').on('change', function() {
+        fetchFilteredFilms();
+      });
+    });
+  </script>
 </body>
 
 </html>

@@ -33,6 +33,21 @@ class ScheduleController extends Controller
             'ticket_price' => 'required|decimal:0,2|min:0',
         ]);
 
+        $startTime = \Carbon\Carbon::parse($validated['start_time'])->format('H:i:s');
+        $endTime = \Carbon\Carbon::parse($validated['end_time'])->format('H:i:s');
+
+        $overlap = Schedule::where('studio_id', $validated['studio_id'])
+            ->where('schedule_date', $validated['schedule_date'])
+            ->where(function ($q) use ($startTime, $endTime) {
+                $q->where('start_time', '<', $endTime)
+                  ->where('end_time', '>', $startTime);
+            })
+            ->exists();
+
+        if ($overlap) {
+            return back()->with('error', 'Jadwal bentrok! Studio ini sudah memiliki film lain pada waktu tersebut.')->withInput();
+        }
+
         Schedule::create($validated);
 
         return redirect()->route('schedules.index')->with('success', 'Jadwal berhasil ditambahkan');
@@ -61,6 +76,22 @@ class ScheduleController extends Controller
             'end_time' => 'required|date_format:H:i|after:start_time',
             'ticket_price' => 'required|decimal:0,2|min:0',
         ]);
+
+        $startTime = \Carbon\Carbon::parse($validated['start_time'])->format('H:i:s');
+        $endTime = \Carbon\Carbon::parse($validated['end_time'])->format('H:i:s');
+
+        $overlap = Schedule::where('studio_id', $validated['studio_id'])
+            ->where('schedule_date', $validated['schedule_date'])
+            ->where('id', '!=', $schedule->id)
+            ->where(function ($q) use ($startTime, $endTime) {
+                $q->where('start_time', '<', $endTime)
+                  ->where('end_time', '>', $startTime);
+            })
+            ->exists();
+
+        if ($overlap) {
+            return back()->with('error', 'Jadwal bentrok! Studio ini sudah memiliki film lain pada waktu tersebut.')->withInput();
+        }
 
         $schedule->update($validated);
 

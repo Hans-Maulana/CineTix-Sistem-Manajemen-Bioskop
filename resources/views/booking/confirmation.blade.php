@@ -15,7 +15,13 @@
 
             {{-- Ticket Cards List --}}
             <div class="d-flex flex-column gap-4 mb-5">
-                @foreach($booking->ticketBookings as $ticket)
+                @if($booking->ticketBookings->isNotEmpty())
+                    @php
+                        $firstTicket = $booking->ticketBookings->first();
+                        $seatCodes = $booking->ticketBookings->map(function($tb) {
+                            return $tb->seat->seat_code;
+                        })->implode(', ');
+                    @endphp
                     <div class="card border-0 shadow-lg rounded-4 overflow-hidden ticket-item" data-aos="zoom-in">
                         <div class="card-header border-0 py-2 px-4" style="background: #1A1953 !important;">
                             <div class="d-flex justify-content-between align-items-center text-white">
@@ -30,22 +36,22 @@
                             <div class="row g-0">
                                 {{-- Left Side: Film Poster --}}
                                 <div class="col-md-3">
-                                    <img src="{{ $ticket->schedule->film->cover_url }}" 
-                                         alt="{{ $ticket->schedule->film->title }}" 
-                                         class="img-fluid h-100 object-fit-cover" 
+                                    <img src="{{ $firstTicket->schedule->film->cover_url }}" 
+                                         alt="{{ $firstTicket->schedule->film->title }}" 
+                                         class="img-fluid h-100 object-fit-fill" 
                                          style="min-height: 180px;">
                                 </div>
 
                                 {{-- Middle Side: Details --}}
                                 <div class="col-md-6 p-4 bg-white border-end border-dashed">
-                                    <h5 class="fw-bold text-dark mb-1">{{ $ticket->schedule->film->title }}</h5>
+                                    <h5 class="fw-bold text-dark mb-1">{{ $firstTicket->schedule->film->title }}</h5>
                                     <div class="mb-3">
-                                        <span class="badge bg-secondary rounded-pill px-3">{{ $ticket->schedule->studio->name }}</span>
-                                        <span class="badge bg-warning text-dark rounded-pill px-3">Kursi: {{ $ticket->seat->seat_code }}</span>
+                                        <span class="badge bg-secondary rounded-pill px-3">{{ $firstTicket->schedule->studio->name }}</span>
+                                        <span class="badge bg-warning text-dark rounded-pill px-3">Kursi: {{ $seatCodes }}</span>
                                     </div>
                                     <div class="d-flex flex-column gap-1 text-muted small">
-                                        <span><iconify-icon icon="lucide:calendar" class="me-1"></iconify-icon> {{ $ticket->schedule->schedule_date->format('d M Y') }}</span>
-                                        <span><iconify-icon icon="lucide:clock" class="me-1"></iconify-icon> {{ $ticket->schedule->start_time->format('H:i') }} - {{ $ticket->schedule->end_time->format('H:i') }}</span>
+                                        <span><iconify-icon icon="lucide:calendar" class="me-1"></iconify-icon> {{ $firstTicket->schedule->schedule_date->format('d M Y') }}</span>
+                                        <span><iconify-icon icon="lucide:clock" class="me-1"></iconify-icon> {{ $firstTicket->schedule->start_time->format('H:i') }} - {{ $firstTicket->schedule->end_time->format('H:i') }}</span>
                                     </div>
                                 </div>
 
@@ -63,14 +69,11 @@
                         <div class="ticket-cutout left" style="left: 25%;"></div>
                         <div class="ticket-cutout right" style="right: 25%;"></div>
                     </div>
-                @endforeach
+                @endif
             </div>
 
             {{-- Actions --}}
             <div class="d-flex flex-column gap-3 mb-5">
-                <a href="{{ route('booking.tickets') }}" class="btn btn-primary btn-lg w-100 py-3 text-white fw-bold rounded-4 shadow-sm" style="background: #1A1953 !important; border: none;">
-                    Simpan E-Tiket Saya
-                </a>
                 <a href="{{ route('landing-page') }}" class="btn btn-outline-secondary btn-lg w-100 py-3 text-white fw-bold rounded-4">
                     Kembali ke Beranda
                 </a>

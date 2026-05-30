@@ -144,6 +144,21 @@
                         </div>
                     </div>
                 @elseif($film->schedules->isNotEmpty())
+                    {{-- Day Filter Tabs --}}
+                    @php
+                        $scheduleDates = $film->schedules->pluck('schedule_date')->unique()->sort()->values();
+                        $firstDateStr = $scheduleDates->first() ? $scheduleDates->first()->format('Y-m-d') : null;
+                    @endphp
+                    <div class="d-flex flex-wrap gap-2 mb-4 schedule-day-tabs">
+                        @foreach($scheduleDates as $index => $date)
+                            <button class="btn btn-sm rounded-pill px-4 py-2 fw-bold day-tab {{ $index === 0 ? 'active' : '' }}" 
+                                    data-date="{{ $date->format('Y-m-d') }}" 
+                                    style="{{ $index === 0 ? 'background: #1A1953; color: #fff;' : 'background: transparent; color: #1A1953;' }} border: 2px solid #1A1953; transition: all 0.2s;">
+                                {{ $date->translatedFormat('l, d M') }}
+                            </button>
+                        @endforeach
+                    </div>
+
                     <div class="card border-0 shadow-sm rounded-4 overflow-hidden">
                         <div class="table-responsive">
                             <table class="table table-hover align-middle mb-0">
@@ -160,7 +175,9 @@
                             </thead>
                                 <tbody>
                                     @foreach($film->schedules as $schedule)
-                                                                <tr>
+                                                                <tr class="schedule-row" 
+                                                                    data-schedule-date="{{ $schedule->schedule_date->format('Y-m-d') }}"
+                                                                    style="{{ $schedule->schedule_date->format('Y-m-d') === $firstDateStr ? '' : 'display: none;' }}">
                                                                     <td class="ps-4 fw-medium" style="color: #1a1a1a !important;">{{ $schedule->schedule_date->format('d M Y') }}</td>
                                                                     <td>
                                                                         <span class="fw-bold text-dark" style="color: #1a1a1a !important;">{{ $schedule->studio->name }}</span>
@@ -170,7 +187,8 @@
                                                                     <td class="text-center">
                                                                         @php
                                                                             $statusClass = match ($schedule->status) {
-                                                                                'on schedule' => 'bg-info',
+                                                                                'on schedule', 'active' => 'bg-info',
+                                                                                'now playing' => 'bg-warning',
                                                                                 'complete' => 'bg-success',
                                                                                 'canceled' => 'bg-danger',
                                                                                 default => 'bg-secondary'
@@ -199,14 +217,14 @@
                                                                     <td class="fw-bold text-primary" style="color: var(--bs-primary) !important;">Rp
                                                                         {{ number_format($schedule->ticket_price, 0, ',', '.') }}</td>
                                                                     <td class="pe-4 text-end">
-                                                                        @if($schedule->available_seats > 0 && $schedule->status === 'on schedule')
+                                                                        @if($schedule->available_seats > 0 && in_array($schedule->status, ['on schedule', 'active']))
                                                                             <a href="{{ route('booking.show', $schedule) }}"
                                                                                 class="btn btn-primary rounded-pill px-7 text-white fw-bold shadow-sm">
                                                                                 Pilih Kursi
                                                                             </a>
                                                                         @else
                                                                             <button class="btn btn-secondary rounded-pill px-4" disabled>
-                                                                                {{ $schedule->status === 'canceled' ? 'Batal' : ($schedule->status === 'complete' ? 'Selesai' : 'Habis') }}
+                                                                                {{ $schedule->status === 'canceled' ? 'Batal' : ($schedule->status === 'complete' ? 'Selesai' : ($schedule->status === 'now playing' ? 'Sedang Tayang' : 'Habis')) }}
                                                                             </button>
                                                                         @endif
                                                                     </td>
@@ -310,5 +328,50 @@
             line-height: 1;
             vertical-align: middle;
         }
+
+        .day-tab {
+            font-size: 0.8rem;
+        }
+        .day-tab:hover {
+            background: #1A1953 !important;
+            color: #fff !important;
+        }
+        .day-tab.active {
+            background: #1A1953 !important;
+            color: #fff !important;
+        }
     </style>
+
+    @push('scripts')
+    <script>
+        document.addEventListener('DOMContentLoaded', function() {
+            const tabs = document.querySelectorAll('.day-tab');
+            const rows = document.querySelectorAll('.schedule-row');
+
+            tabs.forEach(tab => {
+                tab.addEventListener('click', function() {
+                    // Update active tab
+                    tabs.forEach(t => {
+                        t.classList.remove('active');
+                        t.style.background = 'transparent';
+                        t.style.color = '#1A1953';
+                    });
+                    this.classList.add('active');
+                    this.style.background = '#1A1953';
+                    this.style.color = '#fff';
+
+                    const selectedDate = this.getAttribute('data-date');
+
+                    rows.forEach(row => {
+                        if (row.getAttribute('data-schedule-date') === selectedDate) {
+                            row.style.display = '';
+                        } else {
+                            row.style.display = 'none';
+                        }
+                    });
+                });
+            });
+        });
+    </script>
+    @endpush
 @endsection

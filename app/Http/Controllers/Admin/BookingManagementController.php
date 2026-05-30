@@ -10,7 +10,7 @@ class BookingManagementController extends Controller
 {
     public function index()
     {
-        $bookings = Booking::with(['user', 'payments', 'ticketBookings.schedule.film'])
+        $bookings = Booking::with(['user', 'payments', 'ticketBookings.schedule.film', 'ticketBookings.schedule.studio', 'ticketBookings.seat'])
             ->latest()
             ->paginate(15);
         return view('admin.bookings.index', compact('bookings'));

@@ -20,6 +20,7 @@ class DatabaseSeeder extends Seeder
             ScheduleSeeder::class,
             SeatSeeder::class,
             BundlingSeeder::class,
+            BookingSeeder::class,
             ReviewSeeder::class,
             GenreFilmSeeder::class,
         ]);
