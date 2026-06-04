@@ -12,97 +12,77 @@ class ScheduleSeeder extends Seeder
 {
     public function run(): void
     {
-        $avengers = Film::where('title', 'Avengers: Endgame')->first();
-        $inception = Film::where('title', 'Inception')->first();
-        $theDarkKnight = Film::where('title', 'The Dark Knight')->first();
-        $interstellar = Film::where('title', 'Interstellar')->first();
-        $spiderman = Film::where('title', 'Spider-Man: No Way Home')->first();
+        // Hapus jadwal tayang lama agar tidak bentrok
+        Schedule::query()->delete();
 
+        $films = Film::all();
         $studios = Studio::all();
         $studioA = $studios->first();
         $studioB = $studios->skip(1)->first();
         $studioC = $studios->skip(2)->first();
 
-        $schedules = [
-            // Studio A Schedules
-            [
-                'film_id' => $avengers->id,
-                'studio_id' => $studioA->id,
-                'schedule_date' => Carbon::now()->subDays(2),
-                'start_time' => '13:00',
-                'end_time' => '16:01',
-                'ticket_price' => 50000,
-                'status' => 'complete',
-            ],
-            [
-                'film_id' => $avengers->id,
-                'studio_id' => $studioA->id,
-                'schedule_date' => Carbon::now(),
-                'start_time' => '18:00',
-                'end_time' => '21:01',
-                'ticket_price' => 55000,
-                'status' => 'on schedule',
-            ],
+        if ($films->isEmpty() || $studios->isEmpty()) {
+            return;
+        }
 
-            // Studio B Schedules
-            [
-                'film_id' => $inception->id,
-                'studio_id' => $studioB->id,
-                'schedule_date' => Carbon::now()->subDays(1),
-                'start_time' => '14:00',
-                'end_time' => '16:28',
-                'ticket_price' => 50000,
-                'status' => 'complete',
-            ],
-            [
-                'film_id' => $inception->id,
-                'studio_id' => $studioB->id,
-                'schedule_date' => Carbon::now()->addDays(1),
-                'start_time' => '13:00',
-                'end_time' => '15:28',
-                'ticket_price' => 50000,
-                'status' => 'on schedule',
-            ],
+        $schedules = [];
 
-            // Studio C Schedules
-            [
-                'film_id' => $interstellar->id,
-                'studio_id' => $studioC->id,
-                'schedule_date' => Carbon::now()->subDays(3),
-                'start_time' => '10:00',
-                'end_time' => '12:49',
-                'ticket_price' => 60000,
-                'status' => 'complete',
-            ],
-            [
-                'film_id' => $interstellar->id,
-                'studio_id' => $studioC->id,
-                'schedule_date' => Carbon::now(),
-                'start_time' => '14:00',
-                'end_time' => '16:49',
-                'ticket_price' => 60000,
-                'status' => 'on schedule',
-            ],
-            [
-                'film_id' => $spiderman->id,
-                'studio_id' => $studioC->id,
-                'schedule_date' => Carbon::now(),
-                'start_time' => '20:00',
-                'end_time' => '22:28',
-                'ticket_price' => 60000,
-                'status' => 'on schedule',
-            ],
+        // Tanggal penayangan di bulan Juli 2026 dan Agustus 2026
+        $julyDates = [
+            '2026-07-05',
+            '2026-07-15',
+            '2026-07-25',
         ];
 
+        $augustDates = [
+            '2026-08-05',
+            '2026-08-15',
+            '2026-08-25',
+        ];
+
+        $startTimes = ['10:00', '13:30', '16:30', '19:30'];
+
+        foreach ($films as $filmIndex => $film) {
+            // Distribusikan studio berdasarkan index film
+            $studio = $studios->get($filmIndex % $studios->count());
+
+            // 3 jadwal tayang di bulan Juli
+            foreach ($julyDates as $dayIndex => $dateStr) {
+                $startTimeStr = $startTimes[($filmIndex + $dayIndex) % count($startTimes)];
+                $startTime = Carbon::parse("$dateStr $startTimeStr");
+                $endTime = (clone $startTime)->addMinutes($film->duration);
+
+                $schedules[] = [
+                    'film_id' => $film->id,
+                    'studio_id' => $studio->id,
+                    'schedule_date' => $dateStr,
+                    'start_time' => $startTime->format('H:i:s'),
+                    'end_time' => $endTime->format('H:i:s'),
+                    'ticket_price' => 50000 + (($filmIndex % 3) * 10000), // bervariasi 50rb, 60rb, 70rb
+                    'status' => 'on schedule',
+                ];
+            }
+
+            // 3 jadwal tayang di bulan Agustus
+            foreach ($augustDates as $dayIndex => $dateStr) {
+                $startTimeStr = $startTimes[($filmIndex + $dayIndex + 2) % count($startTimes)];
+                $startTime = Carbon::parse("$dateStr $startTimeStr");
+                $endTime = (clone $startTime)->addMinutes($film->duration);
+
+                $schedules[] = [
+                    'film_id' => $film->id,
+                    'studio_id' => $studio->id,
+                    'schedule_date' => $dateStr,
+                    'start_time' => $startTime->format('H:i:s'),
+                    'end_time' => $endTime->format('H:i:s'),
+                    'ticket_price' => 55000 + (($filmIndex % 3) * 10000), // bervariasi 55rb, 65rb, 75rb
+                    'status' => 'on schedule',
+                ];
+            }
+        }
+
         foreach ($schedules as $schedule) {
-            Schedule::updateOrCreate(
-                [
-                    'studio_id' => $schedule['studio_id'],
-                    'schedule_date' => $schedule['schedule_date']->format('Y-m-d'),
-                    'start_time' => $schedule['start_time']
-                ],
-                $schedule
-            );
+            Schedule::create($schedule);
         }
     }
 }

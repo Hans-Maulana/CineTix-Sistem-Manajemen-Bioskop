@@ -7,7 +7,7 @@
     <title>@yield('title') - CineTix Admin</title>
 
     <link rel="shortcut icon" type="image/png" href="{{ asset('assets/images/logos/favicon.svg') }}" />
-    <link rel="stylesheet" href="{{ asset('assets/libs/bootstrap/dist/css/bootstrap.min.css') }}">
+    <link href="https://cdn.jsdelivr.net/npm/bootstrap@5.3.2/dist/css/bootstrap.min.css" rel="stylesheet">
     <link rel="stylesheet" href="https://cdn.jsdelivr.net/npm/bootstrap-icons@1.11.1/font/bootstrap-icons.css">
     <script src="https://cdn.jsdelivr.net/npm/chart.js"></script>
 
@@ -15,13 +15,24 @@
         :root {
             --primary-color: #1A1953;
             --accent-color: #d4b06a;
-            --bg-light: #f4f7f6;
+            --bg-light: #f5f7fb;
+            --card-bg: #fafafb;
+            --text-color: #384252;
         }
 
         body {
             background-color: var(--bg-light);
             font-family: 'Inter', sans-serif;
-            color: #333;
+            color: var(--text-color);
+            overflow: auto !important;
+            pointer-events: auto !important;
+        }
+
+        /* Prevent modal backdrop from locking the screen */
+        .modal-backdrop, .offcanvas-backdrop {
+            display: none !important;
+            visibility: hidden !important;
+            pointer-events: none !important;
         }
 
         .topbar {
@@ -39,8 +50,8 @@
         }
 
         .menu-bar {
-            background-color: white;
-            border-bottom: 1px solid #e0e0e0;
+            background-color: #ffffff;
+            border-bottom: 1px solid #e5e9f0;
             padding: 10px 0;
             position: sticky;
             top: 0;
@@ -49,7 +60,7 @@
 
         .menu-link {
             text-decoration: none;
-            color: #555;
+            color: #5d6778;
             font-size: 15px;
             font-weight: 600;
             margin-right: 25px;
@@ -61,7 +72,7 @@
         .menu-link:hover,
         .menu-link.active {
             color: var(--primary-color);
-            background-color: rgba(26, 25, 83, 0.1);
+            background-color: rgba(26, 25, 83, 0.08);
         }
 
         .btn-teal {
@@ -81,23 +92,79 @@
         }
 
         .card-custom {
-            background: white;
-            border-radius: 16px;
-            padding: 25px;
-            box-shadow: 0 4px 20px rgba(0, 0, 0, 0.05);
-            border: none;
+            background: var(--card-bg);
+            border-radius: 20px;
+            padding: 30px;
+            box-shadow: 0 10px 30px rgba(26, 25, 83, 0.03);
+            border: 1px solid rgba(26, 25, 83, 0.06);
         }
 
         .form-control,
         .form-select {
-            border-radius: 10px;
-            padding: 12px;
-            border: 1px solid #e0e0e0;
+            border-radius: 12px;
+            padding: 12px 16px;
+            border: 1px solid #dcdfe6;
+            background-color: #ffffff;
+            color: var(--text-color);
+            transition: all 0.3s ease;
         }
 
-        .form-control:focus {
+        .form-control:focus,
+        .form-select:focus {
             border-color: var(--primary-color);
-            box-shadow: 0 0 0 0.25rem rgba(26, 25, 83, 0.1);
+            background-color: #ffffff;
+            box-shadow: 0 0 0 4px rgba(26, 25, 83, 0.08);
+        }
+
+        /* Modern Genre Tags Styles */
+        .genre-tags-container {
+            display: flex;
+            flex-wrap: wrap;
+            gap: 10px;
+            padding: 15px;
+            background-color: #ffffff;
+            border: 1px solid #dcdfe6;
+            border-radius: 12px;
+            max-height: 220px;
+            overflow-y: auto;
+        }
+
+        .genre-tag-item {
+            position: relative;
+        }
+
+        .genre-checkbox-hidden {
+            position: absolute;
+            opacity: 0;
+            width: 0;
+            height: 0;
+        }
+
+        .genre-tag-label {
+            display: inline-flex;
+            align-items: center;
+            padding: 8px 16px;
+            border-radius: 50px;
+            background-color: #f1f3f9;
+            color: #495057;
+            font-size: 0.85rem;
+            font-weight: 600;
+            cursor: pointer;
+            transition: all 0.2s ease;
+            border: 1px solid #dcdfe6;
+            user-select: none;
+        }
+
+        .genre-checkbox-hidden:checked + .genre-tag-label {
+            background-color: var(--primary-color);
+            color: #ffffff;
+            border-color: var(--primary-color);
+            box-shadow: 0 4px 10px rgba(26, 25, 83, 0.2);
+        }
+
+        .genre-tag-label:hover {
+            transform: translateY(-1px);
+            box-shadow: 0 2px 5px rgba(0, 0, 0, 0.05);
         }
     </style>
     @stack('styles')
@@ -170,8 +237,57 @@
         @yield('content')
     </div>
 
-    <script src="{{ asset('assets/libs/bootstrap/dist/js/bootstrap.bundle.min.js') }}"></script>
+    <script src="https://cdn.jsdelivr.net/npm/bootstrap@5.3.2/dist/js/bootstrap.bundle.min.js"></script>
     @stack('scripts')
+    
+    <script>
+        document.addEventListener("DOMContentLoaded", function() {
+            function clearOverlays() {
+                // Pastikan body dan html dapat di-scroll dan di-klik
+                document.body.style.setProperty('pointer-events', 'auto', 'important');
+                document.body.style.setProperty('overflow', 'auto', 'important');
+                document.documentElement.style.setProperty('pointer-events', 'auto', 'important');
+                document.documentElement.style.setProperty('overflow', 'auto', 'important');
+                
+                // Hapus class modal-open bawaan Bootstrap pada body jika ada
+                document.body.classList.remove('modal-open');
+                document.body.classList.remove('offcanvas-open');
+                
+                // Cari dan hapus semua elemen modal-backdrop atau offcanvas-backdrop
+                const backdrops = document.querySelectorAll('.modal-backdrop, .offcanvas-backdrop');
+                backdrops.forEach(el => el.remove());
+
+                // Cari elemen fixed/absolute liar yang menutupi layar dan matikan pointer-eventsnya
+                const allElements = document.getElementsByTagName('*');
+                for (let el of allElements) {
+                    const style = window.getComputedStyle(el);
+                    if ((style.position === 'fixed' || style.position === 'absolute') && 
+                        el.id !== 'app' && 
+                        el.tagName !== 'BODY' && 
+                        el.tagName !== 'HTML') {
+                        
+                        const zIndex = parseInt(style.zIndex, 10);
+                        const width = el.offsetWidth;
+                        const height = el.offsetHeight;
+                        
+                        // Jika elemen menutupi hampir seluruh layar (width/height > 90%) dan z-index tinggi, sembunyikan
+                        if (width > window.innerWidth * 0.9 && height > window.innerHeight * 0.9 && zIndex > 5) {
+                            el.style.setProperty('display', 'none', 'important');
+                            el.style.setProperty('pointer-events', 'none', 'important');
+                            el.style.setProperty('z-index', '-9999', 'important');
+                        }
+                    }
+                }
+            }
+
+            // Jalankan beberapa kali untuk mengantisipasi load dinamis
+            clearOverlays();
+            setTimeout(clearOverlays, 300);
+            setTimeout(clearOverlays, 800);
+            setTimeout(clearOverlays, 1500);
+            setInterval(clearOverlays, 2500);
+        });
+    </script>
 </body>
 
 </html>

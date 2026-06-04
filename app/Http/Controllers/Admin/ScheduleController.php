@@ -7,6 +7,7 @@ use App\Models\Schedule;
 use App\Models\Film;
 use App\Models\Studio;
 use Illuminate\Http\Request;
+use Carbon\Carbon; 
 
 class ScheduleController extends Controller
 {
@@ -25,35 +26,46 @@ class ScheduleController extends Controller
 
     public function store(Request $request)
     {
+        // 1. Validasi Input
         $request->validate([
             'film_id' => 'required|exists:films,id',
             'studio_id' => 'required|exists:studios,id',
             'schedule_date' => 'required|date',
             'start_time' => 'required',
-            'end_time' => 'required',
             'ticket_price' => 'required|numeric',
         ]);
 
-        $startTime = \Carbon\Carbon::parse($request->start_time)->format('H:i:s');
-        $endTime = \Carbon\Carbon::parse($request->end_time)->format('H:i:s');
+        // 2. Hitung end_time
+        $film = Film::findOrFail($request->film_id);
+        $startTime = Carbon::parse($request->start_time);
+        $endTime = (clone $startTime)->addMinutes($film->duration);
 
-        if ($startTime >= $endTime) {
-            return back()->with('error', 'Jam selesai harus setelah jam mulai.')->withInput();
-        }
+        $startFormatted = $startTime->format('H:i:s');
+        $endFormatted = $endTime->format('H:i:s');
 
-        $overlap = Schedule::where('studio_id', $request->studio_id)
-            ->where('schedule_date', $request->schedule_date)
-            ->where(function ($q) use ($startTime, $endTime) {
-                $q->where('start_time', '<', $endTime)
-                  ->where('end_time', '>', $startTime);
+        // 3. Cek Bentrok Jadwal
+        $isConflict = Schedule::where('studio_id', $request->studio_id)
+            ->whereDate('schedule_date', $request->schedule_date)
+            ->where(function ($query) use ($startFormatted, $endFormatted) {
+                $query->whereTime('start_time', '<', $endFormatted)
+                      ->whereTime('end_time', '>', $startFormatted);
             })
             ->exists();
 
-        if ($overlap) {
-            return back()->with('error', 'Jadwal bentrok! Studio ini sudah memiliki film lain pada waktu tersebut.')->withInput();
+        if ($isConflict) {
+            return back()->withInput()->with('error', 'Gagal! Jadwal bentrok dengan film lain di studio ini.');
         }
 
-        Schedule::create($request->all());
+        // 4. Simpan Data
+        Schedule::create([
+            'film_id' => $request->film_id,
+            'studio_id' => $request->studio_id,
+            'schedule_date' => $request->schedule_date,
+            'start_time' => $startFormatted,
+            'end_time' => $endFormatted,
+            'ticket_price' => $request->ticket_price,
+            'status' => $request->status ?? 'active'
+        ]);
 
         return redirect()->route('admin.schedules.index')->with('success', 'Jadwal berhasil ditambahkan!');
     }
@@ -67,36 +79,45 @@ class ScheduleController extends Controller
 
     public function update(Request $request, Schedule $schedule)
     {
+
         $request->validate([
             'film_id' => 'required|exists:films,id',
             'studio_id' => 'required|exists:studios,id',
             'schedule_date' => 'required|date',
             'start_time' => 'required',
-            'end_time' => 'required',
             'ticket_price' => 'required|numeric',
         ]);
 
-        $startTime = \Carbon\Carbon::parse($request->start_time)->format('H:i:s');
-        $endTime = \Carbon\Carbon::parse($request->end_time)->format('H:i:s');
+        $film = Film::findOrFail($request->film_id);
+        $startTime = Carbon::parse($request->start_time);
+        $endTime = (clone $startTime)->addMinutes($film->duration);
 
-        if ($startTime >= $endTime) {
-            return back()->with('error', 'Jam selesai harus setelah jam mulai.')->withInput();
-        }
+        $startFormatted = $startTime->format('H:i:s');
+        $endFormatted = $endTime->format('H:i:s');
 
-        $overlap = Schedule::where('studio_id', $request->studio_id)
-            ->where('schedule_date', $request->schedule_date)
+
+        $isConflict = Schedule::where('studio_id', $request->studio_id)
             ->where('id', '!=', $schedule->id)
-            ->where(function ($q) use ($startTime, $endTime) {
-                $q->where('start_time', '<', $endTime)
-                  ->where('end_time', '>', $startTime);
+            ->whereDate('schedule_date', $request->schedule_date)
+            ->where(function ($query) use ($startFormatted, $endFormatted) {
+                $query->whereTime('start_time', '<', $endFormatted)
+                      ->whereTime('end_time', '>', $startFormatted);
             })
             ->exists();
 
-        if ($overlap) {
-            return back()->with('error', 'Jadwal bentrok! Studio ini sudah memiliki film lain pada waktu tersebut.')->withInput();
+        if ($isConflict) {
+            return back()->withInput()->with('error', 'Gagal! Jadwal bentrok dengan film lain di studio ini.');
         }
 
-        $schedule->update($request->all());
+        $schedule->update([
+            'film_id' => $request->film_id,
+            'studio_id' => $request->studio_id,
+            'schedule_date' => $request->schedule_date,
+            'start_time' => $startFormatted,
+            'end_time' => $endFormatted,
+            'ticket_price' => $request->ticket_price,
+            'status' => $request->status ?? $schedule->status
+        ]);
 
         return redirect()->route('admin.schedules.index')->with('success', 'Jadwal berhasil diperbarui!');
     }

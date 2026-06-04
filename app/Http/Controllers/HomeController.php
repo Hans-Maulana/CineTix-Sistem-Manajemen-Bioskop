@@ -54,9 +54,6 @@ class HomeController extends Controller
         $endOfWeek = Carbon::now()->endOfWeek();
         
         $films = Film::whereIn('status', ['now_playing', 'coming_soon'])
-            ->whereHas('schedules', function ($q) use ($startOfWeek, $endOfWeek) {
-                $q->whereBetween('schedule_date', [$startOfWeek->toDateString(), $endOfWeek->toDateString()]);
-            })
             ->where(function ($q) use ($query) {
                 $q->where('title', 'like', "%{$query}%")
                   ->orWhere('synopsis', 'like', "%{$query}%")
