@@ -67,6 +67,7 @@ Route::middleware('auth')->group(function () {
     Route::get('admin/bookings', [BookingManagementController::class, 'index'])->name('admin.bookings.index');
     Route::get('admin/customers', [CustomerController::class, 'index'])->name('admin.customers.index');
     Route::get('admin/tickets', [TicketManagementController::class, 'index'])->name('admin.tickets.index');
+    Route::get('admin/tickets/schedule/{schedule}', [TicketManagementController::class, 'scheduleDetail'])->name('admin.tickets.schedule');
     Route::post('admin/tickets/scan', [TicketManagementController::class, 'scan'])->name('admin.tickets.scan');
     Route::get('admin/reports', [ReportController::class, 'index'])->name('admin.reports.index');
     Route::get('admin/reports/export', [ReportController::class, 'export'])->name('admin.reports.export');

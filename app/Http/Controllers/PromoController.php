@@ -20,9 +20,11 @@ class PromoController extends Controller
     public function index(Request $request)
     {
         $this->ensureAdmin();
-        $query = Promo::orderBy('created_at', 'desc');
 
-        if ($request->has('search') && $request->search != '') {
+        $now = now();
+        $query = Promo::query();
+
+        if ($request->filled('search')) {
             $search = $request->search;
             $query->where(function ($q) use ($search) {
                 $q->where('code', 'like', '%' . $search . '%')
@@ -30,8 +32,57 @@ class PromoController extends Controller
             });
         }
 
-        $promos = $query->paginate(10)->withQueryString();
-        return view('admin.promos.index', compact('promos'));
+        if ($request->filled('status')) {
+            switch ($request->status) {
+                case 'active':
+                    $query->where('valid_from', '<=', $now)
+                          ->where('valid_until', '>=', $now)
+                          ->where(function ($q) {
+                              $q->whereNull('max_usage')
+                                ->orWhereColumn('usage_count', '<', 'max_usage');
+                          });
+                    break;
+                case 'upcoming':
+                    $query->where('valid_from', '>', $now);
+                    break;
+                case 'expired':
+                    $query->where(function ($q) use ($now) {
+                        $q->where('valid_until', '<', $now)
+                          ->orWhere(function ($qq) {
+                              $qq->whereNotNull('max_usage')
+                                 ->whereColumn('usage_count', '>=', 'max_usage');
+                          });
+                    });
+                    break;
+            }
+        }
+
+        if ($request->filled('type') && in_array($request->type, ['percentage', 'fixed'])) {
+            $query->where('discount_type', $request->type);
+        }
+
+        $sort = $request->get('sort', 'newest');
+        switch ($sort) {
+            case 'oldest':       $query->orderBy('created_at', 'asc'); break;
+            case 'most_used':    $query->orderBy('usage_count', 'desc'); break;
+            case 'expires_soon': $query->orderBy('valid_until', 'asc'); break;
+            case 'code_asc':     $query->orderBy('code', 'asc'); break;
+            case 'newest':
+            default:             $query->orderBy('created_at', 'desc');
+        }
+
+        $promos = $query->paginate(12)->withQueryString();
+
+        $stats = [
+            'total'       => Promo::count(),
+            'active'      => Promo::where('valid_from', '<=', $now)
+                                  ->where('valid_until', '>=', $now)
+                                  ->count(),
+            'expired'     => Promo::where('valid_until', '<', $now)->count(),
+            'redemptions' => (int) Promo::sum('usage_count'),
+        ];
+
+        return view('admin.promos.index', compact('promos', 'stats'));
     }
 
     /**
