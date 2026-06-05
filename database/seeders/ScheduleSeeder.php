@@ -27,17 +27,20 @@ class ScheduleSeeder extends Seeder
 
         $schedules = [];
 
-        // Tanggal penayangan di bulan Juli 2026 dan Agustus 2026
+        $today = Carbon::today();
+
+        // Tanggal penayangan dinamis (hari ini, besok, lusa)
         $julyDates = [
-            '2026-07-05',
-            '2026-07-15',
-            '2026-07-25',
+            $today->toDateString(),
+            $today->copy()->addDay()->toDateString(),
+            $today->copy()->addDays(2)->toDateString(),
         ];
 
+        // Tanggal penayangan dinamis minggu depan (7 hari, 8 hari, 9 hari lagi)
         $augustDates = [
-            '2026-08-05',
-            '2026-08-15',
-            '2026-08-25',
+            $today->copy()->addDays(7)->toDateString(),
+            $today->copy()->addDays(8)->toDateString(),
+            $today->copy()->addDays(9)->toDateString(),
         ];
 
         $startTimes = ['10:00', '13:30', '16:30', '19:30'];
@@ -59,7 +62,7 @@ class ScheduleSeeder extends Seeder
                     'start_time' => $startTime->format('H:i:s'),
                     'end_time' => $endTime->format('H:i:s'),
                     'ticket_price' => 50000 + (($filmIndex % 3) * 10000), // bervariasi 50rb, 60rb, 70rb
-                    'status' => 'on schedule',
+                    'status' => $dayIndex === 0 ? 'complete' : 'on schedule',
                 ];
             }
 

@@ -17,10 +17,20 @@ class PromoController extends Controller
     /**
      * Admin: List semua promo
      */
-    public function index()
+    public function index(Request $request)
     {
         $this->ensureAdmin();
-        $promos = Promo::orderBy('created_at', 'desc')->paginate(10);
+        $query = Promo::orderBy('created_at', 'desc');
+
+        if ($request->has('search') && $request->search != '') {
+            $search = $request->search;
+            $query->where(function ($q) use ($search) {
+                $q->where('code', 'like', '%' . $search . '%')
+                  ->orWhere('description', 'like', '%' . $search . '%');
+            });
+        }
+
+        $promos = $query->paginate(10)->withQueryString();
         return view('admin.promos.index', compact('promos'));
     }
 

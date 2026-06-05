@@ -10,9 +10,22 @@ use Illuminate\Support\Facades\Storage;
 
 class FilmController extends Controller
 {
-    public function index()
+    public function index(Request $request)
     {
-        $films = Film::with('genres')->latest()->paginate(10);
+        $query = Film::with('genres')->latest();
+
+        if ($request->has('search') && $request->search != '') {
+            $search = $request->search;
+            $query->where(function ($q) use ($search) {
+                $q->where('title', 'like', '%' . $search . '%')
+                  ->orWhere('director', 'like', '%' . $search . '%')
+                  ->orWhereHas('genres', function ($g) use ($search) {
+                      $g->where('genre_name', 'like', '%' . $search . '%');
+                  });
+            });
+        }
+
+        $films = $query->paginate(10)->withQueryString();
         return view('admin.films.index', compact('films'));
     }
 

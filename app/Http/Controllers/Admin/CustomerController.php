@@ -8,12 +8,22 @@ use Illuminate\Http\Request;
 
 class CustomerController extends Controller
 {
-    public function index()
+    public function index(Request $request)
     {
-        $customers = User::whereHas('role', function($query) {
+        $query = User::whereHas('role', function ($query) {
             $query->where('name', 'customer');
-        })->latest()->paginate(20);
+        })->latest();
 
+        if ($request->has('search') && $request->search != '') {
+            $search = $request->search;
+            $query->where(function ($q) use ($search) {
+                $q->where('name', 'like', '%' . $search . '%')
+                  ->orWhere('email', 'like', '%' . $search . '%')
+                  ->orWhere('contact', 'like', '%' . $search . '%');
+            });
+        }
+
+        $customers = $query->paginate(20)->withQueryString();
         return view('admin.customers.index', compact('customers'));
     }
 }

@@ -19,6 +19,7 @@ use Illuminate\Support\Facades\Route;
 // --- Route publik (guest & member) ---
 Route::get('/', [HomeController::class, 'index'])->name('landing-page');
 Route::get('/search', [HomeController::class, 'search'])->name('films.search');
+Route::get('/films/filter-now-playing', [FilmController::class, 'filterNowPlaying'])->name('films.filter');
 Route::get('/films/{film}', [HomeController::class, 'filmDetail'])->name('films.detail');
 Route::get('/about', fn () => view('about'))->name('about');
 Route::get('/faq', fn () => view('faq'))->name('faq');
@@ -71,8 +72,6 @@ Route::middleware('auth')->group(function () {
     Route::get('admin/reports/export', [ReportController::class, 'export'])->name('admin.reports.export');
 
     Route::get('/customer', [HomeController::class, 'index'])->name('customer.dashboard');
-
-    Route::get('/films/filter-now-playing', [FilmController::class, 'filterNowPlaying'])->name('films.filter');
 
     Route::post('/promo/validate', [PromoController::class, 'validate'])->name('promo.validate');
 

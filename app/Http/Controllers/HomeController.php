@@ -14,12 +14,19 @@ class HomeController extends Controller
      */
     public function index()
     {
-        $startOfWeek = Carbon::today();
-        $endOfWeek = Carbon::now()->endOfWeek();
+        $now = Carbon::now();
+        $todayStr = $now->toDateString();
+        $timeStr = $now->toTimeString();
 
         $nowPlayingFilms = Film::where('status', 'now_playing')
-            ->whereHas('schedules', function ($query) use ($startOfWeek, $endOfWeek) {
-                $query->whereBetween('schedule_date', [$startOfWeek->toDateString(), $endOfWeek->toDateString()]);
+            ->whereHas('schedules', function ($query) use ($todayStr, $timeStr) {
+                $query->where(function ($q) use ($todayStr, $timeStr) {
+                    $q->where('schedule_date', '>', $todayStr)
+                      ->orWhere(function ($sub) use ($todayStr, $timeStr) {
+                          $sub->where('schedule_date', '=', $todayStr)
+                              ->where('start_time', '>', $timeStr);
+                      });
+                })->where('status', 'on schedule');
             })
             ->with(['genres', 'reviews'])
             ->latest()
@@ -27,15 +34,19 @@ class HomeController extends Controller
             ->get();
 
         $comingSoonFilms = Film::where('status', 'coming_soon')
-            ->whereHas('schedules', function ($query) use ($startOfWeek, $endOfWeek) {
-                $query->whereBetween('schedule_date', [$startOfWeek->toDateString(), $endOfWeek->toDateString()]);
-            })
             ->with(['genres'])
             ->latest()
             ->take(4)
             ->get();
 
-        $upcomingSchedules = Schedule::whereBetween('schedule_date', [$startOfWeek->toDateString(), $endOfWeek->toDateString()])
+        $upcomingSchedules = Schedule::where(function ($query) use ($todayStr, $timeStr) {
+                $query->where('schedule_date', '>', $todayStr)
+                      ->orWhere(function ($sub) use ($todayStr, $timeStr) {
+                          $sub->where('schedule_date', '=', $todayStr)
+                              ->where('start_time', '>', $timeStr);
+                      });
+            })
+            ->where('status', 'on schedule')
             ->with('film', 'studio')
             ->orderBy('schedule_date')
             ->take(10)
@@ -50,8 +61,9 @@ class HomeController extends Controller
     public function search(Request $request)
     {
         $query = $request->get('q');
-        $startOfWeek = Carbon::today();
-        $endOfWeek = Carbon::now()->endOfWeek();
+        $now = Carbon::now();
+        $todayStr = $now->toDateString();
+        $timeStr = $now->toTimeString();
         
         $films = Film::whereIn('status', ['now_playing', 'coming_soon'])
             ->where(function ($q) use ($query) {
@@ -61,10 +73,17 @@ class HomeController extends Controller
                       $subQuery->where('genre_name', 'like', "%{$query}%");
                   });
             })
-            ->with(['genres', 'schedules' => function ($q) use ($startOfWeek, $endOfWeek) {
-                $q->whereBetween('schedule_date', [$startOfWeek->toDateString(), $endOfWeek->toDateString()])
-                  ->orderBy('schedule_date')
-                  ->with('studio');
+            ->with(['genres', 'schedules' => function ($q) use ($todayStr, $timeStr) {
+                $q->where(function ($query) use ($todayStr, $timeStr) {
+                    $query->where('schedule_date', '>', $todayStr)
+                          ->orWhere(function ($sub) use ($todayStr, $timeStr) {
+                              $sub->where('schedule_date', '=', $todayStr)
+                                  ->where('start_time', '>', $timeStr);
+                          });
+                })
+                ->where('status', 'on schedule')
+                ->orderBy('schedule_date')
+                ->with('studio');
             }])
             ->paginate(12);
 
@@ -76,15 +95,23 @@ class HomeController extends Controller
      */
     public function filmDetail(Film $film)
     {
-        $startOfWeek = Carbon::today();
-        $endOfWeek = Carbon::now()->endOfWeek();
+        $now = Carbon::now();
+        $todayStr = $now->toDateString();
+        $timeStr = $now->toTimeString();
 
         $film->load(['genres', 'reviews' => function ($q) {
             $q->orderBy('created_at', 'desc')->take(5);
-        }, 'schedules' => function ($q) use ($startOfWeek, $endOfWeek) {
-            $q->whereBetween('schedule_date', [$startOfWeek->toDateString(), $endOfWeek->toDateString()])
-              ->orderBy('schedule_date')
-              ->with('studio');
+        }, 'schedules' => function ($q) use ($todayStr, $timeStr) {
+            $q->where(function ($query) use ($todayStr, $timeStr) {
+                $query->where('schedule_date', '>', $todayStr)
+                      ->orWhere(function ($sub) use ($todayStr, $timeStr) {
+                          $sub->where('schedule_date', '=', $todayStr)
+                              ->where('start_time', '>', $timeStr);
+                      });
+            })
+            ->where('status', 'on schedule')
+            ->orderBy('schedule_date')
+            ->with('studio');
         }]);
 
         $avgRating = $film->reviews()->avg('rating') ?? 0;

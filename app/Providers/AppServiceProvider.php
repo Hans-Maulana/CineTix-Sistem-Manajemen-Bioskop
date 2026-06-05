@@ -7,6 +7,7 @@ use App\Models\Seat;
 use App\Models\Payment;
 use App\Observers\SeatObserver;
 use App\Observers\PaymentObserver;
+use Illuminate\Pagination\Paginator;
 
 class AppServiceProvider extends ServiceProvider
 {
@@ -23,6 +24,9 @@ class AppServiceProvider extends ServiceProvider
      */
     public function boot(): void
     {
+        // Use Bootstrap 5 for pagination
+        Paginator::useBootstrapFive();
+
         // Register observers
         Seat::observe(SeatObserver::class);
         Payment::observe(PaymentObserver::class);

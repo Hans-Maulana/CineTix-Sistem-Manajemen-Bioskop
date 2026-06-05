@@ -16,6 +16,21 @@
 </div>
 
 <div class="card-custom">
+    <!-- Search Bar -->
+    <div class="row mb-4">
+        <div class="col-md-4 ms-auto">
+            <form action="{{ route('admin.films.index') }}" method="GET">
+                <div class="input-group shadow-sm rounded-3 overflow-hidden border">
+                    <span class="input-group-text bg-white border-0"><i class="bi bi-search text-muted"></i></span>
+                    <input type="text" name="search" class="form-control border-0 px-2" placeholder="Cari judul, sutradara, atau genre..." value="{{ request('search') }}">
+                    @if(request('search'))
+                        <a href="{{ route('admin.films.index') }}" class="btn btn-light border-0 d-flex align-items-center"><i class="bi bi-x-lg text-muted"></i></a>
+                    @endif
+                </div>
+            </form>
+        </div>
+    </div>
+
     <div class="table-responsive">
         <table class="table table-hover align-middle">
             <thead class="table-light">

@@ -11,6 +11,21 @@
 </div>
 
 <div class="card-custom">
+    <!-- Search Bar -->
+    <div class="row mb-4">
+        <div class="col-md-4 ms-auto">
+            <form action="{{ route('admin.bookings.index') }}" method="GET">
+                <div class="input-group shadow-sm rounded-3 overflow-hidden border">
+                    <span class="input-group-text bg-white border-0"><i class="bi bi-search text-muted"></i></span>
+                    <input type="text" name="search" class="form-control border-0 px-2" placeholder="Cari ID, customer, atau film..." value="{{ request('search') }}">
+                    @if(request('search'))
+                        <a href="{{ route('admin.bookings.index') }}" class="btn btn-light border-0 d-flex align-items-center"><i class="bi bi-x-lg text-muted"></i></a>
+                    @endif
+                </div>
+            </form>
+        </div>
+    </div>
+
     <div class="table-responsive">
         <table class="table table-hover align-middle">
             <thead class="table-light">
@@ -21,6 +36,7 @@
                     <th class="py-3">Total Bayar</th>
                     <th class="py-3">Status</th>
                     <th class="py-3">Waktu Transaksi</th>
+                    <th class="py-3 text-center">Aksi</th>
                 </tr>
             </thead>
             <tbody>
@@ -55,10 +71,15 @@
                         @endif
                     </td>
                     <td>{{ $booking->created_at->format('d M Y, H:i') }}</td>
+                    <td class="text-center">
+                        <button type="button" class="btn btn-sm btn-outline-info rounded-3 px-3 py-1" data-bs-toggle="modal" data-bs-target="#bookingDetail{{ $booking->id }}">
+                            <i class="bi bi-eye"></i> Detail
+                        </button>
+                    </td>
                 </tr>
                 @empty
                 <tr>
-                    <td colspan="6" class="text-center py-5 text-muted">Belum ada transaksi.</td>
+                    <td colspan="7" class="text-center py-5 text-muted">Belum ada transaksi.</td>
                 </tr>
                 @endforelse
             </tbody>

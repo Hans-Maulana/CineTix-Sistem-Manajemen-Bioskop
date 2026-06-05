@@ -14,7 +14,7 @@ class UserAuthorizationHandler extends BookingApprovalHandler
     {
         if (Auth::check()) {
             $bookingData['user_id'] = Auth::id();
-            $bookingData['guest_email'] = null;
+            $bookingData['guest_email'] = strtolower(trim($bookingData['guest_email'] ?? '')) ?: Auth::user()->email;
 
             return [
                 'approved' => true,

@@ -25,6 +25,12 @@ class BookingController extends Controller
 {
     public function show(Schedule $schedule)
     {
+        $now = \Carbon\Carbon::now();
+        $startDateTime = \Carbon\Carbon::parse($schedule->schedule_date->format('Y-m-d') . ' ' . $schedule->start_time->format('H:i:s'));
+        if ($schedule->status === 'complete' || $schedule->status === 'canceled' || $now->greaterThanOrEqualTo($startDateTime)) {
+            return redirect()->route('landing-page')->with('error', 'Maaf, jadwal tayang ini sudah lewat.');
+        }
+
         $schedule->load('film', 'studio.seats');
 
         $bookedSeatIds = TicketBooking::whereHas('booking', function ($q) {
@@ -52,11 +58,8 @@ class BookingController extends Controller
             'seat_ids' => 'required|array|min:1',
             'seat_ids.*' => 'exists:seats,id',
             'promo_code' => 'nullable|string',
+            'guest_email' => 'required|email:rfc,filter|max:255',
         ];
-
-        if (!Auth::check()) {
-            $rules['guest_email'] = 'required|email:rfc,filter|max:255';
-        }
 
         $validated = $request->validate($rules);
 
@@ -96,7 +99,7 @@ class BookingController extends Controller
 
                 $booking = Booking::create([
                     'user_id' => $bookingData['user_id'] ?? null,
-                    'guest_email' => $isGuest ? ($bookingData['guest_email'] ?? null) : null,
+                    'guest_email' => $bookingData['guest_email'] ?? null,
                     'access_token' => $isGuest ? Str::random(64) : null,
                     'promo_id' => $promoId,
                     'schedule_id' => $bookingData['schedule_id'],

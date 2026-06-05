@@ -11,9 +11,24 @@ use Carbon\Carbon;
 
 class ScheduleController extends Controller
 {
-    public function index()
+    public function index(Request $request)
     {
-        $schedules = Schedule::with(['film', 'studio'])->latest()->paginate(15);
+        $query = Schedule::with(['film', 'studio'])->latest();
+
+        if ($request->has('search') && $request->search != '') {
+            $search = $request->search;
+            $query->where(function ($q) use ($search) {
+                $q->whereHas('film', function ($f) use ($search) {
+                    $f->where('title', 'like', '%' . $search . '%');
+                })
+                ->orWhereHas('studio', function ($s) use ($search) {
+                    $s->where('name', 'like', '%' . $search . '%');
+                })
+                ->orWhere('schedule_date', 'like', '%' . $search . '%');
+            });
+        }
+
+        $schedules = $query->paginate(15)->withQueryString();
         return view('admin.schedules.index', compact('schedules'));
     }
 

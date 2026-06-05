@@ -23,6 +23,21 @@
 
     <div class="card border-0 shadow-sm rounded-4">
         <div class="card-body p-4">
+            <!-- Search Bar -->
+            <div class="row mb-4">
+                <div class="col-md-4 ms-auto">
+                    <form action="{{ route('admin.promos.index') }}" method="GET">
+                        <div class="input-group shadow-sm rounded-3 overflow-hidden border">
+                            <span class="input-group-text bg-white border-0"><i class="bi bi-search text-muted"></i></span>
+                            <input type="text" name="search" class="form-control border-0 px-2" placeholder="Cari kode promo..." value="{{ request('search') }}">
+                            @if(request('search'))
+                                <a href="{{ route('admin.promos.index') }}" class="btn btn-light border-0 d-flex align-items-center"><i class="bi bi-x-lg text-muted"></i></a>
+                            @endif
+                        </div>
+                    </form>
+                </div>
+            </div>
+
             <div class="table-responsive">
                 <table class="table table-hover align-middle mb-0">
                     <thead>

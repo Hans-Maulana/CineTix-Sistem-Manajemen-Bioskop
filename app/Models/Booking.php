@@ -39,7 +39,7 @@ class Booking extends Model
 
     public function customerEmail(): ?string
     {
-        return $this->isGuest() ? $this->guest_email : $this->user?->email;
+        return $this->guest_email ?: ($this->user?->email ?: null);
     }
 
     public function customerName(): string

@@ -132,6 +132,44 @@
                 @endif
             </tbody>
         </table>
+    @elseif($type === 'daily')
+        <table>
+            <thead>
+                <tr>
+                    <th class="text-start" style="width: 35%;">Tanggal</th>
+                    <th class="text-center" style="width: 30%;">Total Transaksi</th>
+                    <th class="text-end" style="width: 35%;">Total Omset Pendapatan</th>
+                </tr>
+            </thead>
+            <tbody>
+                @php 
+                    $totalBookings = 0; 
+                    $totalRevenue = 0; 
+                @endphp
+                @forelse($data as $row)
+                    @php 
+                        $totalBookings += $row->total_bookings; 
+                        $totalRevenue += $row->total_revenue; 
+                    @endphp
+                    <tr>
+                        <td class="text-start fw-bold">{{ \Carbon\Carbon::parse($row->booking_date)->translatedFormat('d F Y') }}</td>
+                        <td class="text-center">{{ number_format($row->total_bookings, 0, ',', '.') }} Transaksi</td>
+                        <td class="text-end fw-bold" style="color: #0d6efd;">Rp {{ number_format($row->total_revenue, 0, ',', '.') }}</td>
+                    </tr>
+                @empty
+                    <tr>
+                        <td colspan="3" class="text-center" style="padding: 30px;">Belum ada data transaksi harian.</td>
+                    </tr>
+                @endforelse
+                @if(count($data) > 0)
+                    <tr class="total-row">
+                        <td class="text-start">TOTAL KESELURUHAN</td>
+                        <td class="text-center">{{ number_format($totalBookings, 0, ',', '.') }} Transaksi</td>
+                        <td class="text-end" style="color: #0d6efd;">Rp {{ number_format($totalRevenue, 0, ',', '.') }}</td>
+                    </tr>
+                @endif
+            </tbody>
+        </table>
     @else
         <table>
             <thead>

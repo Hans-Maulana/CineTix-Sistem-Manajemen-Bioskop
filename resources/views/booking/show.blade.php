@@ -2,6 +2,23 @@
 
 @section('content')
 <div class="container py-5">
+    <!-- Breadcrumb & Back Button -->
+    <div class="d-flex justify-content-between align-items-center mb-4" data-aos="fade-down">
+        <nav aria-label="breadcrumb" class="mb-0">
+            <ol class="breadcrumb mb-0">
+                <li class="breadcrumb-item"><a href="{{ route('landing-page') }}"
+                        class="text-primary text-decoration-none">Beranda</a></li>
+                <li class="breadcrumb-item"><a href="{{ route('films.detail', $schedule->film) }}"
+                        class="text-primary text-decoration-none">{{ $schedule->film->title }}</a></li>
+                <li class="breadcrumb-item active" aria-current="page">Pilih Kursi</li>
+            </ol>
+        </nav>
+        <a href="{{ route('films.detail', $schedule->film) }}" class="btn btn-back-custom rounded-pill px-4 py-2 d-flex align-items-center gap-2">
+            <iconify-icon icon="solar:arrow-left-outline" class="fs-5"></iconify-icon>
+            <span>Kembali</span>
+        </a>
+    </div>
+
     <div class="row">
         {{-- Flash Messages --}}
         <div class="col-12">
@@ -164,20 +181,21 @@
                             </div>
                         </div>
                         @else
-                        <div class="mb-4" id="promoSection">
-                            <div class="alert alert-info border-0 mb-3 py-3">
-                                <p class="mb-0 small">
-                                    <a href="{{ route('login') }}" class="link-primary fw-bold">Login</a> untuk pakai kode promo
-                                    <strong>WELCOME2026</strong> (diskon Rp 20.000).
-                                </p>
-                            </div>
+                        <div class="alert alert-info border-0 mb-3 py-3">
+                            <p class="mb-0 small">
+                                <a href="{{ route('login') }}" class="link-primary fw-bold">Login</a> untuk pakai kode promo
+                                <strong>WELCOME2026</strong> (diskon Rp 20.000).
+                            </p>
+                        </div>
+                        @endif
+
+                        <div class="mb-4">
                             <label for="guestEmail" class="form-label fw-bold text-dark small">Email untuk kirim tiket <span class="text-danger">*</span></label>
                             <input type="email" class="form-control" id="guestEmail" name="guest_email"
                                    placeholder="contoh@email.com" required autocomplete="email"
-                                   value="{{ old('guest_email') }}">
+                                   value="{{ old('guest_email', $isAuthenticated ? $user->email : '') }}">
                             <div class="form-text">Tiket digital akan dikirim ke email ini setelah pembayaran.</div>
                         </div>
-                        @endif
 
                         <hr class="my-4 opacity-10">
 
@@ -186,15 +204,9 @@
                             <span id="totalPrice" class="fs-4 fw-bold" style="color: #1A1953;">Rp 0</span>
                         </div>
 
-                        @if($isAuthenticated)
-                        <button type="submit" class="btn btn-primary text-white w-100 py-3 fw-bold rounded-3 shadow-sm" id="bookingBtn" disabled>
-                            Lanjutkan ke Pembayaran <i class="iconify" data-icon="lucide:arrow-right"></i>
-                        </button>
-                        @else
                         <button type="button" class="btn btn-primary text-white w-100 py-3 fw-bold rounded-3 shadow-sm" id="bookingBtn" disabled>
                             Lanjutkan ke Pembayaran <i class="iconify" data-icon="lucide:arrow-right"></i>
                         </button>
-                        @endif
                     </form>
                 </div>
             </div>
@@ -202,8 +214,7 @@
     </div>
 </div>
 
-@if(!$isAuthenticated)
-{{-- Modal konfirmasi email guest --}}
+{{-- Modal konfirmasi email --}}
 <div class="modal fade" id="emailConfirmModal" tabindex="-1" aria-labelledby="emailConfirmModalLabel" aria-hidden="true">
     <div class="modal-dialog modal-dialog-centered">
         <div class="modal-content rounded-4 border-0 shadow">
@@ -217,7 +228,7 @@
                 <p class="text-muted small mb-0">Apakah alamat email sudah benar?</p>
             </div>
             <div class="modal-footer border-0 flex-nowrap gap-2">
-                <button type="button" class="btn btn-outline-secondary flex-fill py-2 fw-bold" id="btnRecheckEmail" data-bs-dismiss="modal">
+                <button type="button" class="btn btn-primary flex-fill py-2 fw-bold text-white" id="btnRecheckEmail" data-bs-dismiss="modal" style="background: #1A1953;">
                     Cek kembali!
                 </button>
                 <button type="button" class="btn btn-primary flex-fill py-2 fw-bold text-white" id="btnConfirmEmail" style="background: #1A1953;">
@@ -227,7 +238,6 @@
         </div>
     </div>
 </div>
-@endif
 
 <script src="https://js.pusher.com/8.2.0/pusher.min.js"></script>
 <script src="https://cdn.socket.io/4.5.4/socket.io.min.js"></script>
@@ -271,9 +281,8 @@
         attachSeatStyles();
         if (isAuthenticated) {
             initPromoHandler();
-        } else {
-            initGuestCheckout();
         }
+        initGuestCheckout();
     });
 
     function initGuestCheckout() {
@@ -320,6 +329,12 @@
             btn.disabled = true;
             btn.innerHTML = '<span class="spinner-border spinner-border-sm"></span>';
             if (emailModal) emailModal.hide();
+
+            const mainBtn = document.getElementById('bookingBtn');
+            if (mainBtn) {
+                mainBtn.disabled = true;
+                mainBtn.innerHTML = '<span class="spinner-border spinner-border-sm me-2"></span> Memproses...';
+            }
             bookingForm.submit();
         });
     }
@@ -543,6 +558,26 @@
 </script>
 
 <style>
+    .btn-back-custom {
+        border: 2px solid #1A1953 !important;
+        color: #1A1953 !important;
+        font-weight: bold;
+        background: transparent;
+        transition: all 0.3s ease;
+    }
+    .btn-back-custom:hover {
+        background-color: #1A1953 !important;
+        color: #ffffff !important;
+        transform: translateY(-2px);
+        box-shadow: 0 6px 15px rgba(26, 25, 83, 0.2) !important;
+    }
+    .breadcrumb-item+.breadcrumb-item::before {
+        content: "›" !important;
+        font-size: 1.5rem;
+        line-height: 1;
+        vertical-align: middle;
+    }
+
     .cinema-screen {
         position: relative;
         height: 48px;
