@@ -14,6 +14,8 @@ use App\Services\ChainOfResponsibility\BookingApprovalChain;
 use App\Services\ChainOfResponsibility\PaymentValidationChain;
 use App\Services\Payment\PaymentContext;
 use App\Support\GuestBookingAccess;
+use Illuminate\Support\Facades\Cache;
+use App\Mail\GuestOtpMail;
 use Illuminate\Http\Request;
 use Illuminate\Support\Facades\Auth;
 use Illuminate\Support\Facades\DB;
@@ -185,6 +187,58 @@ class BookingController extends Controller
         } catch (\Throwable $e) {
             return back()->with('error', 'Gagal memulai pembayaran: ' . $e->getMessage());
         }
+    }
+
+    // Fungsi untuk kirim OTP
+    public function sendOtp(Request $request)
+    {
+        $request->validate([
+            'email' => 'required|email'
+        ]);
+
+        $email = $request->email;
+        $otp = rand(100000, 999999);
+
+
+        Cache::put('guest_otp_' . $email, $otp, now()->addMinutes(5));
+
+    
+        Mail::to($email)->send(new GuestOtpMail($otp));
+
+        return response()->json([
+            'success' => true,
+            'message' => 'Kode OTP berhasil dikirim ke ' . $email
+        ]);
+    }
+
+    // verifikasi OTP Guest
+    public function verifyOtp(Request $request)
+    {
+        $request->validate([
+            'email' => 'required|email',
+            'otp'   => 'required|numeric'
+        ]);
+
+        $email = $request->email;
+        $inputOtp = $request->otp;
+        $cachedOtp = Cache::get('guest_otp_' . $email);
+
+        if ($cachedOtp && $cachedOtp == $inputOtp) {
+
+            Cache::forget('guest_otp_' . $email);
+
+            session(['verified_guest_email' => $email]);
+
+            return response()->json([
+                'success' => true,
+                'message' => 'Email berhasil diverifikasi!'
+            ]);
+        }
+
+        return response()->json([
+            'success' => false,
+            'message' => 'Kode OTP salah atau sudah kedaluwarsa.'
+        ], 400);
     }
 
     public function processPayment(Request $request, Booking $booking, Payment $payment)

@@ -34,6 +34,10 @@ Route::get('/booking/process-payment/{booking}/{payment}', [BookingController::c
 Route::post('/booking/confirm-payment/{booking}/{payment}', [BookingController::class, 'confirmPayment'])->name('booking.confirm-payment');
 Route::get('/booking/guest-ticket/{booking}', [BookingController::class, 'guestTicket'])->name('booking.guest-ticket');
 
+// Kode OTP Guest
+Route::post('/guest/send-otp', [BookingController::class, 'sendOtp'])->name('guest.send-otp');
+Route::post('/guest/verify-otp', [BookingController::class, 'verifyOtp'])->name('guest.verify-otp');
+
 // Booking AJAX (guest & user)
 Route::get('/booking/available-seats/{schedule}', [BookingController::class, 'getAvailableSeats'])->name('booking.available-seats');
 Route::get('/booking/details/{booking}', [BookingController::class, 'getBookingDetails'])->name('booking.details');
