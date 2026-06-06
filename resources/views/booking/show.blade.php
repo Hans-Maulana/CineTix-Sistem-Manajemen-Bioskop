@@ -2,6 +2,23 @@
 
 @section('content')
 <div class="container py-5">
+    <!-- Breadcrumb & Back Button -->
+    <div class="d-flex justify-content-between align-items-center mb-4" data-aos="fade-down">
+        <nav aria-label="breadcrumb" class="mb-0">
+            <ol class="breadcrumb mb-0">
+                <li class="breadcrumb-item"><a href="{{ route('landing-page') }}"
+                        class="text-primary text-decoration-none">Beranda</a></li>
+                <li class="breadcrumb-item"><a href="{{ route('films.detail', $schedule->film) }}"
+                        class="text-primary text-decoration-none">{{ $schedule->film->title }}</a></li>
+                <li class="breadcrumb-item active" aria-current="page">Pilih Kursi</li>
+            </ol>
+        </nav>
+        <a href="{{ route('films.detail', $schedule->film) }}" class="btn btn-back-custom rounded-pill px-4 py-2 d-flex align-items-center gap-2">
+            <iconify-icon icon="solar:arrow-left-outline" class="fs-5"></iconify-icon>
+            <span>Kembali</span>
+        </a>
+    </div>
+
     <div class="row">
         {{-- Flash Messages --}}
         <div class="col-12">
@@ -164,20 +181,21 @@
                             </div>
                         </div>
                         @else
-                        <div class="mb-4" id="promoSection">
-                            <div class="alert alert-info border-0 mb-3 py-3">
-                                <p class="mb-0 small">
-                                    <a href="{{ route('login') }}" class="link-primary fw-bold">Login</a> untuk pakai kode promo
-                                    <strong>WELCOME2026</strong> (diskon Rp 20.000).
-                                </p>
-                            </div>
+                        <div class="alert alert-info border-0 mb-3 py-3">
+                            <p class="mb-0 small">
+                                <a href="{{ route('login') }}" class="link-primary fw-bold">Login</a> untuk pakai kode promo
+                                <strong>WELCOME2026</strong> (diskon Rp 20.000).
+                            </p>
+                        </div>
+                        @endif
+
+                        <div class="mb-4">
                             <label for="guestEmail" class="form-label fw-bold text-dark small">Email untuk kirim tiket <span class="text-danger">*</span></label>
                             <input type="email" class="form-control" id="guestEmail" name="guest_email"
                                    placeholder="contoh@email.com" required autocomplete="email"
-                                   value="{{ old('guest_email') }}">
+                                   value="{{ old('guest_email', $isAuthenticated ? $user->email : '') }}">
                             <div class="form-text">Tiket digital akan dikirim ke email ini setelah pembayaran.</div>
                         </div>
-                        @endif
 
                         <hr class="my-4 opacity-10">
 
@@ -186,15 +204,9 @@
                             <span id="totalPrice" class="fs-4 fw-bold" style="color: #1A1953;">Rp 0</span>
                         </div>
 
-                        @if($isAuthenticated)
-                        <button type="submit" class="btn btn-primary text-white w-100 py-3 fw-bold rounded-3 shadow-sm" id="bookingBtn" disabled>
-                            Lanjutkan ke Pembayaran <i class="iconify" data-icon="lucide:arrow-right"></i>
-                        </button>
-                        @else
                         <button type="button" class="btn btn-primary text-white w-100 py-3 fw-bold rounded-3 shadow-sm" id="bookingBtn" disabled>
                             Lanjutkan ke Pembayaran <i class="iconify" data-icon="lucide:arrow-right"></i>
                         </button>
-                        @endif
                     </form>
                 </div>
             </div>
@@ -202,32 +214,58 @@
     </div>
 </div>
 
-@if(!$isAuthenticated)
-{{-- Modal konfirmasi email guest --}}
-<div class="modal fade" id="emailConfirmModal" tabindex="-1" aria-labelledby="emailConfirmModalLabel" aria-hidden="true">
+{{-- Modal Konfirmasi Email & OTP Guest --}}
+<div class="modal fade" id="emailConfirmModal" tabindex="-1" aria-labelledby="emailConfirmModalLabel" aria-hidden="true" data-bs-backdrop="static">
     <div class="modal-dialog modal-dialog-centered">
         <div class="modal-content rounded-4 border-0 shadow">
             <div class="modal-header border-0 pb-0">
-                <h5 class="modal-title fw-bold" id="emailConfirmModalLabel">Konfirmasi Email</h5>
+                <h5 class="modal-title fw-bold" id="emailConfirmModalLabel">Checkout Tiket</h5>
                 <button type="button" class="btn-close" data-bs-dismiss="modal" aria-label="Tutup"></button>
             </div>
-            <div class="modal-body pt-2">
-                <p class="mb-2">Tiket akan dikirim ke:</p>
-                <p class="fs-5 fw-bold text-primary mb-3" id="modalEmailDisplay">—</p>
-                <p class="text-muted small mb-0">Apakah alamat email sudah benar?</p>
-            </div>
-            <div class="modal-footer border-0 flex-nowrap gap-2">
-                <button type="button" class="btn btn-outline-secondary flex-fill py-2 fw-bold" id="btnRecheckEmail" data-bs-dismiss="modal">
-                    Cek kembali!
-                </button>
-                <button type="button" class="btn btn-primary flex-fill py-2 fw-bold text-white" id="btnConfirmEmail" style="background: #1A1953;">
-                    Kirim!
-                </button>
+            <div class="modal-body pt-2 text-center">
+
+                <div id="step-email-confirm">
+                    <p class="mb-2 text-muted">Tiket digital Anda akan dikirim ke:</p>
+                    <p class="fs-4 fw-bold text-primary mb-3" id="modalEmailDisplay">—</p>
+                    <p class="text-muted small mb-4">Pastikan alamat email sudah benar karena tiket akan dikirimkan ke email ini.</p>
+
+                    <div class="d-flex gap-2">
+                        <button type="button" class="btn btn-light border w-50 py-2 fw-bold" data-bs-dismiss="modal">
+                            Ubah Email
+                        </button>
+                        <button type="button" class="btn text-white w-50 py-2 fw-bold" id="btnSendOtp" style="background: #1A1953;">
+                            Kirim OTP Validasi
+                        </button>
+                    </div>
+                </div>
+
+                <div id="step-otp-input" style="display: none;">
+                    <div class="alert alert-info border-0 rounded-3 small mb-4 text-start">
+                        <iconify-icon icon="lucide:info" class="me-1"></iconify-icon>
+                        6-digit kode OTP telah dikirim ke email Anda. Silakan periksa kotak masuk atau folder spam.
+                    </div>
+                    <div class="mb-4 text-start">
+                        <label class="form-label fw-bold text-dark small">Masukkan Kode OTP <span class="text-danger">*</span></label>
+                        <input type="text" id="guestOtpCode" class="form-control py-3 text-center fs-3 fw-bold tracking-widest" placeholder="• • • • • •" maxlength="6" autocomplete="off">
+                    </div>
+                    <div class="d-flex gap-2">
+                        <button type="button" class="btn btn-light border w-50 py-2 fw-bold" id="btnBackToEmail">
+                            Kembali
+                        </button>
+                        <button type="button" class="btn text-white w-50 py-2 fw-bold" id="btnVerifyOtp" style="background: #1A1953;">
+                            Verifikasi & Lanjut
+                        </button>
+                    </div>
+                </div>
+
             </div>
         </div>
     </div>
 </div>
-@endif
+
+<style>
+    .tracking-widest { letter-spacing: 0.5em; }
+</style>
 
 <script src="https://js.pusher.com/8.2.0/pusher.min.js"></script>
 <script src="https://cdn.socket.io/4.5.4/socket.io.min.js"></script>
@@ -271,9 +309,8 @@
         attachSeatStyles();
         if (isAuthenticated) {
             initPromoHandler();
-        } else {
-            initGuestCheckout();
         }
+        initGuestCheckout();
     });
 
     function initGuestCheckout() {
@@ -288,7 +325,9 @@
             emailModal = new bootstrap.Modal(emailModalEl);
         }
 
+
         guestEmail.addEventListener('input', updateSummary);
+
 
         bookingBtn.addEventListener('click', function(e) {
             e.preventDefault();
@@ -296,31 +335,125 @@
                 alert('Silakan pilih minimal 1 kursi');
                 return;
             }
+
+
+            if (isAuthenticated) {
+                bookingBtn.disabled = true;
+                bookingBtn.innerHTML = '<span class="spinner-border spinner-border-sm me-2"></span> Memproses...';
+                bookingForm.submit();
+                return;
+            }
+
+
             const email = guestEmail.value.trim();
             if (!email || !/^[^\s@]+@[^\s@]+\.[^\s@]+$/.test(email)) {
                 guestEmail.classList.add('is-invalid');
                 guestEmail.focus();
                 return;
             }
+
+
             guestEmail.classList.remove('is-invalid');
             document.getElementById('modalEmailDisplay').textContent = email;
+            document.getElementById('step-otp-input').style.display = 'none';
+            document.getElementById('step-email-confirm').style.display = 'block';
+            document.getElementById('guestOtpCode').value = '';
+
             if (emailModal) {
                 emailModal.show();
-            } else if (confirm('Tiket akan dikirim ke ' + email + '. Lanjutkan?')) {
-                bookingForm.submit();
             }
         });
 
-        document.getElementById('btnRecheckEmail')?.addEventListener('click', function() {
-            setTimeout(() => guestEmail.focus(), 300);
+
+        document.getElementById('btnSendOtp')?.addEventListener('click', function() {
+            const btn = this;
+            const email = guestEmail.value.trim();
+
+            btn.disabled = true;
+            btn.innerHTML = '<span class="spinner-border spinner-border-sm me-2"></span> Mengirim...';
+
+            fetch('{{ route("guest.send-otp") }}', {
+                method: 'POST',
+                headers: {
+                    'Content-Type': 'application/json',
+                    'X-CSRF-TOKEN': '{{ csrf_token() }}',
+                    'Accept': 'application/json'
+                },
+                body: JSON.stringify({ email: email })
+            })
+            .then(response => response.json())
+            .then(data => {
+                btn.disabled = false;
+                btn.innerHTML = 'Kirim OTP Validasi';
+
+                if (data.success) {
+                    // Pindah ke Step Input OTP
+                    document.getElementById('step-email-confirm').style.display = 'none';
+                    document.getElementById('step-otp-input').style.display = 'block';
+                    setTimeout(() => document.getElementById('guestOtpCode').focus(), 300);
+                } else {
+                    alert(data.message || 'Gagal mengirim OTP');
+                }
+            })
+            .catch(error => {
+                console.error('Error:', error);
+                btn.disabled = false;
+                btn.innerHTML = 'Kirim OTP Validasi';
+                alert('Terjadi kesalahan sistem saat mengirim OTP.');
+            });
         });
 
-        document.getElementById('btnConfirmEmail')?.addEventListener('click', function() {
-            const btn = document.getElementById('btnConfirmEmail');
+        document.getElementById('btnBackToEmail')?.addEventListener('click', function() {
+            document.getElementById('step-otp-input').style.display = 'none';
+            document.getElementById('step-email-confirm').style.display = 'block';
+        });
+
+        document.getElementById('btnVerifyOtp')?.addEventListener('click', function() {
+            const email = guestEmail.value.trim();
+            const otp = document.getElementById('guestOtpCode').value.trim();
+            const btn = this;
+
+            if (!otp || otp.length !== 6) {
+                alert('Masukkan 6-digit kode OTP dengan benar.');
+                return;
+            }
+
             btn.disabled = true;
-            btn.innerHTML = '<span class="spinner-border spinner-border-sm"></span>';
-            if (emailModal) emailModal.hide();
-            bookingForm.submit();
+            btn.innerHTML = '<span class="spinner-border spinner-border-sm me-2"></span> Memverifikasi...';
+
+            fetch('{{ route("guest.verify-otp") }}', {
+                method: 'POST',
+                headers: {
+                    'Content-Type': 'application/json',
+                    'X-CSRF-TOKEN': '{{ csrf_token() }}',
+                    'Accept': 'application/json'
+                },
+                body: JSON.stringify({ email: email, otp: otp })
+            })
+            .then(response => response.json())
+            .then(data => {
+                if (data.success) {
+                    if (emailModal) emailModal.hide();
+
+                    const mainBtn = document.getElementById('bookingBtn');
+                    if (mainBtn) {
+                        mainBtn.disabled = true;
+                        mainBtn.innerHTML = '<span class="spinner-border spinner-border-sm me-2"></span> Mengunci Kursi...';
+                    }
+
+                    bookingForm.submit();
+                } else {
+                    btn.disabled = false;
+                    btn.innerHTML = 'Verifikasi & Lanjut';
+                    alert(data.message || 'Kode OTP Salah!');
+                }
+            })
+            .catch(error => {
+                console.error('Error:', error);
+                btn.disabled = false;
+                btn.innerHTML = 'Verifikasi & Lanjut';
+                alert('Terjadi kesalahan saat memverifikasi OTP.');
+            });
         });
     }
 
@@ -543,6 +676,26 @@
 </script>
 
 <style>
+    .btn-back-custom {
+        border: 2px solid #1A1953 !important;
+        color: #1A1953 !important;
+        font-weight: bold;
+        background: transparent;
+        transition: all 0.3s ease;
+    }
+    .btn-back-custom:hover {
+        background-color: #1A1953 !important;
+        color: #ffffff !important;
+        transform: translateY(-2px);
+        box-shadow: 0 6px 15px rgba(26, 25, 83, 0.2) !important;
+    }
+    .breadcrumb-item+.breadcrumb-item::before {
+        content: "›" !important;
+        font-size: 1.5rem;
+        line-height: 1;
+        vertical-align: middle;
+    }
+
     .cinema-screen {
         position: relative;
         height: 48px;

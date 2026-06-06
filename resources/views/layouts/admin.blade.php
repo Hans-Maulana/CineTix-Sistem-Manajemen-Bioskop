@@ -242,6 +242,175 @@
     
     <script>
         document.addEventListener("DOMContentLoaded", function() {
+            // Live Search-on-Type with Debounce
+            const searchInput = document.querySelector('input[name="search"]');
+            if (searchInput) {
+                let searchTimeout;
+                searchInput.setAttribute('autocomplete', 'off');
+
+                const inputGroup = searchInput.closest('.input-group');
+                if (inputGroup) {
+                    const toggleClearBtn = () => {
+                        let btn = inputGroup.querySelector('.btn-clear-js, a.btn-light');
+                        if (searchInput.value.trim() !== '') {
+                            if (!btn) {
+                                btn = document.createElement('button');
+                                btn.type = 'button';
+                                btn.className = 'btn btn-light border-0 d-flex align-items-center btn-clear-js';
+                                btn.innerHTML = '<i class="bi bi-x-lg text-muted"></i>';
+                                btn.addEventListener('click', clearAndSearch);
+                                inputGroup.appendChild(btn);
+                            } else {
+                                btn.style.display = 'flex';
+                            }
+                        } else {
+                            if (btn) {
+                                if (btn.classList.contains('btn-clear-js')) {
+                                    btn.remove();
+                                } else {
+                                    btn.style.display = 'none';
+                                }
+                            }
+                        }
+                    };
+
+                    function clearAndSearch() {
+                        searchInput.value = '';
+                        toggleClearBtn();
+                        searchInput.dispatchEvent(new Event('input'));
+                        searchInput.focus();
+                    }
+
+                    const serverClearBtn = inputGroup.querySelector('a.btn-light');
+                    if (serverClearBtn) {
+                        serverClearBtn.addEventListener('click', function(e) {
+                            e.preventDefault();
+                            clearAndSearch();
+                        });
+                    }
+
+                    searchInput.addEventListener('input', toggleClearBtn);
+                    toggleClearBtn(); // Run immediately on load
+                }
+
+                searchInput.addEventListener('input', function() {
+                    clearTimeout(searchTimeout);
+                    const query = this.value;
+                    const form = this.closest('form');
+                    const url = new URL(form.action || window.location.href);
+                    url.searchParams.set('search', query);
+                    url.searchParams.set('page', 1);
+
+                    const searchIconSpan = inputGroup ? inputGroup.querySelector('.input-group-text') : null;
+
+                    searchTimeout = setTimeout(() => {
+                        if (searchIconSpan) {
+                            searchIconSpan.innerHTML = '<div class="spinner-border spinner-border-sm text-muted" role="status" style="width: 1rem; height: 1rem; border-width: 0.15em;"></div>';
+                        }
+
+                        fetch(url)
+                            .then(response => response.text())
+                            .then(html => {
+                                const parser = new DOMParser();
+                                const doc = parser.parseFromString(html, 'text/html');
+                                
+                                // Update Table Container
+                                const newTable = doc.querySelector('.table-responsive');
+                                const oldTable = document.querySelector('.table-responsive');
+                                if (newTable && oldTable) {
+                                    oldTable.innerHTML = newTable.innerHTML;
+                                }
+                                
+                                // Update Pagination Links
+                                const paginationSelector = '.mt-4, .d-flex.justify-content-end.mt-4, .p-4.border-top.bg-white';
+                                const newPagination = doc.querySelector(paginationSelector);
+                                const oldPagination = document.querySelector(paginationSelector);
+                                if (newPagination && oldPagination) {
+                                    oldPagination.innerHTML = newPagination.innerHTML;
+                                } else if (newPagination && !oldPagination) {
+                                    const cardCustom = document.querySelector('.card-custom, .card-body');
+                                    if (cardCustom) {
+                                        const pagDiv = document.createElement('div');
+                                        pagDiv.className = 'mt-4';
+                                        pagDiv.innerHTML = newPagination.innerHTML;
+                                        cardCustom.appendChild(pagDiv);
+                                    }
+                                } else if (!newPagination && oldPagination) {
+                                    oldPagination.innerHTML = '';
+                                }
+
+                                // Update URL query param in address bar
+                                window.history.pushState({ path: url.href }, '', url.href);
+                            })
+                            .catch(err => {
+                                console.error('Error fetching search results:', err);
+                            })
+                            .finally(() => {
+                                if (searchIconSpan) {
+                                    searchIconSpan.innerHTML = '<i class="bi bi-search text-muted"></i>';
+                                }
+                            });
+                    }, 250); // 250ms debounce
+                });
+            }
+
+            // Global Interceptor for Admin Pagination Clicks (for AJAX loading)
+            document.body.addEventListener('click', function(e) {
+                const pageLink = e.target.closest('.pagination a, a.page-link');
+                if (pageLink && document.querySelector('.table-responsive')) {
+                    const url = new URL(pageLink.href);
+                    if (url.pathname.includes('/admin/')) {
+                        e.preventDefault();
+                        
+                        const tableContainer = document.querySelector('.table-responsive');
+                        if (tableContainer) {
+                            tableContainer.style.opacity = '0.4';
+                            tableContainer.style.transition = 'opacity 0.15s ease';
+                        }
+                        
+                        fetch(url)
+                            .then(response => response.text())
+                            .then(html => {
+                                const parser = new DOMParser();
+                                const doc = parser.parseFromString(html, 'text/html');
+                                
+                                // Update Table Container
+                                const newTable = doc.querySelector('.table-responsive');
+                                const oldTable = document.querySelector('.table-responsive');
+                                if (newTable && oldTable) {
+                                    oldTable.innerHTML = newTable.innerHTML;
+                                    oldTable.style.opacity = '1';
+                                }
+                                
+                                // Update Pagination Links
+                                const paginationSelector = '.mt-4, .d-flex.justify-content-end.mt-4, .p-4.border-top.bg-white';
+                                const newPagination = doc.querySelector(paginationSelector);
+                                const oldPagination = document.querySelector(paginationSelector);
+                                if (newPagination && oldPagination) {
+                                    oldPagination.innerHTML = newPagination.innerHTML;
+                                } else if (newPagination && !oldPagination) {
+                                    const cardCustom = document.querySelector('.card-custom:last-of-type') || document.querySelector('.card-custom');
+                                    if (cardCustom) {
+                                        const pagDiv = document.createElement('div');
+                                        pagDiv.className = 'mt-4';
+                                        pagDiv.innerHTML = newPagination.innerHTML;
+                                        cardCustom.appendChild(pagDiv);
+                                    }
+                                } else if (!newPagination && oldPagination) {
+                                    oldPagination.innerHTML = '';
+                                }
+                                
+                                // Update URL query param in address bar
+                                window.history.pushState({ path: url.href }, '', url.href);
+                            })
+                            .catch(err => {
+                                console.error('Error fetching paginated search results:', err);
+                                if (tableContainer) tableContainer.style.opacity = '1';
+                            });
+                    }
+                }
+            });
+
             function clearOverlays() {
                 // Pastikan body dan html dapat di-scroll dan di-klik
                 document.body.style.setProperty('pointer-events', 'auto', 'important');
@@ -270,8 +439,8 @@
                         const width = el.offsetWidth;
                         const height = el.offsetHeight;
                         
-                        // Jika elemen menutupi hampir seluruh layar (width/height > 90%) dan z-index tinggi, sembunyikan
-                        if (width > window.innerWidth * 0.9 && height > window.innerHeight * 0.9 && zIndex > 5) {
+                        // Jika elemen menutupi hampir seluruh layar (width/height > 90%) dan z-index tinggi, sembunyikan (kecuali modal)
+                        if (!el.classList.contains('modal') && width > window.innerWidth * 0.9 && height > window.innerHeight * 0.9 && zIndex > 5) {
                             el.style.setProperty('display', 'none', 'important');
                             el.style.setProperty('pointer-events', 'none', 'important');
                             el.style.setProperty('z-index', '-9999', 'important');

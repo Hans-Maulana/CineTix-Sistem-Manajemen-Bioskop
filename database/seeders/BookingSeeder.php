@@ -8,6 +8,8 @@ use App\Models\TicketBooking;
 use App\Models\Schedule;
 use App\Models\Seat;
 use App\Models\User;
+use App\Models\Film;
+use App\Models\Studio;
 use Illuminate\Database\Seeder;
 use Illuminate\Support\Str;
 use Carbon\Carbon;
@@ -16,252 +18,123 @@ class BookingSeeder extends Seeder
 {
     public function run(): void
     {
-        // 1. Dapatkan customer user
-        $customer = User::where('email', 'customer@bioskop.com')->first();
-        if (!$customer) {
-            $this->command->error('User customer@bioskop.com tidak ditemukan. Jalankan CustomerSeeder terlebih dahulu.');
+        // Disable foreign key checks to truncate cleanly
+        \Illuminate\Support\Facades\Schema::disableForeignKeyConstraints();
+        Booking::truncate();
+        TicketBooking::truncate();
+        Payment::truncate();
+        \Illuminate\Support\Facades\Schema::enableForeignKeyConstraints();
+
+        // 1. Get films, studios, and customer users
+        $films = Film::all();
+        $studios = Studio::all();
+        $customers = User::whereHas('role', function($q) {
+            $q->where('name', 'customer');
+        })->get();
+
+        if ($films->isEmpty() || $studios->isEmpty() || $customers->isEmpty()) {
+            $this->command->error('Pastikan Film, Studio, dan Customer sudah di-seed!');
             return;
         }
 
-        // 2. Dapatkan schedule yang sesuai
-        $pastScheduleAvengers = Schedule::whereHas('film', function ($q) {
-            $q->where('title', 'Avengers: Endgame');
-        })->where('status', 'complete')->first();
+        $this->command->info('Memulai seeding data transaksi dummy (150 transaksi)...');
 
-        $pastScheduleInception = Schedule::whereHas('film', function ($q) {
-            $q->where('title', 'Inception');
-        })->where('status', 'complete')->first();
-
-        $pastScheduleInterstellar = Schedule::whereHas('film', function ($q) {
-            $q->where('title', 'Interstellar');
-        })->where('status', 'complete')->first();
-
-        $futureScheduleInception = Schedule::whereHas('film', function ($q) {
-            $q->where('title', 'Inception');
-        })->where('status', 'on schedule')->first();
-
-        if (!$pastScheduleAvengers || !$pastScheduleInception || !$pastScheduleInterstellar || !$futureScheduleInception) {
-            $this->command->error('Schedules tidak lengkap. Jalankan ScheduleSeeder terlebih dahulu.');
-            return;
-        }
-
-        // Dapatkan kursi-kursi untuk studio masing-masing
-        $seatsAvengers = Seat::where('studio_id', $pastScheduleAvengers->studio_id)->take(2)->get();
-        $seatsInceptionPast = Seat::where('studio_id', $pastScheduleInception->studio_id)->take(2)->get();
-        $seatsInterstellar = Seat::where('studio_id', $pastScheduleInterstellar->studio_id)->take(2)->get();
-        $seatsInceptionFuturePending = Seat::where('studio_id', $futureScheduleInception->studio_id)->skip(2)->take(2)->get();
-        $seatsInceptionFutureCancelled = Seat::where('studio_id', $futureScheduleInception->studio_id)->skip(4)->take(2)->get();
-
-        // --- 1. SEED BOOKING BERHASIL MASA LALU (Avengers: Endgame) ---
-        if ($seatsAvengers->count() >= 2) {
-            $ticketPrice = $pastScheduleAvengers->ticket_price;
-            $totalAmount = $ticketPrice * 2;
-
-            $booking = Booking::create([
-                'user_id' => $customer->id,
-                'schedule_id' => $pastScheduleAvengers->id,
-                'booking_type' => 'ticket',
-                'total_amount' => $totalAmount,
-                'status' => 'confirmed',
-                'qr_redeem' => (string) Str::uuid(),
-                'status_redeem' => 'unredeemed',
-                'created_at' => Carbon::now()->subDays(2),
-                'updated_at' => Carbon::now()->subDays(2),
+        // Let's generate 150 bookings spread over the last 12 months
+        for ($i = 0; $i < 150; $i++) {
+            $isGuest = rand(1, 100) <= 30; // 30% guest
+            $film = $films->random();
+            $studio = $studios->random();
+            
+            // Generate a date within the last 365 days
+            $daysAgo = rand(1, 365);
+            $createdAt = Carbon::now()->subDays($daysAgo)->subHours(rand(1, 23))->subMinutes(rand(1, 59));
+            
+            // Create a schedule for this booking
+            $startTime = Carbon::parse($createdAt->toDateString() . ' ' . rand(10, 21) . ':00:00');
+            $endTime = (clone $startTime)->addMinutes($film->duration);
+            
+            $schedule = Schedule::create([
+                'film_id' => $film->id,
+                'studio_id' => $studio->id,
+                'schedule_date' => $createdAt->toDateString(),
+                'start_time' => $startTime->format('H:i:s'),
+                'end_time' => $endTime->format('H:i:s'),
+                'ticket_price' => rand(35, 75) * 1000,
+                'status' => 'complete',
+                'created_at' => $createdAt,
+                'updated_at' => $createdAt,
             ]);
 
-            foreach ($seatsAvengers as $seat) {
-                TicketBooking::create([
-                    'booking_id' => $booking->id,
-                    'schedule_id' => $pastScheduleAvengers->id,
-                    'seat_id' => $seat->id,
-                    'price_at_sale' => $ticketPrice,
-                ]);
+            // Choose 1-4 seats
+            $seats = Seat::where('studio_id', $studio->id)->inRandomOrder()->take(rand(1, 4))->get();
+            if ($seats->isEmpty()) continue;
 
-                // Update seat status to booked (global fallback, but database checkAvailability handles schedule check)
-                $seat->update(['status' => 'booked']);
+            $ticketPrice = $schedule->ticket_price;
+            $totalAmount = $ticketPrice * $seats->count();
+
+            // Status distribution
+            $randStatus = rand(1, 100);
+            if ($randStatus <= 85) {
+                $bookingStatus = 'confirmed';
+                $paymentStatus = 'success';
+            } elseif ($randStatus <= 95) {
+                $bookingStatus = 'pending';
+                $paymentStatus = 'pending';
+            } else {
+                $bookingStatus = 'cancelled';
+                $paymentStatus = 'failed';
             }
 
-            Payment::create([
-                'booking_id' => $booking->id,
-                'amount' => $totalAmount,
-                'method' => 'virtual_account',
-                'status' => 'success',
-                'va_number' => '1234567890123456',
-                'countdown_seconds' => 300,
-                'paid_at' => Carbon::now()->subDays(2)->addMinutes(5),
-                'created_at' => Carbon::now()->subDays(2),
-                'updated_at' => Carbon::now()->subDays(2)->addMinutes(5),
-            ]);
-        }
-
-        // --- 2. SEED BOOKING BERHASIL MASA LALU (Inception) ---
-        if ($seatsInceptionPast->count() >= 2) {
-            $ticketPrice = $pastScheduleInception->ticket_price;
-            $totalAmount = $ticketPrice * 2;
-
-            $booking = Booking::create([
-                'user_id' => $customer->id,
-                'schedule_id' => $pastScheduleInception->id,
-                'booking_type' => 'ticket',
-                'total_amount' => $totalAmount,
-                'status' => 'confirmed',
-                'qr_redeem' => (string) Str::uuid(),
-                'status_redeem' => 'redeemed', // Sudah ditukarkan tiketnya
-                'created_at' => Carbon::now()->subDays(1),
-                'updated_at' => Carbon::now()->subDays(1),
-            ]);
-
-            foreach ($seatsInceptionPast as $seat) {
-                TicketBooking::create([
-                    'booking_id' => $booking->id,
-                    'schedule_id' => $pastScheduleInception->id,
-                    'seat_id' => $seat->id,
-                    'price_at_sale' => $ticketPrice,
-                ]);
-
-                $seat->update(['status' => 'booked']);
+            $guestEmail = null;
+            $guestName = null;
+            $userId = null;
+            if ($isGuest) {
+                $guestNames = ['Budi', 'Joko', 'Andi', 'Siti', 'Rini', 'Agus', 'Dewi', 'Hendra', 'Wati', 'Tono'];
+                $guestName = $guestNames[array_rand($guestNames)] . ' ' . rand(10, 99);
+                $guestEmail = strtolower(str_replace(' ', '', $guestName)) . '@example.com';
+            } else {
+                $userId = $customers->random()->id;
             }
 
-            Payment::create([
-                'booking_id' => $booking->id,
-                'amount' => $totalAmount,
-                'method' => 'qris',
-                'status' => 'success',
-                'countdown_seconds' => 300,
-                'paid_at' => Carbon::now()->subDays(1)->addMinutes(3),
-                'created_at' => Carbon::now()->subDays(1),
-                'updated_at' => Carbon::now()->subDays(1)->addMinutes(3),
-            ]);
-        }
-
-        // --- 3. SEED BOOKING PENDING MASA DEPAN (Inception) ---
-        if ($seatsInceptionFuturePending->count() >= 2) {
-            $ticketPrice = $futureScheduleInception->ticket_price;
-            $totalAmount = $ticketPrice * 2;
-
             $booking = Booking::create([
-                'user_id' => $customer->id,
-                'schedule_id' => $futureScheduleInception->id,
+                'user_id' => $userId,
+                'guest_name' => $guestName,
+                'guest_email' => $guestEmail,
+                'schedule_id' => $schedule->id,
                 'booking_type' => 'ticket',
                 'total_amount' => $totalAmount,
-                'status' => 'pending',
-                'qr_redeem' => null,
-                'status_redeem' => 'unredeemed',
-                'created_at' => Carbon::now(),
-                'updated_at' => Carbon::now(),
+                'status' => $bookingStatus,
+                'qr_redeem' => $bookingStatus === 'confirmed' ? (string) Str::uuid() : null,
+                'status_redeem' => $bookingStatus === 'confirmed' && rand(1, 100) <= 60 ? 'redeemed' : 'unredeemed',
+                'created_at' => $createdAt,
+                'updated_at' => $createdAt,
             ]);
 
-            foreach ($seatsInceptionFuturePending as $seat) {
+            foreach ($seats as $seat) {
                 TicketBooking::create([
                     'booking_id' => $booking->id,
-                    'schedule_id' => $futureScheduleInception->id,
+                    'schedule_id' => $schedule->id,
                     'seat_id' => $seat->id,
                     'price_at_sale' => $ticketPrice,
-                ]);
-
-                // Pending bookings lock the seat (status pending, locked_until)
-                $seat->update([
-                    'status' => 'pending',
-                    'locked_until' => Carbon::now()->addSeconds(300),
-                    'locked_by_user_id' => $customer->id,
+                    'created_at' => $createdAt,
+                    'updated_at' => $createdAt,
                 ]);
             }
 
+            $methods = ['qris', 'virtual_account', 'credit_card'];
             Payment::create([
                 'booking_id' => $booking->id,
                 'amount' => $totalAmount,
-                'method' => 'virtual_account',
-                'status' => 'pending',
-                'va_number' => '9876543210987654',
+                'method' => $methods[array_rand($methods)],
+                'status' => $paymentStatus,
+                'va_number' => $paymentStatus === 'pending' ? '9876' . rand(100000, 999999) : null,
+                'paid_at' => $paymentStatus === 'success' ? (clone $createdAt)->addMinutes(rand(1, 10)) : null,
                 'countdown_seconds' => 300,
-                'created_at' => Carbon::now(),
-                'updated_at' => Carbon::now(),
+                'created_at' => $createdAt,
+                'updated_at' => $createdAt,
             ]);
         }
 
-        // --- 4. SEED BOOKING CANCELLED MASA DEPAN (Inception) ---
-        if ($seatsInceptionFutureCancelled->count() >= 2) {
-            $ticketPrice = $futureScheduleInception->ticket_price;
-            $totalAmount = $ticketPrice * 2;
-
-            $booking = Booking::create([
-                'user_id' => $customer->id,
-                'schedule_id' => $futureScheduleInception->id,
-                'booking_type' => 'ticket',
-                'total_amount' => $totalAmount,
-                'status' => 'cancelled',
-                'qr_redeem' => null,
-                'status_redeem' => 'unredeemed',
-                'created_at' => Carbon::now()->subHours(6),
-                'updated_at' => Carbon::now()->subHours(6),
-            ]);
-
-            foreach ($seatsInceptionFutureCancelled as $seat) {
-                TicketBooking::create([
-                    'booking_id' => $booking->id,
-                    'schedule_id' => $futureScheduleInception->id,
-                    'seat_id' => $seat->id,
-                    'price_at_sale' => $ticketPrice,
-                ]);
-
-                // Cancelled bookings release the seat
-                $seat->update([
-                    'status' => 'available',
-                    'locked_until' => null,
-                    'locked_by_user_id' => null,
-                ]);
-            }
-
-            Payment::create([
-                'booking_id' => $booking->id,
-                'amount' => $totalAmount,
-                'method' => 'qris',
-                'status' => 'failed',
-                'countdown_seconds' => 300,
-                'created_at' => Carbon::now()->subHours(6),
-                'updated_at' => Carbon::now()->subHours(6),
-            ]);
-        }
-
-        // --- 5. SEED BOOKING BERHASIL MASA LALU (Interstellar - Untuk dicoba Ulas sendiri oleh User) ---
-        if ($seatsInterstellar->count() >= 2) {
-            $ticketPrice = $pastScheduleInterstellar->ticket_price;
-            $totalAmount = $ticketPrice * 2;
-
-            $booking = Booking::create([
-                'user_id' => $customer->id,
-                'schedule_id' => $pastScheduleInterstellar->id,
-                'booking_type' => 'ticket',
-                'total_amount' => $totalAmount,
-                'status' => 'confirmed',
-                'qr_redeem' => (string) Str::uuid(),
-                'status_redeem' => 'unredeemed',
-                'created_at' => Carbon::now()->subDays(3),
-                'updated_at' => Carbon::now()->subDays(3),
-            ]);
-
-            foreach ($seatsInterstellar as $seat) {
-                TicketBooking::create([
-                    'booking_id' => $booking->id,
-                    'schedule_id' => $pastScheduleInterstellar->id,
-                    'seat_id' => $seat->id,
-                    'price_at_sale' => $ticketPrice,
-                ]);
-
-                $seat->update(['status' => 'booked']);
-            }
-
-            Payment::create([
-                'booking_id' => $booking->id,
-                'amount' => $totalAmount,
-                'method' => 'virtual_account',
-                'status' => 'success',
-                'va_number' => '1122334455667788',
-                'countdown_seconds' => 300,
-                'paid_at' => Carbon::now()->subDays(3)->addMinutes(5),
-                'created_at' => Carbon::now()->subDays(3),
-                'updated_at' => Carbon::now()->subDays(3)->addMinutes(5),
-            ]);
-        }
+        $this->command->info('Seeding data transaksi dummy selesai!');
     }
 }
