@@ -10,10 +10,70 @@ use Illuminate\Support\Facades\Storage;
 
 class FilmController extends Controller
 {
-    public function index()
+    public function index(Request $request)
     {
-        $films = Film::with('genres')->latest()->paginate(10);
-        return view('admin.films.index', compact('films'));
+        $query = Film::with('genres')->withCount('schedules')->withAvg('reviews', 'rating');
+
+        if ($request->filled('search')) {
+            $search = $request->search;
+            $query->where(function ($q) use ($search) {
+                $q->where('title', 'like', '%' . $search . '%')
+                  ->orWhere('director', 'like', '%' . $search . '%')
+                  ->orWhere('actors', 'like', '%' . $search . '%')
+                  ->orWhereHas('genres', function ($g) use ($search) {
+                      $g->where('genre_name', 'like', '%' . $search . '%');
+                  });
+            });
+        }
+
+        if ($request->filled('genre')) {
+            $query->whereHas('genres', function ($g) use ($request) {
+                $g->where('genres.id', $request->genre);
+            });
+        }
+
+        if ($request->filled('status') && in_array($request->status, ['now_playing', 'coming_soon'])) {
+            $query->where('status', $request->status);
+        }
+
+        if ($request->filled('classification')) {
+            $query->where('classification', $request->classification);
+        }
+
+        switch ($request->get('sort')) {
+            case 'oldest':
+                $query->oldest();
+                break;
+            case 'title_asc':
+                $query->orderBy('title');
+                break;
+            case 'title_desc':
+                $query->orderByDesc('title');
+                break;
+            case 'rating_high':
+                $query->orderByDesc('reviews_avg_rating');
+                break;
+            case 'release_new':
+                $query->orderByDesc('release_date');
+                break;
+            default:
+                $query->latest();
+                break;
+        }
+
+        $films = $query->paginate(12)->withQueryString();
+
+        $stats = [
+            'total'        => Film::count(),
+            'now_playing'  => Film::where('status', 'now_playing')->count(),
+            'coming_soon'  => Film::where('status', 'coming_soon')->count(),
+            'genres_count' => Genre::count(),
+        ];
+
+        $genres = Genre::orderBy('genre_name')->get();
+        $classifications = Film::whereNotNull('classification')->distinct()->pluck('classification')->filter()->sort()->values();
+
+        return view('admin.films.index', compact('films', 'stats', 'genres', 'classifications'));
     }
 
     public function create()

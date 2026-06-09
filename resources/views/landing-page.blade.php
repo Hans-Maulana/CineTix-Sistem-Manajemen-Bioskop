@@ -237,6 +237,88 @@
       margin-bottom: 8px !important;
       color: #1F2A2E !important;
     }
+
+    /* Premium Filter Dropdowns */
+    .filter-container {
+      background: rgba(26, 25, 83, 0.04);
+      border: 1px solid rgba(26, 25, 83, 0.08);
+      border-radius: 16px;
+      padding: 12px 20px;
+      backdrop-filter: blur(10px);
+      box-shadow: 0 10px 30px rgba(26, 25, 83, 0.03);
+      display: inline-flex;
+      align-items: center;
+      gap: 15px;
+      margin-top: 15px;
+      margin-bottom: 25px;
+    }
+
+    .filter-select-wrapper {
+      position: relative;
+      display: inline-block;
+    }
+
+    .filter-select-wrapper iconify-icon {
+      position: absolute;
+      left: 14px;
+      top: 50%;
+      transform: translateY(-50%);
+      color: #1A1953;
+      font-size: 1.15rem;
+      pointer-events: none;
+      transition: color 0.3s ease;
+      z-index: 2;
+    }
+
+    .custom-filter-select {
+      appearance: none;
+      -webkit-appearance: none;
+      -moz-appearance: none;
+      background-color: #ffffff;
+      border: 1.5px solid rgba(26, 25, 83, 0.15);
+      border-radius: 12px;
+      padding: 10px 40px 10px 38px;
+      font-size: 0.95rem;
+      font-weight: 600;
+      color: #1a1953;
+      cursor: pointer;
+      outline: none;
+      transition: all 0.3s cubic-bezier(0.4, 0, 0.2, 1);
+      box-shadow: 0 4px 6px rgba(0, 0, 0, 0.02);
+      min-width: 190px;
+    }
+
+    .custom-filter-select:hover {
+      border-color: #1A1953;
+      transform: translateY(-1px);
+      box-shadow: 0 6px 12px rgba(26, 25, 83, 0.08);
+    }
+
+    .custom-filter-select:focus {
+      border-color: #1A1953;
+      box-shadow: 0 0 0 4px rgba(26, 25, 83, 0.15);
+    }
+
+    /* Custom arrow indicator */
+    .filter-select-wrapper::after {
+      content: "";
+      position: absolute;
+      right: 16px;
+      top: 50%;
+      transform: translateY(-50%);
+      width: 0;
+      height: 0;
+      border-left: 5px solid transparent;
+      border-right: 5px solid transparent;
+      border-top: 5px solid #1A1953;
+      pointer-events: none;
+      transition: transform 0.3s ease;
+      z-index: 2;
+    }
+
+    .filter-select-wrapper:focus-within::after {
+      transform: translateY(-50%) rotate(180deg);
+    }
   </style>
 </head>
 
@@ -401,29 +483,42 @@
             </div>
           </div>
 
-          <div class="row mt-4 mb-4">
-            <div class="col-12 d-flex gap-3 justify-content-start flex-wrap">
-              <select id="filter-genre" class="form-select w-auto shadow-sm border-secondary text-dark fw-semibold">
-                <option value="">Semua Genre</option>
-                <option value="Action">Action</option>
-                <option value="Comedy">Comedy</option>
-                <option value="Drama">Drama</option>
-                <option value="Horror">Horror</option>
-                <option value="Romance">Romance</option>
-              </select>
+          <div class="row mt-2 mb-2">
+            <div class="col-12">
+              <div class="filter-container align-items-center flex-wrap" data-aos="fade-up" data-aos-delay="200">
+                <span class="fs-6 fw-bold text-dark me-2 d-flex align-items-center gap-2">
+                  <iconify-icon icon="lucide:sliders-horizontal" class="text-primary"></iconify-icon>
+                  Filter Film:
+                </span>
+                
+                <div class="filter-select-wrapper">
+                  <iconify-icon icon="lucide:film"></iconify-icon>
+                  <select id="filter-genre" class="custom-filter-select">
+                    <option value="">Semua Genre</option>
+                    <option value="Action">Action</option>
+                    <option value="Comedy">Comedy</option>
+                    <option value="Drama">Drama</option>
+                    <option value="Horror">Horror</option>
+                    <option value="Romance">Romance</option>
+                  </select>
+                </div>
 
-              <select id="filter-classification" class="form-select w-auto shadow-sm border-secondary text-dark fw-semibold">
-                <option value="">Semua Rating Umur</option>
-                <option value="SU">SU</option>
-                <option value="13+">13+</option>
-                <option value="17+">17+</option>
-              </select>
+                <div class="filter-select-wrapper">
+                  <iconify-icon icon="lucide:user-check"></iconify-icon>
+                  <select id="filter-classification" class="custom-filter-select">
+                    <option value="">Semua Rating Umur</option>
+                    <option value="SU">SU</option>
+                    <option value="13+">13+</option>
+                    <option value="17+">17+</option>
+                  </select>
+                </div>
+              </div>
             </div>
           </div>
 
         </div>
         <div class="featured-projects-slider px-3">
-          <div class="owl-carousel owl-theme">
+          <div id="owl-now-playing" class="owl-carousel owl-theme">
             @foreach($nowPlayingFilms as $film)
               <div class="item">
                 <div class="portfolio d-flex flex-column gap-6">

@@ -2,16 +2,22 @@
 
 @section('content')
     <div class="container py-5">
-        <!-- Breadcrumb -->
-        <nav aria-label="breadcrumb" class="mb-4" data-aos="fade-down">
-            <ol class="breadcrumb">
-                <li class="breadcrumb-item"><a href="{{ route('landing-page') }}"
-                        class="text-primary text-decoration-none">Beranda</a></li>
-                <li class="breadcrumb-item"><a href="{{ route('films.search') }}"
-                        class="text-primary text-decoration-none">Film</a></li>
-                <li class="breadcrumb-item active" aria-current="page">{{ $film->title }}</li>
-            </ol>
-        </nav>
+        <!-- Breadcrumb & Back Button -->
+        <div class="d-flex justify-content-between align-items-center mb-4" data-aos="fade-down">
+            <nav aria-label="breadcrumb" class="mb-0">
+                <ol class="breadcrumb mb-0">
+                    <li class="breadcrumb-item"><a href="{{ route('landing-page') }}"
+                            class="text-primary text-decoration-none">Beranda</a></li>
+                    <li class="breadcrumb-item"><a href="{{ route('films.search') }}"
+                            class="text-primary text-decoration-none">Film</a></li>
+                    <li class="breadcrumb-item active" aria-current="page">{{ $film->title }}</li>
+                </ol>
+            </nav>
+            <a href="{{ route('landing-page') }}" class="btn btn-back-custom rounded-pill px-4 py-2 d-flex align-items-center gap-2">
+                <iconify-icon icon="solar:arrow-left-outline" class="fs-5"></iconify-icon>
+                <span>Kembali</span>
+            </a>
+        </div>
 
         <div class="row g-5">
             <!-- Poster & Basic Info -->
@@ -291,6 +297,20 @@
     </div>
 
     <style>
+        .btn-back-custom {
+            border: 2px solid #1A1953 !important;
+            color: #1A1953 !important;
+            font-weight: bold;
+            background: transparent;
+            transition: all 0.3s ease;
+        }
+        .btn-back-custom:hover {
+            background-color: #1A1953 !important;
+            color: #ffffff !important;
+            transform: translateY(-2px);
+            box-shadow: 0 6px 15px rgba(26, 25, 83, 0.2) !important;
+        }
+
         .bg-light-primary {
             background-color: rgba(var(--bs-primary-rgb), 0.1);
         }

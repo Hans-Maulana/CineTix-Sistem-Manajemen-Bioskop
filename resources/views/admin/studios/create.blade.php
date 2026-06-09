@@ -4,49 +4,28 @@
 
 @section('content')
 <div class="row mb-4 align-items-center">
-    <div class="col-md-6">
-        <h1 class="fw-bold text-primary">Tambah Studio</h1>
-        <p class="text-muted">Daftarkan studio baru untuk bioskop kamu.</p>
+    <div class="col-md-7">
+        <h1 class="fw-bold text-primary mb-1">
+            <i class="bi bi-plus-circle-dotted me-1"></i> Tambah Studio
+        </h1>
+        <p class="text-muted mb-0">Buat studio baru dan rancang tata letak kursinya secara visual.</p>
     </div>
-    <div class="col-md-6 text-md-end">
+    <div class="col-md-5 text-md-end mt-3 mt-md-0">
         <a href="{{ route('admin.studios.index') }}" class="btn btn-outline-secondary rounded-pill px-4">
             <i class="bi bi-arrow-left"></i> Kembali
         </a>
     </div>
 </div>
 
-<div class="card-custom">
-    <form action="{{ route('admin.studios.store') }}" method="POST">
-        @csrf
-        <div class="row">
-            <div class="col-md-6 mb-4">
-                <label class="form-label fw-bold">Nama Studio</label>
-                <input type="text" name="name" class="form-control" placeholder="Contoh: Studio 1 atau Premiere" required>
-            </div>
-            <div class="col-md-6 mb-4">
-                <label class="form-label fw-bold">Tipe Studio</label>
-                <select name="type_id" class="form-select" required>
-                    <option value="">Pilih Tipe...</option>
-                    @foreach($types as $type)
-                        <option value="{{ $type->id }}">{{ $type->name }}</option>
-                    @endforeach
-                </select>
-            </div>
-            <div class="col-md-6 mb-4">
-                <label class="form-label fw-bold">Kapasitas Kursi</label>
-                <input type="number" name="capacity" class="form-control" placeholder="Contoh: 50" required>
-            </div>
-            <div class="col-md-6 mb-4">
-                <label class="form-label fw-bold">Status</label>
-                <select name="status" class="form-select">
-                    <option value="active">Aktif</option>
-                    <option value="inactive">Nonaktif</option>
-                </select>
-            </div>
-        </div>
-        <div class="text-end mt-4">
-            <button type="submit" class="btn-teal rounded-pill px-5">Simpan Studio</button>
-        </div>
-    </form>
-</div>
+<form action="{{ route('admin.studios.store') }}" method="POST" data-studio-form>
+    @csrf
+    @php
+        $studio = (object) ['name' => '', 'type_id' => '', 'status' => 'active', 'seat_layout' => null];
+    @endphp
+    @include('admin.studios._form', [
+        'studio' => $studio,
+        'submitLabel' => 'Simpan Studio',
+        'hasBookings' => false,
+    ])
+</form>
 @endsection

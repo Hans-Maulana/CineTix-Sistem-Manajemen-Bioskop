@@ -19,6 +19,7 @@ use Illuminate\Support\Facades\Route;
 // --- Route publik (guest & member) ---
 Route::get('/', [HomeController::class, 'index'])->name('landing-page');
 Route::get('/search', [HomeController::class, 'search'])->name('films.search');
+Route::get('/films/filter-now-playing', [FilmController::class, 'filterNowPlaying'])->name('films.filter');
 Route::get('/films/{film}', [HomeController::class, 'filmDetail'])->name('films.detail');
 Route::get('/about', fn () => view('about'))->name('about');
 Route::get('/faq', fn () => view('faq'))->name('faq');
@@ -32,6 +33,10 @@ Route::post('/booking/initiate-payment/{booking}', [BookingController::class, 'i
 Route::get('/booking/process-payment/{booking}/{payment}', [BookingController::class, 'processPayment'])->name('booking.process-payment');
 Route::post('/booking/confirm-payment/{booking}/{payment}', [BookingController::class, 'confirmPayment'])->name('booking.confirm-payment');
 Route::get('/booking/guest-ticket/{booking}', [BookingController::class, 'guestTicket'])->name('booking.guest-ticket');
+
+// Kode OTP Guest
+Route::post('/guest/send-otp', [BookingController::class, 'sendOtp'])->name('guest.send-otp');
+Route::post('/guest/verify-otp', [BookingController::class, 'verifyOtp'])->name('guest.verify-otp');
 
 // Booking AJAX (guest & user)
 Route::get('/booking/available-seats/{schedule}', [BookingController::class, 'getAvailableSeats'])->name('booking.available-seats');
@@ -66,13 +71,12 @@ Route::middleware('auth')->group(function () {
     Route::get('admin/bookings', [BookingManagementController::class, 'index'])->name('admin.bookings.index');
     Route::get('admin/customers', [CustomerController::class, 'index'])->name('admin.customers.index');
     Route::get('admin/tickets', [TicketManagementController::class, 'index'])->name('admin.tickets.index');
+    Route::get('admin/tickets/schedule/{schedule}', [TicketManagementController::class, 'scheduleDetail'])->name('admin.tickets.schedule');
     Route::post('admin/tickets/scan', [TicketManagementController::class, 'scan'])->name('admin.tickets.scan');
     Route::get('admin/reports', [ReportController::class, 'index'])->name('admin.reports.index');
     Route::get('admin/reports/export', [ReportController::class, 'export'])->name('admin.reports.export');
 
     Route::get('/customer', [HomeController::class, 'index'])->name('customer.dashboard');
-
-    Route::get('/films/filter-now-playing', [FilmController::class, 'filterNowPlaying'])->name('films.filter');
 
     Route::post('/promo/validate', [PromoController::class, 'validate'])->name('promo.validate');
 
