@@ -21,6 +21,13 @@ class RegisteredUserController extends Controller
      */
     public function create(): View
     {
+        $referer = request()->headers->get('referer');
+        if ($referer && !str_contains($referer, '/login') && !str_contains($referer, '/register') && !str_contains($referer, '/logout') && !str_contains($referer, '/password')) {
+            if (str_starts_with($referer, request()->getSchemeAndHttpHost())) {
+                session(['url.intended' => $referer]);
+            }
+        }
+
         return view('auth.sign-up');
     }
 
@@ -50,7 +57,7 @@ class RegisteredUserController extends Controller
 
         Auth::login($user);
 
-        return redirect(route('dashboard', absolute: false))
+        return redirect()->intended(route('dashboard', absolute: false))
             ->with('success', 'Selamat datang! Anda mendapat kode promo WELCOME2026 senilai Rp 20.000 untuk pembelian pertama.');
     }
 }

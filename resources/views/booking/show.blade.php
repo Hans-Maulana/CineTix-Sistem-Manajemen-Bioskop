@@ -152,7 +152,7 @@
                             <div id="selectedSeats" class="p-3 bg-light rounded-3 mb-2 min-vh-10" style="min-height: 50px; border: 1px dashed #ced4da;">
                                 <small class="text-white text-secondary opacity-75">Belum ada kursi yang dipilih</small>
                             </div>
-                            <input type="hidden" name="seat_ids" id="seatIds">
+                            <div id="seatIdsContainer"></div>
                         </div>
 
                         <div class="mb-3">
@@ -189,13 +189,17 @@
                         </div>
                         @endif
 
-                        <div class="mb-4">
-                            <label for="guestEmail" class="form-label fw-bold text-dark small">Email untuk kirim tiket <span class="text-danger">*</span></label>
-                            <input type="email" class="form-control" id="guestEmail" name="guest_email"
-                                   placeholder="contoh@email.com" required autocomplete="email"
-                                   value="{{ old('guest_email', $isAuthenticated ? $user->email : '') }}">
-                            <div class="form-text">Tiket digital akan dikirim ke email ini setelah pembayaran.</div>
-                        </div>
+                        @if($isAuthenticated)
+                            <input type="hidden" id="guestEmail" name="guest_email" value="{{ $user->email }}">
+                        @else
+                            <div class="mb-4">
+                                <label for="guestEmail" class="form-label fw-bold text-dark small">Email untuk kirim tiket <span class="text-danger">*</span></label>
+                                <input type="email" class="form-control" id="guestEmail" name="guest_email"
+                                       placeholder="contoh@email.com" required autocomplete="email"
+                                       value="{{ old('guest_email') }}">
+                                <div class="form-text">Tiket digital akan dikirim ke email ini setelah pembayaran.</div>
+                            </div>
+                        @endif
 
                         <hr class="my-4 opacity-10">
 
@@ -204,7 +208,7 @@
                             <span id="totalPrice" class="fs-4 fw-bold" style="color: #1A1953;">Rp 0</span>
                         </div>
 
-                        <button type="button" class="btn btn-primary text-white w-100 py-3 fw-bold rounded-3 shadow-sm" id="bookingBtn" disabled>
+                        <button type="button" class="btn btn-primary text-white w-100 py-3 fw-bold rounded-3 shadow-sm" id="bookingBtn" onclick="submitBooking()">
                             Lanjutkan ke Pembayaran <i class="iconify" data-icon="lucide:arrow-right"></i>
                         </button>
                     </form>
@@ -277,6 +281,49 @@
     let appliedDiscount = 0;
     let promoApplied = false;
 
+    // Fungsi utama submit booking - dipanggil langsung dari onclick tombol
+    function submitBooking() {
+        if (selectedSeats.length === 0) {
+            alert('Silakan pilih minimal 1 kursi terlebih dahulu.');
+            return;
+        }
+
+        if (!isAuthenticated) {
+            // Guest: tampilkan modal OTP
+            const guestEmail = document.getElementById('guestEmail');
+            const email = guestEmail ? guestEmail.value.trim() : '';
+            if (!email || !/^[^\s@]+@[^\s@]+\.[^\s@]+$/.test(email)) {
+                if (guestEmail) { guestEmail.classList.add('is-invalid'); guestEmail.focus(); }
+                return;
+            }
+            if (guestEmail) guestEmail.classList.remove('is-invalid');
+            document.getElementById('modalEmailDisplay').textContent = email;
+            document.getElementById('step-otp-input').style.display = 'none';
+            document.getElementById('step-email-confirm').style.display = 'block';
+            document.getElementById('guestOtpCode').value = '';
+            const emailModalEl = document.getElementById('emailConfirmModal');
+            if (emailModalEl && typeof bootstrap !== 'undefined') {
+                new bootstrap.Modal(emailModalEl).show();
+            }
+            return;
+        }
+
+        // User sudah login: isi seat_ids[] dan submit form
+        const container = document.getElementById('seatIdsContainer');
+        if (container) {
+            container.innerHTML = selectedSeats.map(s => '<input type="hidden" name="seat_ids[]" value="' + s.id + '">').join('');
+        }
+
+        const btn = document.getElementById('bookingBtn');
+        if (btn) {
+            btn.disabled = true;
+            btn.innerHTML = '<span class="spinner-border spinner-border-sm me-2"></span> Memproses...';
+        }
+
+        const form = document.getElementById('bookingForm');
+        if (form) form.submit();
+    }
+
     // Initialize Pusher untuk Real-Time Seat Updates
     try {
         const pusherKey = '{{ config('broadcasting.connections.pusher.key') }}';
@@ -307,11 +354,34 @@
     // Initialize styles
     document.addEventListener('DOMContentLoaded', function() {
         attachSeatStyles();
+        restoreSelectedSeats();
         if (isAuthenticated) {
             initPromoHandler();
         }
         initGuestCheckout();
+        initFormSubmit();
     });
+
+    function restoreSelectedSeats() {
+        const saved = sessionStorage.getItem('selected_seats_' + scheduleId);
+        if (saved) {
+            try {
+                const parsedSeats = JSON.parse(saved);
+                selectedSeats = [];
+                parsedSeats.forEach(seat => {
+                    const btn = document.querySelector(`[data-seat-id="${seat.id}"]`);
+                    if (btn && !btn.disabled) {
+                        btn.classList.add('seat-selected');
+                        selectedSeats.push(seat);
+                    }
+                });
+                sessionStorage.setItem('selected_seats_' + scheduleId, JSON.stringify(selectedSeats));
+                updateSummary();
+            } catch (e) {
+                console.error('Failed to restore selected seats:', e);
+            }
+        }
+    }
 
     function initGuestCheckout() {
         const guestEmail = document.getElementById('guestEmail');
@@ -320,49 +390,16 @@
         const emailModalEl = document.getElementById('emailConfirmModal');
         if (!guestEmail || !bookingBtn || !bookingForm) return;
 
+        guestEmail.addEventListener('input', updateSummary);
+
+        if (isAuthenticated) {
+            return;
+        }
+
         let emailModal = null;
         if (emailModalEl && typeof bootstrap !== 'undefined') {
             emailModal = new bootstrap.Modal(emailModalEl);
         }
-
-
-        guestEmail.addEventListener('input', updateSummary);
-
-
-        bookingBtn.addEventListener('click', function(e) {
-            e.preventDefault();
-            if (selectedSeats.length === 0) {
-                alert('Silakan pilih minimal 1 kursi');
-                return;
-            }
-
-
-            if (isAuthenticated) {
-                bookingBtn.disabled = true;
-                bookingBtn.innerHTML = '<span class="spinner-border spinner-border-sm me-2"></span> Memproses...';
-                bookingForm.submit();
-                return;
-            }
-
-
-            const email = guestEmail.value.trim();
-            if (!email || !/^[^\s@]+@[^\s@]+\.[^\s@]+$/.test(email)) {
-                guestEmail.classList.add('is-invalid');
-                guestEmail.focus();
-                return;
-            }
-
-
-            guestEmail.classList.remove('is-invalid');
-            document.getElementById('modalEmailDisplay').textContent = email;
-            document.getElementById('step-otp-input').style.display = 'none';
-            document.getElementById('step-email-confirm').style.display = 'block';
-            document.getElementById('guestOtpCode').value = '';
-
-            if (emailModal) {
-                emailModal.show();
-            }
-        });
 
 
         document.getElementById('btnSendOtp')?.addEventListener('click', function() {
@@ -437,8 +474,10 @@
 
                     const mainBtn = document.getElementById('bookingBtn');
                     if (mainBtn) {
-                        mainBtn.disabled = true;
                         mainBtn.innerHTML = '<span class="spinner-border spinner-border-sm me-2"></span> Mengunci Kursi...';
+                        setTimeout(function() {
+                            mainBtn.disabled = true;
+                        }, 50);
                     }
 
                     bookingForm.submit();
@@ -523,6 +562,9 @@
             btn.classList.add('seat-selected');
         }
 
+        // Save to sessionStorage
+        sessionStorage.setItem('selected_seats_' + scheduleId, JSON.stringify(selectedSeats));
+
         updateSummary();
     }
 
@@ -540,7 +582,11 @@
 
         document.getElementById('seatCount').textContent = seatCount;
         document.getElementById('totalPrice').innerHTML = `Rp ${totalPrice.toLocaleString('id-ID')}`;
-        document.getElementById('seatIds').value = selectedSeats.map(s => s.id).join(',');
+        // Perbarui hidden inputs seat_ids[] agar benar-benar dikirim sebagai array
+        const container = document.getElementById('seatIdsContainer');
+        if (container) {
+            container.innerHTML = selectedSeats.map(s => `<input type="hidden" name="seat_ids[]" value="${s.id}">`).join('');
+        }
         document.getElementById('selectedSeats').innerHTML = seatCount > 0
             ? selectedSeats.map(s => `<span class="badge px-3 py-2 rounded-pill shadow-sm me-1 mb-1" style="background: #1A1953; color: white;">${s.code}</span>`).join('')
             : '<small class="text-secondary opacity-75">Belum ada kursi yang dipilih</small>';
@@ -643,35 +689,60 @@
         });
     }
 
-    const bookingForm = document.getElementById('bookingForm');
-    if (bookingForm && isAuthenticated) {
-        bookingForm.addEventListener('submit', function(e) {
-            if (selectedSeats.length === 0) {
-                e.preventDefault();
-                alert('Silakan pilih minimal 1 kursi');
-                return;
-            }
+    function initFormSubmit() {
+        const bookingForm = document.getElementById('bookingForm');
+        if (!bookingForm) {
+            console.error('bookingForm tidak ditemukan!');
+            return;
+        }
 
-            const btn = document.getElementById('bookingBtn');
-            if (btn) {
-                btn.disabled = true;
-                btn.innerHTML = '<span class="spinner-border spinner-border-sm me-2"></span> Memproses...';
-            }
-        });
-    }
-
-    if (bookingForm && !isAuthenticated) {
-        bookingForm.addEventListener('submit', function(e) {
-            if (selectedSeats.length === 0) {
+        if (isAuthenticated) {
+            // User sudah login: langsung submit
+            bookingForm.addEventListener('submit', function(e) {
+                if (selectedSeats.length === 0) {
+                    e.preventDefault();
+                    alert('Silakan pilih minimal 1 kursi terlebih dahulu.');
+                    return;
+                }
+                // Isi ulang seat_ids[] dari selectedSeats array sebelum submit
+                const container = document.getElementById('seatIdsContainer');
+                if (container) {
+                    container.innerHTML = selectedSeats.map(s => `<input type="hidden" name="seat_ids[]" value="${s.id}">`).join('');
+                }
+                const btn = document.getElementById('bookingBtn');
+                if (btn) {
+                    btn.innerHTML = '<span class="spinner-border spinner-border-sm me-2"></span> Memproses...';
+                    setTimeout(function() { btn.disabled = true; }, 100);
+                }
+            });
+        } else {
+            // User belum login: butuh OTP
+            bookingForm.addEventListener('submit', function(e) {
                 e.preventDefault();
-                return;
-            }
-            const btn = document.getElementById('bookingBtn');
-            if (btn) {
-                btn.disabled = true;
-                btn.innerHTML = '<span class="spinner-border spinner-border-sm me-2"></span> Memproses...';
-            }
-        });
+                if (selectedSeats.length === 0) {
+                    alert('Silakan pilih minimal 1 kursi terlebih dahulu.');
+                    return;
+                }
+                const guestEmail = document.getElementById('guestEmail');
+                const email = guestEmail ? guestEmail.value.trim() : '';
+                if (!email || !/^[^\s@]+@[^\s@]+\.[^\s@]+$/.test(email)) {
+                    if (guestEmail) {
+                        guestEmail.classList.add('is-invalid');
+                        guestEmail.focus();
+                    }
+                    return;
+                }
+                if (guestEmail) guestEmail.classList.remove('is-invalid');
+                document.getElementById('modalEmailDisplay').textContent = email;
+                document.getElementById('step-otp-input').style.display = 'none';
+                document.getElementById('step-email-confirm').style.display = 'block';
+                document.getElementById('guestOtpCode').value = '';
+                const emailModalEl = document.getElementById('emailConfirmModal');
+                if (emailModalEl && typeof bootstrap !== 'undefined') {
+                    new bootstrap.Modal(emailModalEl).show();
+                }
+            });
+        }
     }
 </script>
 

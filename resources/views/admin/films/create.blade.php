@@ -57,10 +57,26 @@
                 </div>
 
                 <div class="row">
-                    <div class="col-12 mb-4">
+                    <div class="col-md-6 mb-4">
                         <label class="form-label fw-bold">Durasi (Menit)</label>
                         <input type="number" name="duration" class="form-control" placeholder="120" value="{{ old('duration') }}" required>
                     </div>
+                    <div class="col-md-6 mb-4">
+                        <label class="form-label fw-bold">Status</label>
+                        <select name="status" class="form-select" required>
+                            <option value="now_playing" {{ old('status') == 'now_playing' ? 'selected' : '' }}>Sedang Tayang</option>
+                            <option value="coming_soon" {{ old('status') == 'coming_soon' ? 'selected' : '' }}>Segera Tayang</option>
+                        </select>
+                    </div>
+                </div>
+
+                <div class="mb-4">
+                    <label class="form-label fw-bold">Klasifikasi Umur</label>
+                    <select name="classification" class="form-select" required>
+                        <option value="SU" {{ old('classification') == 'SU' ? 'selected' : '' }}>SU (Semua Umur)</option>
+                        <option value="13+" {{ old('classification') == '13+' ? 'selected' : '' }}>13+ (Remaja)</option>
+                        <option value="17+" {{ old('classification') == '17+' ? 'selected' : '' }}>17+ (Dewasa)</option>
+                    </select>
                 </div>
 
                 <div class="mb-4">

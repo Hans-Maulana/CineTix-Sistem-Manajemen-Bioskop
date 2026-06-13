@@ -92,6 +92,8 @@ class FilmController extends Controller
             'release_date' => 'required|date',
             'cover' => 'nullable|image|mimes:jpeg,png,jpg,gif,webp,avif|max:2048',
             'genres' => 'required|array',
+            'status' => 'required|in:now_playing,coming_soon',
+            'classification' => 'required|in:SU,13+,17+',
         ]);
 
         $data = $request->all();
@@ -128,6 +130,8 @@ class FilmController extends Controller
             'release_date' => 'required|date',
             'cover' => 'nullable|image|mimes:jpeg,png,jpg,gif,webp,avif|max:2048',
             'genres' => 'required|array',
+            'status' => 'required|in:now_playing,coming_soon',
+            'classification' => 'required|in:SU,13+,17+',
         ]);
 
         $data = $request->all();

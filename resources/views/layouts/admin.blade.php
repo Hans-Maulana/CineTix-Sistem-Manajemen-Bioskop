@@ -362,7 +362,14 @@
                     if (url.pathname.includes('/admin/')) {
                         e.preventDefault();
                         
-                        const tableContainer = document.querySelector('.table-responsive');
+                        const activePane = pageLink.closest('.tab-pane');
+                        let tableContainer;
+                        if (activePane) {
+                            tableContainer = activePane.querySelector('.table-responsive');
+                        } else {
+                            tableContainer = document.querySelector('.table-responsive');
+                        }
+                        
                         if (tableContainer) {
                             tableContainer.style.opacity = '0.4';
                             tableContainer.style.transition = 'opacity 0.15s ease';
@@ -375,21 +382,39 @@
                                 const doc = parser.parseFromString(html, 'text/html');
                                 
                                 // Update Table Container
-                                const newTable = doc.querySelector('.table-responsive');
-                                const oldTable = document.querySelector('.table-responsive');
+                                let newTable, oldTable;
+                                if (activePane) {
+                                    oldTable = activePane.querySelector('.table-responsive');
+                                    const newPane = doc.querySelector('#' + activePane.id);
+                                    newTable = newPane ? newPane.querySelector('.table-responsive') : null;
+                                } else {
+                                    oldTable = document.querySelector('.table-responsive');
+                                    newTable = doc.querySelector('.table-responsive');
+                                }
+                                
                                 if (newTable && oldTable) {
                                     oldTable.innerHTML = newTable.innerHTML;
                                     oldTable.style.opacity = '1';
+                                } else if (tableContainer) {
+                                    tableContainer.style.opacity = '1';
                                 }
                                 
                                 // Update Pagination Links
                                 const paginationSelector = '.mt-4, .d-flex.justify-content-end.mt-4, .p-4.border-top.bg-white';
-                                const newPagination = doc.querySelector(paginationSelector);
-                                const oldPagination = document.querySelector(paginationSelector);
+                                let newPagination, oldPagination;
+                                if (activePane) {
+                                    oldPagination = activePane.querySelector(paginationSelector);
+                                    const newPane = doc.querySelector('#' + activePane.id);
+                                    newPagination = newPane ? newPane.querySelector(paginationSelector) : null;
+                                } else {
+                                    oldPagination = document.querySelector(paginationSelector);
+                                    newPagination = doc.querySelector(paginationSelector);
+                                }
+                                
                                 if (newPagination && oldPagination) {
                                     oldPagination.innerHTML = newPagination.innerHTML;
                                 } else if (newPagination && !oldPagination) {
-                                    const cardCustom = document.querySelector('.card-custom:last-of-type') || document.querySelector('.card-custom');
+                                    const cardCustom = activePane ? activePane.querySelector('.table-card, .card-custom') : (document.querySelector('.card-custom:last-of-type') || document.querySelector('.card-custom'));
                                     if (cardCustom) {
                                         const pagDiv = document.createElement('div');
                                         pagDiv.className = 'mt-4';

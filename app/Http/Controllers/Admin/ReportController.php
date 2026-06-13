@@ -17,6 +17,29 @@ use Barryvdh\DomPDF\Facade\Pdf;
 
 class ReportController extends Controller
 {
+    private function applyDateFilters($query, $startDate, $endDate, $year, $month, $tablePrefix = '')
+    {
+        $column = $tablePrefix ? $tablePrefix . '.created_at' : 'created_at';
+        
+        if ($startDate || $endDate) {
+            if ($startDate && $endDate) {
+                $query->whereBetween($column, [$startDate . ' 00:00:00', $endDate . ' 23:59:59']);
+            } elseif ($startDate) {
+                $query->where($column, '>=', $startDate . ' 00:00:00');
+            } else {
+                $query->where($column, '<=', $endDate . ' 23:59:59');
+            }
+        } else {
+            if ($year) {
+                $query->whereYear($column, $year);
+            }
+            if ($month) {
+                $query->whereMonth($column, $month);
+            }
+        }
+        return $query;
+    }
+
     public function index(Request $request)
     {
         // Get filters from request
@@ -25,6 +48,7 @@ class ReportController extends Controller
         $month = $request->get('month');
         $startDate = $request->get('start_date');
         $endDate = $request->get('end_date');
+        $reportType = $request->get('report_type', 'daily');
 
         // Base query for confirmed bookings
         $bookingQuery = Booking::where('status', 'confirmed');
@@ -36,14 +60,7 @@ class ReportController extends Controller
             });
         }
 
-        if ($startDate && $endDate) {
-            $bookingQuery->whereBetween('created_at', [$startDate . ' 00:00:00', $endDate . ' 23:59:59']);
-        } elseif ($year) {
-            $bookingQuery->whereYear('created_at', $year);
-            if ($month) {
-                $bookingQuery->whereMonth('created_at', $month);
-            }
-        }
+        $this->applyDateFilters($bookingQuery, $startDate, $endDate, $year, $month);
 
         // 1. Rekap Keseluruhan (Filtered)
         $totalRevenue = $bookingQuery->sum('total_amount');
@@ -58,14 +75,7 @@ class ReportController extends Controller
             $totalTicketsQuery->join('schedules', 'ticket_bookings.schedule_id', '=', 'schedules.id')
                 ->where('schedules.film_id', $filmId);
         }
-        if ($startDate && $endDate) {
-            $totalTicketsQuery->whereBetween('bookings.created_at', [$startDate . ' 00:00:00', $endDate . ' 23:59:59']);
-        } elseif ($year) {
-            $totalTicketsQuery->whereYear('bookings.created_at', $year);
-            if ($month) {
-                $totalTicketsQuery->whereMonth('bookings.created_at', $month);
-            }
-        }
+        $this->applyDateFilters($totalTicketsQuery, $startDate, $endDate, $year, $month, 'bookings');
         $totalTickets = $totalTicketsQuery->count();
 
         // 2. Rekap per Film (Filtered)
@@ -75,28 +85,14 @@ class ReportController extends Controller
                       ->join('bookings', 'ticket_bookings.booking_id', '=', 'bookings.id')
                       ->where('bookings.status', 'confirmed');
                       
-                if ($startDate && $endDate) {
-                    $query->whereBetween('bookings.created_at', [$startDate . ' 00:00:00', $endDate . ' 23:59:59']);
-                } elseif ($year) {
-                    $query->whereYear('bookings.created_at', $year);
-                    if ($month) {
-                        $query->whereMonth('bookings.created_at', $month);
-                    }
-                }
+                $this->applyDateFilters($query, $startDate, $endDate, $year, $month, 'bookings');
             }])
             ->withSum(['schedules as total_revenue' => function ($query) use ($startDate, $endDate, $year, $month) {
                 $query->join('ticket_bookings', 'schedules.id', '=', 'ticket_bookings.schedule_id')
                       ->join('bookings', 'ticket_bookings.booking_id', '=', 'bookings.id')
                       ->where('bookings.status', 'confirmed');
                       
-                if ($startDate && $endDate) {
-                    $query->whereBetween('bookings.created_at', [$startDate . ' 00:00:00', $endDate . ' 23:59:59']);
-                } elseif ($year) {
-                    $query->whereYear('bookings.created_at', $year);
-                    if ($month) {
-                        $query->whereMonth('bookings.created_at', $month);
-                    }
-                }
+                $this->applyDateFilters($query, $startDate, $endDate, $year, $month, 'bookings');
             }], 'ticket_bookings.price_at_sale');
 
         if ($filmId) {
@@ -119,14 +115,7 @@ class ReportController extends Controller
                 $q->where('film_id', $filmId);
             });
         }
-        if ($startDate && $endDate) {
-            $monthlyReportsQuery->whereBetween('created_at', [$startDate . ' 00:00:00', $endDate . ' 23:59:59']);
-        } elseif ($year) {
-            $monthlyReportsQuery->whereYear('created_at', $year);
-            if ($month) {
-                $monthlyReportsQuery->whereMonth('created_at', $month);
-            }
-        }
+        $this->applyDateFilters($monthlyReportsQuery, $startDate, $endDate, $year, $month);
         
         $monthlyReports = $monthlyReportsQuery->groupBy('month_year')
             ->orderBy('month_year', 'desc')
@@ -145,13 +134,8 @@ class ReportController extends Controller
                 $q->where('film_id', $filmId);
             });
         }
-        if ($startDate && $endDate) {
-            $dailyReportsQuery->whereBetween('created_at', [$startDate . ' 00:00:00', $endDate . ' 23:59:59']);
-        } elseif ($year) {
-            $dailyReportsQuery->whereYear('created_at', $year);
-            if ($month) {
-                $dailyReportsQuery->whereMonth('created_at', $month);
-            }
+        if ($startDate || $endDate || $year || $month) {
+            $this->applyDateFilters($dailyReportsQuery, $startDate, $endDate, $year, $month);
         } else {
             // Default: past 30 days
             $dailyReportsQuery->where('created_at', '>=', now()->subDays(30));
@@ -174,14 +158,7 @@ class ReportController extends Controller
             });
         }
 
-        if ($startDate && $endDate) {
-            $detailedBookingsQuery->whereBetween('created_at', [$startDate . ' 00:00:00', $endDate . ' 23:59:59']);
-        } elseif ($year) {
-            $detailedBookingsQuery->whereYear('created_at', $year);
-            if ($month) {
-                $detailedBookingsQuery->whereMonth('created_at', $month);
-            }
-        }
+        $this->applyDateFilters($detailedBookingsQuery, $startDate, $endDate, $year, $month);
 
         $detailedBookings = $detailedBookingsQuery->latest('created_at')->paginate(10)->withQueryString();
 
@@ -214,7 +191,8 @@ class ReportController extends Controller
             'year',
             'month',
             'startDate',
-            'endDate'
+            'endDate',
+            'reportType'
         ));
     }
 
@@ -232,6 +210,10 @@ class ReportController extends Controller
         $titleSuffix = "";
         if ($startDate && $endDate) {
             $titleSuffix = " Periode " . date('d M Y', strtotime($startDate)) . " s/d " . date('d M Y', strtotime($endDate));
+        } elseif ($startDate) {
+            $titleSuffix = " Mulai " . date('d M Y', strtotime($startDate));
+        } elseif ($endDate) {
+            $titleSuffix = " Sampai " . date('d M Y', strtotime($endDate));
         } elseif ($year) {
             if ($month) {
                 $titleSuffix = " Bulan " . \Carbon\Carbon::parse("$year-$month-01")->translatedFormat('F Y');
@@ -249,14 +231,7 @@ class ReportController extends Controller
                     $q->where('film_id', $filmId);
                 });
             }
-            if ($startDate && $endDate) {
-                $query->whereBetween('created_at', [$startDate . ' 00:00:00', $endDate . ' 23:59:59']);
-            } elseif ($year) {
-                $query->whereYear('created_at', $year);
-                if ($month) {
-                    $query->whereMonth('created_at', $month);
-                }
-            }
+            $this->applyDateFilters($query, $startDate, $endDate, $year, $month);
 
             $data = $query->latest('created_at')->get();
             $title = "Laporan Detail Transaksi Penjualan" . $titleSuffix;
@@ -274,14 +249,7 @@ class ReportController extends Controller
                     $q->where('film_id', $filmId);
                 });
             }
-            if ($startDate && $endDate) {
-                $query->whereBetween('created_at', [$startDate . ' 00:00:00', $endDate . ' 23:59:59']);
-            } elseif ($year) {
-                $query->whereYear('created_at', $year);
-                if ($month) {
-                    $query->whereMonth('created_at', $month);
-                }
-            }
+            $this->applyDateFilters($query, $startDate, $endDate, $year, $month);
 
             $data = $query->groupBy('month_year')
                 ->orderBy('month_year', 'desc')
@@ -302,13 +270,8 @@ class ReportController extends Controller
                     $q->where('film_id', $filmId);
                 });
             }
-            if ($startDate && $endDate) {
-                $query->whereBetween('created_at', [$startDate . ' 00:00:00', $endDate . ' 23:59:59']);
-            } elseif ($year) {
-                $query->whereYear('created_at', $year);
-                if ($month) {
-                    $query->whereMonth('created_at', $month);
-                }
+            if ($startDate || $endDate || $year || $month) {
+                $this->applyDateFilters($query, $startDate, $endDate, $year, $month);
             } else {
                 $query->where('created_at', '>=', now()->subDays(30));
             }
@@ -327,35 +290,23 @@ class ReportController extends Controller
                       ->join('bookings', 'ticket_bookings.booking_id', '=', 'bookings.id')
                       ->where('bookings.status', 'confirmed');
                       
-                    if ($startDate && $endDate) {
-                        $q->whereBetween('bookings.created_at', [$startDate . ' 00:00:00', $endDate . ' 23:59:59']);
-                    } elseif ($year) {
-                        $q->whereYear('bookings.created_at', $year);
-                        if ($month) {
-                            $q->whereMonth('bookings.created_at', $month);
-                        }
-                    }
+                    $this->applyDateFilters($q, $startDate, $endDate, $year, $month, 'bookings');
                 }])
                 ->withSum(['schedules as total_revenue' => function ($q) use ($startDate, $endDate, $year, $month) {
                     $q->join('ticket_bookings', 'schedules.id', '=', 'ticket_bookings.schedule_id')
                       ->join('bookings', 'ticket_bookings.booking_id', '=', 'bookings.id')
                       ->where('bookings.status', 'confirmed');
                       
-                    if ($startDate && $endDate) {
-                        $q->whereBetween('bookings.created_at', [$startDate . ' 00:00:00', $endDate . ' 23:59:59']);
-                    } elseif ($year) {
-                        $q->whereYear('bookings.created_at', $year);
-                        if ($month) {
-                            $q->whereMonth('bookings.created_at', $month);
-                        }
-                    }
+                    $this->applyDateFilters($q, $startDate, $endDate, $year, $month, 'bookings');
                 }], 'ticket_bookings.price_at_sale');
 
             if ($filmId) {
                 $query->where('films.id', $filmId);
             }
 
-            $data = $query->get();
+            $data = $query->get()->filter(function ($film) {
+                return $film->tickets_sold > 0;
+            });
 
             $title = "Laporan Penjualan Tiket per Film" . $titleSuffix;
             $filenameBase = "laporan_penjualan_per_film_" . date('Ymd');

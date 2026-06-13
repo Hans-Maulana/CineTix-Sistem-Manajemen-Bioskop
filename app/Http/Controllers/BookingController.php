@@ -51,8 +51,11 @@ class BookingController extends Controller
 
     public function store(Request $request)
     {
+        // Normalisasi seat_ids: bisa berupa string CSV (fallback) atau array langsung
         if (is_string($request->seat_ids)) {
-            $request->merge(['seat_ids' => explode(',', $request->seat_ids)]);
+            $request->merge(['seat_ids' => array_filter(explode(',', $request->seat_ids))]);
+        } elseif (is_array($request->seat_ids) && count($request->seat_ids) === 1 && is_string($request->seat_ids[0]) && str_contains($request->seat_ids[0], ',')) {
+            $request->merge(['seat_ids' => array_filter(explode(',', $request->seat_ids[0]))]);
         }
 
         $rules = [
@@ -60,7 +63,7 @@ class BookingController extends Controller
             'seat_ids' => 'required|array|min:1',
             'seat_ids.*' => 'exists:seats,id',
             'promo_code' => 'nullable|string',
-            'guest_email' => 'required|email:rfc,filter|max:255',
+            'guest_email' => Auth::check() ? 'nullable|email:rfc,filter|max:255' : 'required|email:rfc,filter|max:255',
         ];
 
         $validated = $request->validate($rules);

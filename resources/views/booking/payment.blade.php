@@ -219,6 +219,9 @@
 
 @push('scripts')
 <script>
+    // Clear selected seats for this schedule since booking was successful
+    sessionStorage.removeItem('selected_seats_' + {{ $booking->schedule_id }});
+
     function selectMethod(method) {
         // Method selection handled by CSS + HTML radio
         document.getElementById('payBtn').disabled = false;

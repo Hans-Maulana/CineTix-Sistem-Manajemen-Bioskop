@@ -14,6 +14,13 @@ class AuthenticatedSessionController extends Controller
 {
     public function create(): View
     {
+        $referer = request()->headers->get('referer');
+        if ($referer && !str_contains($referer, '/login') && !str_contains($referer, '/register') && !str_contains($referer, '/logout') && !str_contains($referer, '/password')) {
+            if (str_starts_with($referer, request()->getSchemeAndHttpHost())) {
+                session(['url.intended' => $referer]);
+            }
+        }
+
         return view('auth.sign-in');
     }
 

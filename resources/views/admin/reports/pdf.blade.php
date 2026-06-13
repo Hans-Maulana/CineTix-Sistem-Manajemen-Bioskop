@@ -6,36 +6,38 @@
     <style>
         body {
             font-family: 'Helvetica Neue', Helvetica, Arial, sans-serif;
-            color: #333;
+            color: #384252;
             line-height: 1.5;
-            font-size: 10pt;
+            font-size: 9pt;
             margin: 0;
             padding: 0;
         }
         .header {
+            background-color: #1A1953;
+            color: #ffffff;
+            padding: 20px;
             text-align: center;
-            border-bottom: 2px solid #0d6efd;
-            padding-bottom: 15px;
+            border-radius: 10px;
             margin-bottom: 25px;
         }
         .logo {
-            font-size: 24pt;
-            font-weight: bold;
-            color: #0d6efd;
+            font-size: 22pt;
+            font-weight: 800;
+            color: #d4b06a;
             margin: 0;
             letter-spacing: 2px;
         }
         .title {
-            font-size: 16pt;
+            font-size: 13pt;
             font-weight: bold;
-            color: #1e3a8a;
-            margin: 5px 0;
+            color: #ffffff;
+            margin: 5px 0 0 0;
             text-transform: uppercase;
         }
         .meta {
-            font-size: 9pt;
-            color: #666;
-            margin: 0;
+            font-size: 8pt;
+            color: #b5bdd0;
+            margin: 5px 0 0 0;
         }
         table {
             width: 100%;
@@ -43,44 +45,44 @@
             margin-bottom: 20px;
         }
         th {
-            background-color: #0d6efd;
+            background-color: #1A1953;
             color: white;
             font-weight: bold;
             text-transform: uppercase;
-            font-size: 9pt;
+            font-size: 8.5pt;
             padding: 10px 12px;
-            border: 1px solid #0d6efd;
+            border: 1px solid #1A1953;
         }
         td {
             padding: 10px 12px;
-            border-bottom: 1px solid #e0e0e0;
-            border-left: 1px solid #e0e0e0;
-            border-right: 1px solid #e0e0e0;
-            font-size: 10pt;
+            border-bottom: 1px solid #eef0f7;
+            border-left: 1px solid #eef0f7;
+            border-right: 1px solid #eef0f7;
+            font-size: 9pt;
         }
         tr:nth-child(even) td {
-            background-color: #f8f9fa;
+            background-color: #fafbfd;
         }
         .text-center { text-align: center; }
         .text-end { text-align: right; }
         .text-start { text-align: left; }
         .fw-bold { font-weight: bold; }
         .total-row td {
-            background-color: #e9ecef;
+            background-color: #f3f4fa;
             font-weight: bold;
-            border-top: 2px solid #0d6efd;
-            border-bottom: 2px solid #0d6efd;
-            color: #000;
+            border-top: 2px solid #1A1953;
+            border-bottom: 2px solid #1A1953;
+            color: #1A1953;
         }
         .footer {
             position: fixed;
             bottom: -30px;
             left: 0;
             right: 0;
-            font-size: 8pt;
-            color: #888;
+            font-size: 7.5pt;
+            color: #8a93a6;
             text-align: center;
-            border-top: 1px solid #ddd;
+            border-top: 1px solid #e6e8f0;
             padding-top: 10px;
         }
         .page-number:after { content: counter(page); }
@@ -166,6 +168,67 @@
                         <td class="text-start">TOTAL KESELURUHAN</td>
                         <td class="text-center">{{ number_format($totalBookings, 0, ',', '.') }} Transaksi</td>
                         <td class="text-end" style="color: #0d6efd;">Rp {{ number_format($totalRevenue, 0, ',', '.') }}</td>
+                    </tr>
+                @endif
+            </tbody>
+        </table>
+    @elseif($type === 'detailed')
+        <table>
+            <thead>
+                <tr>
+                    <th class="text-center" style="width: 12%;">Booking ID</th>
+                    <th class="text-start" style="width: 20%;">Customer</th>
+                    <th class="text-start" style="width: 28%;">Film & Show</th>
+                    <th class="text-center" style="width: 12%;">Kursi</th>
+                    <th class="text-end" style="width: 15%;">Total Bayar</th>
+                    <th class="text-center" style="width: 13%;">Waktu</th>
+                </tr>
+            </thead>
+            <tbody>
+                @php 
+                    $totalRevenue = 0; 
+                @endphp
+                @forelse($data as $booking)
+                    @php 
+                        $payment = $booking->latestPayment;
+                        $totalRevenue += ($payment?->amount ?? 0);
+                        $schedule = $booking->ticketBookings->first()?->schedule;
+                        $film = $schedule?->film;
+                    @endphp
+                    <tr>
+                        <td class="text-center fw-bold">#{{ $booking->id }}</td>
+                        <td class="text-start">
+                            {{ $booking->customerName() }}
+                            <br><span style="font-size: 8pt; color: #666;">({{ $booking->isGuest() ? 'Guest' : 'Member' }})</span>
+                        </td>
+                        <td class="text-start">
+                            {{ $film?->title ?? '-' }}
+                            <br><span style="font-size: 8pt; color: #666;">{{ $schedule?->studio->name ?? '-' }} &bull; {{ $schedule ? $schedule->start_time->format('H:i') : '-' }}</span>
+                        </td>
+                        <td class="text-center">
+                            @php 
+                                $seats = $booking->ticketBookings->map(function($tb) {
+                                    return $tb?->seat?->seat_code;
+                                })->filter()->implode(', ');
+                            @endphp
+                            {{ $seats }}
+                        </td>
+                        <td class="text-end fw-bold">Rp {{ number_format($payment?->amount ?? 0, 0, ',', '.') }}</td>
+                        <td class="text-center">
+                            {{ $booking->created_at->translatedFormat('d M Y') }}
+                            <br><span style="font-size: 8pt; color: #666;">{{ $booking->created_at->format('H:i') }} WIB</span>
+                        </td>
+                    </tr>
+                @empty
+                    <tr>
+                        <td colspan="6" class="text-center" style="padding: 30px;">Belum ada detail transaksi yang tercatat.</td>
+                    </tr>
+                @endforelse
+                @if(count($data) > 0)
+                    <tr class="total-row">
+                        <td colspan="4" class="text-start">TOTAL OMSET DARI TRANSAKSI DI ATAS</td>
+                        <td class="text-end" style="color: #0d6efd;">Rp {{ number_format($totalRevenue, 0, ',', '.') }}</td>
+                        <td></td>
                     </tr>
                 @endif
             </tbody>
