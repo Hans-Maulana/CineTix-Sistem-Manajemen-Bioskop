@@ -1,125 +1,95 @@
 @extends('layouts.app')
 
+@push('styles')
+@include('partials.customer_film_styles')
+@include('partials.e_ticket_styles')
+<style>
+    body { background-color: #e4e8ef !important; }
+
+    .cx-success-icon {
+        width: 72px;
+        height: 72px;
+        margin: 0 auto 16px;
+        border-radius: 999px;
+        background: rgba(25, 167, 95, 0.12);
+        color: #19a75f;
+        display: flex;
+        align-items: center;
+        justify-content: center;
+        font-size: 2.2rem;
+    }
+
+    .cx-ticket-notes {
+        background: #fff;
+        border: 1px solid rgba(26, 25, 83, 0.1);
+        border-radius: 14px;
+        padding: 18px 20px;
+        margin-top: 24px;
+    }
+
+    .cx-ticket-notes h6 {
+        font-size: 0.88rem;
+        font-weight: 800;
+        color: #1f2533;
+        margin-bottom: 12px;
+    }
+
+    .cx-ticket-notes ul {
+        margin: 0;
+        padding-left: 18px;
+        color: #5c6478;
+        font-size: 0.84rem;
+        line-height: 1.65;
+    }
+
+    .cx-ticket-btn {
+        display: inline-flex;
+        align-items: center;
+        justify-content: center;
+        gap: 8px;
+        width: 100%;
+        padding: 14px;
+        border-radius: 12px;
+        font-weight: 700;
+        text-decoration: none;
+        background: #fff;
+        color: #1A1953;
+        border: 1.5px solid rgba(26, 25, 83, 0.15);
+        margin-top: 20px;
+    }
+
+    .cx-ticket-btn:hover { background: #f4f6fa; color: #1A1953; }
+</style>
+@endpush
+
 @section('content')
-<div class="container py-5">
+<div class="container py-4 py-lg-5">
     <div class="row justify-content-center">
-        <div class="col-md-7">
-            {{-- Success Animation/Header --}}
-            <div class="text-center mb-5" data-aos="fade-up">
-                <div class="d-inline-block p-4 rounded-circle bg-success bg-opacity-10 mb-4">
-                    <iconify-icon icon="solar:check-circle-bold-duotone" class="text-success display-1"></iconify-icon>
+        <div class="col-lg-8">
+            <div class="text-center mb-4">
+                <div class="cx-success-icon">
+                    <iconify-icon icon="lucide:badge-check"></iconify-icon>
                 </div>
-                <h2 class="fw-bold text-dark">Pemesanan Berhasil!</h2>
-                <p class="text-muted">Pembayaran Anda telah dikonfirmasi dan tiket sudah siap digunakan.</p>
+                <h2 class="fw-bold text-dark mb-2">Pemesanan Berhasil!</h2>
+                <p class="text-muted mb-0">Pembayaran telah dikonfirmasi. Tiket siap digunakan.</p>
             </div>
 
-            {{-- Ticket Cards List --}}
-            <div class="d-flex flex-column gap-4 mb-5">
-                @if($booking->ticketBookings->isNotEmpty())
-                    @php
-                        $firstTicket = $booking->ticketBookings->first();
-                        $seatCodes = $booking->ticketBookings->map(function($tb) {
-                            return $tb->seat->seat_code;
-                        })->implode(', ');
-                    @endphp
-                    <div class="card border-0 shadow-lg rounded-4 overflow-hidden ticket-item" data-aos="zoom-in">
-                        <div class="card-header border-0 py-2 px-4" style="background: #1A1953 !important;">
-                            <div class="d-flex justify-content-between align-items-center text-white">
-                                <div class="d-flex align-items-center gap-2">
-                                    <iconify-icon icon="solar:ticket-bold-duotone" class="fs-5"></iconify-icon>
-                                    <span class="fw-bold tracking-wider small">CINETIX E-TICKET</span>
-                                </div>
-                                <span class="small opacity-75">ID: #{{ $booking->qr_redeem }}</span>
-                            </div>
-                        </div>
-                        <div class="card-body p-0">
-                            <div class="row g-0">
-                                {{-- Left Side: Film Poster --}}
-                                <div class="col-md-3">
-                                    <img src="{{ $firstTicket->schedule->film->cover_url }}" 
-                                         alt="{{ $firstTicket->schedule->film->title }}" 
-                                         class="img-fluid h-100 object-fit-fill" 
-                                         style="min-height: 180px;">
-                                </div>
+            @include('partials.e_ticket_card', ['booking' => $booking, 'downloadable' => true])
 
-                                {{-- Middle Side: Details --}}
-                                <div class="col-md-6 p-4 bg-white border-end border-dashed">
-                                    <h5 class="fw-bold text-dark mb-1">{{ $firstTicket->schedule->film->title }}</h5>
-                                    <div class="mb-3">
-                                        <span class="badge bg-secondary rounded-pill px-3">{{ $firstTicket->schedule->studio->name }}</span>
-                                        <span class="badge bg-warning text-dark rounded-pill px-3">Kursi: {{ $seatCodes }}</span>
-                                    </div>
-                                    <div class="d-flex flex-column gap-1 text-muted small">
-                                        <span><iconify-icon icon="lucide:calendar" class="me-1"></iconify-icon> {{ $firstTicket->schedule->schedule_date->format('d M Y') }}</span>
-                                        <span><iconify-icon icon="lucide:clock" class="me-1"></iconify-icon> {{ $firstTicket->schedule->start_time->format('H:i') }} - {{ $firstTicket->schedule->end_time->format('H:i') }}</span>
-                                    </div>
-                                </div>
-
-                                {{-- Right Side: QR Code --}}
-                                <div class="col-md-3 bg-light p-3 d-flex flex-column align-items-center justify-content-center">
-                                    <div class="p-2 bg-white rounded-3 shadow-sm mb-2">
-                                        <img src="https://api.qrserver.com/v1/create-qr-code/?size=120x120&data={{ $booking->qr_redeem }}" alt="QR Code" class="img-fluid" style="max-width: 80px;">
-                                    </div>
-                                    <p class="font-monospace fw-bold text-dark mb-0 small" style="letter-spacing: 1px; font-size: 10px;">{{ $booking->qr_redeem }}</p>
-                                    <span class="badge bg-success bg-opacity-10 text-success mt-2 small" style="font-size: 9px;">LUNAS</span>
-                                </div>
-                            </div>
-                        </div>
-                        {{-- Decorative circles --}}
-                        <div class="ticket-cutout left" style="left: 25%;"></div>
-                        <div class="ticket-cutout right" style="right: 25%;"></div>
-                    </div>
-                @endif
-            </div>
-
-            {{-- Actions --}}
-            <div class="d-flex flex-column gap-3 mb-5">
-                <a href="{{ route('landing-page') }}" class="btn btn-outline-secondary btn-lg w-100 py-3 text-white fw-bold rounded-4">
-                    Kembali ke Beranda
-                </a>
-            </div>
-
-            {{-- Notice --}}
-            <div class="p-4 rounded-4 border bg-light">
-                <h6 class="fw-bold text-white mb-3">📌 Informasi Penting:</h6>
-                <ul class="text-muted text-white small mb-0 ps-3">
-                    <li class="mb-2">Harap datang 15 menit sebelum film dimulai untuk proses scan tiket.</li>
-                    <li class="mb-2">Tunjukkan Kode QR atau Nomor Pemesanan di atas kepada petugas bioskop.</li>
-                    <li class="mb-0">Dilarang membawa makanan dan minuman dari luar bioskop.</li>
+            <div class="cx-ticket-notes">
+                <h6>Informasi Penting</h6>
+                <ul>
+                    <li>Datang 15 menit sebelum film dimulai untuk proses scan tiket.</li>
+                    <li>Tunjukkan QR code atau ID booking kepada petugas bioskop.</li>
+                    <li>Dilarang membawa makanan dan minuman dari luar bioskop.</li>
                 </ul>
             </div>
+
+            <a href="{{ route('landing-page') }}" class="cx-ticket-btn">
+                <iconify-icon icon="lucide:home"></iconify-icon>
+                Kembali ke Beranda
+            </a>
         </div>
     </div>
 </div>
-
-@push('styles')
-<style>
-    .font-monospace {
-        font-family: 'JetBrains Mono', 'Courier New', monospace !important;
-    }
-    .border-dashed {
-        border-style: dashed !important;
-    }
-    .ticket-cutout {
-        position: absolute;
-        width: 30px;
-        height: 30px;
-        background-color: #f8f9fa; /* matches body bg */
-        border-radius: 50%;
-        top: 50%;
-        transform: translateY(-50%);
-        z-index: 10;
-    }
-    .ticket-cutout.left {
-        left: -15px;
-    }
-    .ticket-cutout.right {
-        right: -15px;
-    }
-    @media (max-width: 768px) {
-        .ticket-cutout { display: none; }
-        .col-md-4 { border-bottom: 2px dashed #eee !important; border-end: none !important; }
-    }
-</style>
-@endpush
 @endsection

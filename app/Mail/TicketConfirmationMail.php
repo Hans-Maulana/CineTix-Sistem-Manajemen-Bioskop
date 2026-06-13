@@ -41,10 +41,14 @@ class TicketConfirmationMail extends Mailable
             ])
             : route('booking.tickets');
 
+        $qrUrl = 'https://api.qrserver.com/v1/create-qr-code/?size=200x200&data=' . urlencode((string) $this->booking->qr_redeem);
+
         return new Content(
             view: 'emails.ticket-confirmation',
             with: [
                 'ticketUrl' => $ticketUrl,
+                'recipientEmail' => $this->booking->customerEmail(),
+                'qrUrl' => $qrUrl,
             ],
         );
     }

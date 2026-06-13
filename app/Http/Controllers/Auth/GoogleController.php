@@ -5,6 +5,7 @@ namespace App\Http\Controllers\Auth;
 use App\Http\Controllers\Controller;
 use App\Models\User;
 use App\Models\Role;
+use App\Support\RedirectAfterAuth;
 use Illuminate\Support\Facades\Auth;
 use Illuminate\Support\Facades\Hash;
 use Illuminate\Support\Str;
@@ -14,6 +15,8 @@ class GoogleController extends Controller
 {
    public function redirectToGoogle()
     {
+        RedirectAfterAuth::remember(request('redirect'));
+
         return Socialite::driver('google')
             ->with(['prompt' => 'select_account'])
             ->stateless()
@@ -65,12 +68,10 @@ class GoogleController extends Controller
             return redirect()->intended('/admin');
         }
 
-
         if ($user->isCustomer()) {
-            return redirect()->intended('/customer');
+            return redirect()->intended(RedirectAfterAuth::fallback());
         }
 
-
-        return redirect('/');
+        return redirect()->intended(RedirectAfterAuth::fallback());
     }
 }

@@ -19,7 +19,9 @@ class PaymentPendingValidationHandler extends PaymentValidationHandler
             return $this->error('Payment tidak terkait dengan booking ini.');
         }
 
-        // Check apakah ada payment pending lain untuk booking yang sama
+        // Lepaskan payment pending expired, lalu tolak jika masih ada pending aktif lain
+        Payment::failExpiredPendingForBooking($booking->id);
+
         $otherPendingPayments = Payment::where('booking_id', $booking->id)
             ->where('status', 'pending')
             ->where('id', '!=', $payment->id)

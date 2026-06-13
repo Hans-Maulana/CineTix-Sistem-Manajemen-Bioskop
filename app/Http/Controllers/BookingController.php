@@ -33,6 +33,12 @@ class BookingController extends Controller
             return redirect()->route('landing-page')->with('error', 'Maaf, jadwal tayang ini sudah lewat.');
         }
 
+        if (! $schedule->isWithinBookingWindow($now)) {
+            return redirect()
+                ->route('films.detail', $schedule->film_id)
+                ->with('error', 'Penjualan tiket untuk jadwal ini belum dibuka. Tiket hanya tersedia hingga ' . Schedule::BOOKING_WINDOW_DAYS . ' hari sebelum tayang.');
+        }
+
         $schedule->load('film', 'studio.seats');
 
         $bookedSeatIds = TicketBooking::whereHas('booking', function ($q) {
@@ -46,7 +52,69 @@ class BookingController extends Controller
         $isAuthenticated = Auth::check();
         $user = Auth::user();
 
-        return view('booking.show', compact('schedule', 'bookedSeatIds', 'seatsByCode', 'isAuthenticated', 'user'));
+        $restoredSeats = $this->pullPendingSeatSelection($schedule, $bookedSeatIds);
+
+        return view('booking.show', compact('schedule', 'bookedSeatIds', 'seatsByCode', 'isAuthenticated', 'user', 'restoredSeats'));
+    }
+
+    /**
+     * Simpan pilihan kursi sementara (mis. sebelum login) agar tetap ada setelah auth.
+     */
+    public function rememberSeats(Request $request, Schedule $schedule)
+    {
+        $validated = $request->validate([
+            'seat_ids' => 'required|array|min:1',
+            'seat_ids.*' => 'integer|exists:seats,id',
+        ]);
+
+        $validSeatIds = Seat::whereIn('id', $validated['seat_ids'])
+            ->where('studio_id', $schedule->studio_id)
+            ->pluck('id')
+            ->all();
+
+        if (empty($validSeatIds)) {
+            return response()->json(['success' => false, 'message' => 'Kursi tidak valid.'], 422);
+        }
+
+        session([
+            'pending_seat_selection.' . $schedule->id => [
+                'seat_ids' => array_values($validSeatIds),
+                'saved_at' => now()->timestamp,
+            ],
+            'seat_restore_notice.' . $schedule->id => true,
+        ]);
+
+        return response()->json(['success' => true]);
+    }
+
+    private function pullPendingSeatSelection(Schedule $schedule, array $bookedSeatIds): array
+    {
+        $key = 'pending_seat_selection.' . $schedule->id;
+        $pending = session($key);
+
+        if (! is_array($pending) || empty($pending['seat_ids'])) {
+            return [];
+        }
+
+        $savedAt = (int) ($pending['saved_at'] ?? 0);
+        if ($savedAt < now()->subHours(2)->timestamp) {
+            session()->forget($key);
+
+            return [];
+        }
+
+        $restored = $schedule->studio->seats
+            ->whereIn('id', $pending['seat_ids'])
+            ->reject(fn ($seat) => in_array($seat->id, $bookedSeatIds, true))
+            ->map(fn ($seat) => ['id' => $seat->id, 'code' => $seat->seat_code])
+            ->values()
+            ->all();
+
+        if (! empty($restored) && session()->pull('seat_restore_notice.' . $schedule->id)) {
+            session()->flash('seats_restored', count($restored));
+        }
+
+        return $restored;
     }
 
     public function store(Request $request)
@@ -67,6 +135,11 @@ class BookingController extends Controller
         ];
 
         $validated = $request->validate($rules);
+
+        $scheduleForWindow = Schedule::find($validated['schedule_id']);
+        if (! $scheduleForWindow || ! $scheduleForWindow->isWithinBookingWindow()) {
+            return back()->with('error', 'Penjualan tiket untuk jadwal ini belum dibuka. Tiket hanya tersedia hingga ' . Schedule::BOOKING_WINDOW_DAYS . ' hari sebelum tayang.');
+        }
 
         try {
             $chain = BookingApprovalChain::build();
@@ -116,6 +189,7 @@ class BookingController extends Controller
 
                 if ($isGuest) {
                     GuestBookingAccess::grant($booking);
+                    session()->forget('verified_guest_email');
                 }
 
                 if ($promoId && Auth::check()) {
@@ -149,6 +223,8 @@ class BookingController extends Controller
                 return $booking;
             }, 3);
 
+            session()->forget('pending_seat_selection.' . $bookingData['schedule_id']);
+
             return redirect()->route('booking.payment', $this->bookingRouteParams($booking))
                 ->with('success', 'Kursi berhasil di-lock sementara. Segera lakukan pembayaran dalam 5 menit.');
         } catch (\Throwable $e) {
@@ -165,10 +241,12 @@ class BookingController extends Controller
         }
 
         $booking->load(['ticketBookings.seat', 'ticketBookings.schedule.film', 'promo']);
+        Payment::failExpiredPendingForBooking($booking->id);
+        $activePendingPayment = Payment::activePendingForBooking($booking->id);
         $paymentMethods = PaymentContext::availableMethods();
         $isGuest = GuestBookingAccess::isGuestBooking($booking);
 
-        return view('booking.payment', compact('booking', 'paymentMethods', 'isGuest'));
+        return view('booking.payment', compact('booking', 'paymentMethods', 'isGuest', 'activePendingPayment'));
     }
 
     public function initiatePayment(Request $request, Booking $booking)
@@ -180,6 +258,18 @@ class BookingController extends Controller
         ]);
 
         try {
+            Payment::failExpiredPendingForBooking($booking->id);
+
+            $activePending = Payment::activePendingForBooking($booking->id);
+            if ($activePending && $activePending->method === $validated['payment_method']) {
+                return redirect()->route('booking.process-payment', array_merge(
+                    $this->bookingRouteParams($booking),
+                    ['payment' => $activePending]
+                ));
+            }
+
+            Payment::closeOtherPendingForBooking($booking->id);
+
             $strategy = PaymentContext::resolve($validated['payment_method']);
             $payment = $strategy->initiate($booking);
 
@@ -199,14 +289,21 @@ class BookingController extends Controller
             'email' => 'required|email'
         ]);
 
-        $email = $request->email;
+        $email = strtolower(trim($request->email));
         $otp = rand(100000, 999999);
-
 
         Cache::put('guest_otp_' . $email, $otp, now()->addMinutes(5));
 
-    
-        Mail::to($email)->send(new GuestOtpMail($otp));
+        try {
+            Mail::to($email)->send(new GuestOtpMail($otp));
+        } catch (\Throwable $e) {
+            Log::error('Gagal kirim OTP guest: ' . $e->getMessage(), ['email' => $email]);
+
+            return response()->json([
+                'success' => false,
+                'message' => 'Gagal mengirim email OTP. Periksa konfigurasi mail server.',
+            ], 500);
+        }
 
         return response()->json([
             'success' => true,
@@ -222,7 +319,7 @@ class BookingController extends Controller
             'otp'   => 'required|numeric'
         ]);
 
-        $email = $request->email;
+        $email = strtolower(trim($request->email));
         $inputOtp = $request->otp;
         $cachedOtp = Cache::get('guest_otp_' . $email);
 
@@ -277,7 +374,22 @@ class BookingController extends Controller
             abort(404);
         }
 
+        if ($payment->status === 'success' && $booking->status === 'confirmed') {
+            $emailSent = $this->sendTicketEmail($booking->fresh());
+
+            return $this->redirectAfterConfirmed(
+                $booking,
+                $emailSent
+                    ? 'Pembayaran sudah selesai. Tiket telah dikirim ulang ke email Anda.'
+                    : 'Pembayaran sudah selesai. Email tiket gagal dikirim — gunakan tombol kirim ulang di halaman tiket.',
+                $emailSent
+            );
+        }
+
         try {
+            Payment::failExpiredPendingForBooking($booking->id);
+            Payment::closeOtherPendingForBooking($booking->id, $payment->id);
+
             $chain = PaymentValidationChain::build();
             $validation = $chain->handle($booking, $payment);
 
@@ -293,6 +405,9 @@ class BookingController extends Controller
                 $ticketBookings = $booking->ticketBookings()->with('seat')->get();
                 foreach ($ticketBookings as $ticket) {
                     $seat = $ticket->seat;
+                    if (!$seat) {
+                        continue;
+                    }
                     $seat->update([
                         'status' => 'booked',
                         'locked_until' => null,
@@ -306,9 +421,13 @@ class BookingController extends Controller
                 }
             });
 
-            $this->sendTicketEmail($booking->fresh());
+            $emailSent = $this->sendTicketEmail($booking);
 
-            return $this->redirectAfterConfirmed($booking, 'Pembayaran berhasil! Tiket Anda telah dikonfirmasi.');
+            $successMessage = $emailSent
+                ? 'Pembayaran berhasil! Tiket telah dikirim ke email Anda.'
+                : 'Pembayaran berhasil! Tiket siap digunakan. Jika email belum masuk, cek folder spam atau simpan halaman tiket ini.';
+
+            return $this->redirectAfterConfirmed($booking, $successMessage, $emailSent);
         } catch (\Throwable $e) {
             $payment->markAsFailed();
             return redirect()->route('booking.payment', $this->bookingRouteParams($booking))
@@ -335,6 +454,36 @@ class BookingController extends Controller
         $booking->load(['ticketBookings.seat', 'ticketBookings.schedule.film', 'ticketBookings.schedule.studio', 'promo']);
 
         return view('booking.guest-ticket', compact('booking'));
+    }
+
+    public function resendTicketEmail(Request $request, Booking $booking)
+    {
+        GuestBookingAccess::authorize($booking, $request);
+
+        if ($booking->status !== 'confirmed') {
+            return back()->with('error', 'Tiket belum aktif. Selesaikan pembayaran terlebih dahulu.');
+        }
+
+        $cacheKey = 'resend_ticket_' . $booking->id;
+        $attempts = (int) Cache::get($cacheKey, 0);
+        if ($attempts >= 3) {
+            return back()->with('error', 'Terlalu banyak permintaan kirim ulang. Coba lagi dalam 1 jam.');
+        }
+        Cache::put($cacheKey, $attempts + 1, now()->addHour());
+
+        $emailSent = $this->sendTicketEmail($booking);
+
+        if ($emailSent) {
+            return back()->with([
+                'success' => 'Tiket telah dikirim ulang ke ' . $booking->customerEmail() . '. Periksa inbox atau folder spam.',
+                'ticket_email_sent' => true,
+            ]);
+        }
+
+        return back()->with([
+            'error' => 'Gagal mengirim email tiket. Simpan halaman tiket ini sebagai cadangan.',
+            'ticket_email_sent' => false,
+        ]);
     }
 
     public function tickets()
@@ -469,18 +618,23 @@ class BookingController extends Controller
         return back()->with('success', 'Ulasan Anda berhasil dikirim! Terima kasih atas masukan Anda.');
     }
 
-    private function redirectAfterConfirmed(Booking $booking, ?string $message = null)
+    private function redirectAfterConfirmed(Booking $booking, ?string $message = null, ?bool $emailSent = null)
     {
+        $flash = ['success' => $message ?? 'Pembayaran berhasil!'];
+
+        if ($emailSent !== null) {
+            $flash['ticket_email_sent'] = $emailSent;
+        }
+
         if (GuestBookingAccess::isGuestBooking($booking)) {
             return redirect()->route('booking.guest-ticket', [
                 'booking' => $booking->id,
                 'token' => $booking->access_token,
-            ])->with('success', $message ?? 'Pembayaran berhasil! Tiket telah dikirim ke email Anda.');
+            ])->with($flash);
         }
 
         return redirect()->route('booking.tickets')
-            ->with('success_booking', $booking->id)
-            ->with('success', $message ?? 'Pembayaran berhasil!');
+            ->with(array_merge($flash, ['success_booking' => $booking->id]));
     }
 
     private function bookingRouteParams(Booking $booking): array
@@ -494,24 +648,51 @@ class BookingController extends Controller
         return $params;
     }
 
-    private function sendTicketEmail(Booking $booking): void
+    private function sendTicketEmail(Booking $booking): bool
     {
+        $booking = $booking->fresh()->load([
+            'user',
+            'ticketBookings.seat',
+            'ticketBookings.schedule.film',
+            'ticketBookings.schedule.studio',
+            'promo',
+        ]);
+
         if ($booking->status !== 'confirmed') {
-            return;
+            Log::warning('Ticket email skipped: booking belum confirmed', [
+                'booking_id' => $booking->id,
+                'status' => $booking->status,
+            ]);
+
+            return false;
         }
 
         $email = $booking->customerEmail();
         if (!$email) {
-            return;
+            Log::warning('Ticket email skipped: email penerima kosong', [
+                'booking_id' => $booking->id,
+                'user_id' => $booking->user_id,
+            ]);
+
+            return false;
         }
 
         try {
             Mail::to($email)->send(new TicketConfirmationMail($booking));
+
+            Log::info('Ticket email sent', [
+                'booking_id' => $booking->id,
+                'email' => $email,
+            ]);
+
+            return true;
         } catch (\Throwable $e) {
             Log::error('Gagal kirim email tiket: ' . $e->getMessage(), [
                 'booking_id' => $booking->id,
                 'email' => $email,
             ]);
+
+            return false;
         }
     }
 }

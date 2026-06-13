@@ -39,8 +39,43 @@ class Payment extends Model
     // -------------------------
 
     /**
-     * Check apakah payment sudah expired (countdown habis).
+     * Tandai payment pending lain (selain $exceptPaymentId) sebagai failed.
+     * Dipakai saat user memulai ulang atau menyelesaikan satu payment.
      */
+    public static function closeOtherPendingForBooking(int $bookingId, ?int $exceptPaymentId = null): void
+    {
+        Payment::where('booking_id', $bookingId)
+            ->where('status', 'pending')
+            ->when($exceptPaymentId, fn ($query) => $query->where('id', '!=', $exceptPaymentId))
+            ->get()
+            ->each(fn (Payment $payment) => $payment->markAsFailed());
+    }
+
+    /**
+     * Tandai payment pending yang sudah expired sebagai failed.
+     */
+    public static function failExpiredPendingForBooking(int $bookingId): void
+    {
+        Payment::where('booking_id', $bookingId)
+            ->where('status', 'pending')
+            ->whereNotNull('countdown_seconds')
+            ->get()
+            ->filter(fn (Payment $payment) => $payment->isExpired())
+            ->each(fn (Payment $payment) => $payment->markAsFailed());
+    }
+
+    /**
+     * Ambil payment pending yang masih aktif (belum expired) untuk booking.
+     */
+    public static function activePendingForBooking(int $bookingId): ?Payment
+    {
+        return Payment::where('booking_id', $bookingId)
+            ->where('status', 'pending')
+            ->orderByDesc('id')
+            ->get()
+            ->first(fn (Payment $payment) => ! $payment->isExpired());
+    }
+
     public function isExpired(): bool
     {
         if (!$this->countdown_seconds) {

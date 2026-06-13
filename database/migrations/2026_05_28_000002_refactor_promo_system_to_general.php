@@ -32,8 +32,8 @@ return new class extends Migration
             }
         });
 
-        // Drop columns if they exist
-        if (Schema::hasColumns('promos', ['user_id', 'is_used', 'booking_id'])) {
+        // Drop columns if they exist (SQLite needs table rebuild — skip drop on sqlite)
+        if (Schema::hasColumns('promos', ['user_id', 'is_used', 'booking_id']) && Schema::getConnection()->getDriverName() !== 'sqlite') {
             Schema::table('promos', function (Blueprint $table) {
                 $table->dropColumn(['user_id', 'is_used', 'booking_id']);
             });

@@ -1,5 +1,9 @@
 @extends('layouts.app')
 
+@push('styles')
+@include('partials.customer_film_styles')
+@endpush
+
 @section('content')
 <div class="container py-5">
     <!-- Breadcrumb & Back Button -->
@@ -49,27 +53,38 @@
                     <button type="button" class="btn-close" data-bs-dismiss="alert"></button>
                 </div>
             @endif
+
+            @if(session('seats_restored'))
+                <div class="alert alert-info alert-dismissible fade show rounded-4 border-0 shadow-sm mb-4" role="alert">
+                    <iconify-icon icon="lucide:armchair" class="me-2"></iconify-icon>
+                    Pilihan kursi Anda ({{ session('seats_restored') }}) sudah dipulihkan setelah login.
+                    <button type="button" class="btn-close" data-bs-dismiss="alert"></button>
+                </div>
+            @endif
         </div>
 
         <div class="col-md-8">
-            <div class="card shadow-sm">
-                <div class="card-header bg-primary text-white">
-                    <h4 class="mb-0 text-white">{{ $schedule->film->title }}</h4>
-                </div>
-                <div class="card-body">
-                    <div class="row mb-4">
-                        <div class="col-md-6">
-                            <p class="mb-1"><strong class="text-dark">Studio:</strong> <span class="text-secondary">{{ $schedule->studio->name }}</span></p>
-                            <p class="mb-1"><strong class="text-dark">Tipe:</strong> <span class="text-secondary">{{ $schedule->studio->type->name ?? 'Standard' }}</span></p>
-                        </div>
-                        <div class="col-md-6">
-                            <p class="mb-1"><strong class="text-dark">Tanggal:</strong> <span class="text-secondary">{{ $schedule->schedule_date->format('d M Y') }}</span></p>
-                            <p class="mb-1"><strong class="text-dark">Jam Tayang:</strong> <span class="text-secondary">{{ $schedule->start_time->format('H:i') }} - {{ $schedule->end_time->format('H:i') }}</span></p>
-                        </div>
+            <div class="cx-booking-hero" data-aos="fade-up">
+                <div class="d-flex flex-wrap justify-content-between align-items-start gap-3">
+                    <div>
+                        <span class="badge bg-white bg-opacity-20 text-white rounded-pill mb-2 px-3 py-2">
+                            <iconify-icon icon="lucide:armchair" class="me-1"></iconify-icon> Pilih Kursi
+                        </span>
+                        <h4 class="mb-1 text-white fw-bold">{{ $schedule->film->title }}</h4>
+                        <p class="mb-0 text-white-50 small">{{ $schedule->studio->name }} · {{ $schedule->schedule_date->format('d M Y') }} · {{ $schedule->start_time->format('H:i') }}</p>
                     </div>
+                    <div class="text-white text-end">
+                        <div class="small text-white-50">Harga per kursi</div>
+                        <div class="fs-4 fw-bold">Rp {{ number_format($schedule->ticket_price, 0, ',', '.') }}</div>
+                    </div>
+                </div>
+            </div>
 
-                    <hr>
-
+            <div class="card cx-booking-card shadow-sm">
+                <div class="card-header text-white">
+                    <h5 class="mb-0 text-white fw-bold">Peta Kursi Studio</h5>
+                </div>
+                <div class="card-body p-4">
                     <div class="cinema-screen mb-5">
                         LAYAR BIOSKOP
                     </div>
@@ -138,7 +153,7 @@
         </div>
 
         <div class="col-md-4">
-            <div class="card shadow-sm border-0 rounded-4 overflow-hidden position-sticky" style="top: 100px;">
+            <div class="card cx-summary-card border-0 overflow-hidden position-sticky" style="top: 100px;">
                 <div class="card-header bg-white border-bottom py-3">
                     <h5 class="mb-0 fw-bold text-dark">Ringkasan Pemesanan</h5>
                 </div>
@@ -183,7 +198,7 @@
                         @else
                         <div class="alert alert-info border-0 mb-3 py-3">
                             <p class="mb-0 small">
-                                <a href="{{ route('login') }}" class="link-primary fw-bold">Login</a> untuk pakai kode promo
+                                <a href="{{ route('login', ['redirect' => url()->full()]) }}" class="link-primary fw-bold">Login</a> untuk pakai kode promo
                                 <strong>WELCOME2026</strong> (diskon Rp 20.000).
                             </p>
                         </div>
@@ -208,8 +223,8 @@
                             <span id="totalPrice" class="fs-4 fw-bold" style="color: #1A1953;">Rp 0</span>
                         </div>
 
-                        <button type="button" class="btn btn-primary text-white w-100 py-3 fw-bold rounded-3 shadow-sm" id="bookingBtn" onclick="submitBooking()">
-                            Lanjutkan ke Pembayaran <i class="iconify" data-icon="lucide:arrow-right"></i>
+                        <button type="button" class="cx-btn-book w-100 py-3" id="bookingBtn" onclick="submitBooking()" style="height: auto;">
+                            Lanjutkan ke Pembayaran <iconify-icon icon="lucide:arrow-right"></iconify-icon>
                         </button>
                     </form>
                 </div>
@@ -220,55 +235,340 @@
 
 {{-- Modal Konfirmasi Email & OTP Guest --}}
 <div class="modal fade" id="emailConfirmModal" tabindex="-1" aria-labelledby="emailConfirmModalLabel" aria-hidden="true" data-bs-backdrop="static">
-    <div class="modal-dialog modal-dialog-centered">
-        <div class="modal-content rounded-4 border-0 shadow">
-            <div class="modal-header border-0 pb-0">
-                <h5 class="modal-title fw-bold" id="emailConfirmModalLabel">Checkout Tiket</h5>
-                <button type="button" class="btn-close" data-bs-dismiss="modal" aria-label="Tutup"></button>
+    <div class="modal-dialog modal-dialog-centered cx-checkout-modal">
+        <div class="modal-content cx-modal-shell">
+            <div class="cx-modal-header">
+                <button type="button" class="btn-close cx-modal-close" data-bs-dismiss="modal" aria-label="Tutup"></button>
+                <div class="cx-modal-icon">
+                    <iconify-icon icon="lucide:ticket-check"></iconify-icon>
+                </div>
+                <h5 class="cx-modal-title" id="emailConfirmModalLabel">Checkout Tiket</h5>
+                <p class="cx-modal-subtitle">Verifikasi email sebelum melanjutkan pembayaran</p>
+
+                <div class="cx-modal-steps">
+                    <span class="cx-modal-step is-active" data-step="1">1. Email</span>
+                    <span class="cx-modal-step-divider"></span>
+                    <span class="cx-modal-step" data-step="2">2. OTP</span>
+                </div>
             </div>
-            <div class="modal-body pt-2 text-center">
 
+            <div class="cx-modal-body">
                 <div id="step-email-confirm">
-                    <p class="mb-2 text-muted">Tiket digital Anda akan dikirim ke:</p>
-                    <p class="fs-4 fw-bold text-primary mb-3" id="modalEmailDisplay">—</p>
-                    <p class="text-muted small mb-4">Pastikan alamat email sudah benar karena tiket akan dikirimkan ke email ini.</p>
+                    <p class="cx-modal-label">Tiket digital akan dikirim ke</p>
+                    <div class="cx-modal-email-box">
+                        <iconify-icon icon="lucide:mail" class="cx-modal-email-icon"></iconify-icon>
+                        <span id="modalEmailDisplay">—</span>
+                    </div>
+                    <p class="cx-modal-hint">Pastikan alamat email sudah benar. Tiket dan bukti pembayaran akan dikirim ke email ini.</p>
 
-                    <div class="d-flex gap-2">
-                        <button type="button" class="btn btn-light border w-50 py-2 fw-bold" data-bs-dismiss="modal">
+                    <div class="cx-modal-actions">
+                        <button type="button" class="cx-modal-btn cx-modal-btn-ghost" data-bs-dismiss="modal">
                             Ubah Email
                         </button>
-                        <button type="button" class="btn text-white w-50 py-2 fw-bold" id="btnSendOtp" style="background: #1A1953;">
-                            Kirim OTP Validasi
+                        <button type="button" class="cx-modal-btn cx-modal-btn-primary" id="btnSendOtp">
+                            Kirim Kode OTP
                         </button>
                     </div>
                 </div>
 
                 <div id="step-otp-input" style="display: none;">
-                    <div class="alert alert-info border-0 rounded-3 small mb-4 text-start">
-                        <iconify-icon icon="lucide:info" class="me-1"></iconify-icon>
-                        6-digit kode OTP telah dikirim ke email Anda. Silakan periksa kotak masuk atau folder spam.
+                    <div class="cx-modal-info">
+                        <iconify-icon icon="lucide:shield-check"></iconify-icon>
+                        <p>Kode 6 digit telah dikirim ke email Anda. Periksa kotak masuk atau folder spam.</p>
                     </div>
-                    <div class="mb-4 text-start">
-                        <label class="form-label fw-bold text-dark small">Masukkan Kode OTP <span class="text-danger">*</span></label>
-                        <input type="text" id="guestOtpCode" class="form-control py-3 text-center fs-3 fw-bold tracking-widest" placeholder="• • • • • •" maxlength="6" autocomplete="off">
+
+                    <label class="cx-modal-label text-center d-block">Masukkan Kode OTP</label>
+                    <div class="cx-otp-group" id="otpInputGroup">
+                        @for ($i = 0; $i < 6; $i++)
+                            <input type="text"
+                                   class="cx-otp-digit"
+                                   maxlength="1"
+                                   inputmode="numeric"
+                                   pattern="[0-9]*"
+                                   autocomplete="one-time-code"
+                                   aria-label="Digit OTP {{ $i + 1 }}"
+                                   data-otp-index="{{ $i }}">
+                        @endfor
                     </div>
-                    <div class="d-flex gap-2">
-                        <button type="button" class="btn btn-light border w-50 py-2 fw-bold" id="btnBackToEmail">
+                    <p class="cx-modal-error" id="otpErrorMsg" hidden></p>
+                    <input type="hidden" id="guestOtpCode">
+
+                    <div class="cx-modal-actions">
+                        <button type="button" class="cx-modal-btn cx-modal-btn-ghost" id="btnBackToEmail">
                             Kembali
                         </button>
-                        <button type="button" class="btn text-white w-50 py-2 fw-bold" id="btnVerifyOtp" style="background: #1A1953;">
+                        <button type="button" class="cx-modal-btn cx-modal-btn-primary" id="btnVerifyOtp">
                             Verifikasi & Lanjut
                         </button>
                     </div>
                 </div>
-
             </div>
         </div>
     </div>
 </div>
 
 <style>
-    .tracking-widest { letter-spacing: 0.5em; }
+    .cx-checkout-modal {
+        max-width: 440px;
+    }
+
+    .cx-modal-shell {
+        border: none;
+        border-radius: 20px;
+        overflow: hidden;
+        box-shadow: 0 24px 60px rgba(26, 25, 83, 0.22);
+    }
+
+    .cx-modal-header {
+        position: relative;
+        text-align: center;
+        padding: 28px 28px 20px;
+        background: linear-gradient(160deg, #1A1953 0%, #2a2880 100%);
+        color: #fff;
+    }
+
+    .cx-modal-close {
+        position: absolute;
+        top: 16px;
+        right: 16px;
+        filter: invert(1);
+        opacity: 0.85;
+    }
+
+    .cx-modal-icon {
+        width: 52px;
+        height: 52px;
+        margin: 0 auto 12px;
+        border-radius: 14px;
+        background: rgba(255, 255, 255, 0.14);
+        display: flex;
+        align-items: center;
+        justify-content: center;
+        font-size: 1.6rem;
+    }
+
+    .cx-modal-title {
+        font-size: 1.25rem;
+        font-weight: 800;
+        margin: 0 0 4px;
+        color: #fff;
+    }
+
+    .cx-modal-subtitle {
+        font-size: 0.82rem;
+        color: rgba(255, 255, 255, 0.72);
+        margin: 0 0 18px;
+    }
+
+    .cx-modal-steps {
+        display: inline-flex;
+        align-items: center;
+        gap: 10px;
+        background: rgba(255, 255, 255, 0.1);
+        border-radius: 999px;
+        padding: 6px 14px;
+    }
+
+    .cx-modal-step {
+        font-size: 0.72rem;
+        font-weight: 700;
+        color: rgba(255, 255, 255, 0.55);
+        transition: color 0.2s ease;
+    }
+
+    .cx-modal-step.is-active {
+        color: #fff;
+    }
+
+    .cx-modal-step-divider {
+        width: 20px;
+        height: 2px;
+        background: rgba(255, 255, 255, 0.25);
+        border-radius: 999px;
+    }
+
+    .cx-modal-body {
+        padding: 24px 28px 28px;
+        background: #fff;
+    }
+
+    .cx-modal-label {
+        font-size: 0.78rem;
+        font-weight: 700;
+        color: #8a93a6;
+        text-transform: uppercase;
+        letter-spacing: 0.04em;
+        margin-bottom: 10px;
+    }
+
+    .cx-modal-email-box {
+        display: flex;
+        align-items: center;
+        gap: 12px;
+        padding: 14px 16px;
+        background: #f4f6fa;
+        border: 1px solid rgba(26, 25, 83, 0.1);
+        border-radius: 12px;
+        margin-bottom: 12px;
+    }
+
+    .cx-modal-email-icon {
+        font-size: 1.25rem;
+        color: #1A1953;
+        flex-shrink: 0;
+    }
+
+    .cx-modal-email-box span {
+        font-size: 1rem;
+        font-weight: 800;
+        color: #1A1953;
+        word-break: break-all;
+        text-align: left;
+    }
+
+    .cx-modal-hint {
+        font-size: 0.82rem;
+        color: #8a93a6;
+        line-height: 1.55;
+        margin-bottom: 22px;
+    }
+
+    .cx-modal-info {
+        display: flex;
+        gap: 12px;
+        align-items: flex-start;
+        padding: 14px 16px;
+        background: rgba(26, 25, 83, 0.06);
+        border-radius: 12px;
+        margin-bottom: 22px;
+    }
+
+    .cx-modal-info iconify-icon {
+        font-size: 1.2rem;
+        color: #1A1953;
+        flex-shrink: 0;
+        margin-top: 2px;
+    }
+
+    .cx-modal-info p {
+        margin: 0;
+        font-size: 0.84rem;
+        color: #5c6478;
+        line-height: 1.55;
+        text-align: left;
+    }
+
+    .cx-otp-group {
+        display: flex;
+        justify-content: center;
+        gap: 8px;
+        margin-bottom: 24px;
+    }
+
+    .cx-otp-digit {
+        width: 46px;
+        height: 54px;
+        border: 2px solid #dfe4ec;
+        border-radius: 12px;
+        text-align: center;
+        font-size: 1.35rem;
+        font-weight: 800;
+        color: #1A1953;
+        background: #fafbfc;
+        transition: border-color 0.15s ease, box-shadow 0.15s ease, background 0.15s ease;
+        padding: 0;
+    }
+
+    .cx-otp-digit:focus {
+        outline: none;
+        border-color: #1A1953;
+        background: #fff;
+        box-shadow: 0 0 0 3px rgba(26, 25, 83, 0.12);
+    }
+
+    .cx-otp-digit.filled {
+        border-color: #1A1953;
+        background: #fff;
+    }
+
+    .cx-otp-digit.is-error {
+        border-color: #dc3545;
+        animation: cxOtpShake 0.35s ease;
+    }
+
+    .cx-modal-error {
+        margin: -12px 0 18px;
+        font-size: 0.82rem;
+        font-weight: 600;
+        color: #dc3545;
+        text-align: center;
+    }
+
+    @keyframes cxOtpShake {
+        0%, 100% { transform: translateX(0); }
+        25% { transform: translateX(-4px); }
+        75% { transform: translateX(4px); }
+    }
+
+    .cx-modal-actions {
+        display: flex;
+        flex-direction: column;
+        gap: 10px;
+    }
+
+    .cx-modal-btn {
+        width: 100%;
+        border: none;
+        border-radius: 12px;
+        padding: 13px 18px;
+        font-size: 0.92rem;
+        font-weight: 700;
+        transition: all 0.18s ease;
+        white-space: nowrap;
+    }
+
+    .cx-modal-btn-primary {
+        background: #1A1953;
+        color: #fff;
+    }
+
+    .cx-modal-btn-primary:hover:not(:disabled) {
+        background: #14123e;
+        color: #fff;
+    }
+
+    .cx-modal-btn-primary:disabled {
+        opacity: 0.65;
+    }
+
+    .cx-modal-btn-ghost {
+        background: #f4f6fa;
+        color: #1A1953;
+        border: 1px solid rgba(26, 25, 83, 0.12);
+    }
+
+    .cx-modal-btn-ghost:hover {
+        background: #e9edf3;
+        color: #1A1953;
+    }
+
+    @media (max-width: 420px) {
+        .cx-modal-body,
+        .cx-modal-header {
+            padding-left: 20px;
+            padding-right: 20px;
+        }
+
+        .cx-otp-digit {
+            width: 42px;
+            height: 50px;
+            font-size: 1.2rem;
+        }
+
+        .cx-otp-group {
+            gap: 6px;
+        }
+    }
 </style>
 
 <script src="https://js.pusher.com/8.2.0/pusher.min.js"></script>
@@ -277,9 +577,143 @@
     const scheduleId = {{ $schedule->id }};
     const ticketPrice = {{ $schedule->ticket_price }};
     const isAuthenticated = {{ $isAuthenticated ? 'true' : 'false' }};
+    const rememberSeatsUrl = @json(route('booking.remember-seats', $schedule));
+    const serverRestoredSeats = @json($restoredSeats ?? []);
     let selectedSeats = [];
     let appliedDiscount = 0;
     let promoApplied = false;
+    let skipOtpCheck = false;
+
+    function setModalStep(step) {
+        document.querySelectorAll('.cx-modal-step').forEach(el => {
+            el.classList.toggle('is-active', el.dataset.step === String(step));
+        });
+    }
+
+    function getOtpDigits() {
+        return Array.from(document.querySelectorAll('.cx-otp-digit'));
+    }
+
+    function getOtpValue() {
+        return getOtpDigits().map(input => input.value.trim()).join('');
+    }
+
+    function syncHiddenOtp() {
+        const hidden = document.getElementById('guestOtpCode');
+        if (hidden) hidden.value = getOtpValue();
+    }
+
+    function resetOtpInputs() {
+        getOtpDigits().forEach(input => {
+            input.value = '';
+            input.classList.remove('filled', 'is-error');
+        });
+        syncHiddenOtp();
+        const err = document.getElementById('otpErrorMsg');
+        if (err) {
+            err.textContent = '';
+            err.hidden = true;
+        }
+    }
+
+    function showOtpError(message) {
+        const err = document.getElementById('otpErrorMsg');
+        if (err) {
+            err.textContent = message;
+            err.hidden = !message;
+        }
+        getOtpDigits().forEach(input => input.classList.add('is-error'));
+    }
+
+    function focusOtpDigit(index) {
+        const digits = getOtpDigits();
+        if (digits[index]) digits[index].focus();
+    }
+
+    function initOtpInputs() {
+        const digits = getOtpDigits();
+        if (!digits.length) return;
+
+        digits.forEach((input, index) => {
+            input.addEventListener('input', function() {
+                this.value = this.value.replace(/\D/g, '').slice(-1);
+                this.classList.toggle('filled', this.value !== '');
+                this.classList.remove('is-error');
+                syncHiddenOtp();
+
+                if (this.value && index < digits.length - 1) {
+                    focusOtpDigit(index + 1);
+                }
+            });
+
+            input.addEventListener('keydown', function(e) {
+                if (e.key === 'Backspace' && !this.value && index > 0) {
+                    focusOtpDigit(index - 1);
+                }
+            });
+
+            input.addEventListener('paste', function(e) {
+                e.preventDefault();
+                const pasted = (e.clipboardData.getData('text') || '').replace(/\D/g, '').slice(0, 6);
+                pasted.split('').forEach((char, i) => {
+                    if (digits[i]) {
+                        digits[i].value = char;
+                        digits[i].classList.toggle('filled', char !== '');
+                    }
+                });
+                syncHiddenOtp();
+                focusOtpDigit(Math.min(pasted.length, digits.length - 1));
+            });
+        });
+    }
+
+    function populateSeatIds() {
+        const container = document.getElementById('seatIdsContainer');
+        if (!container) return;
+        container.innerHTML = selectedSeats.map(s =>
+            `<input type="hidden" name="seat_ids[]" value="${s.id}">`
+        ).join('');
+    }
+
+    function setSubmitLoading(isLoading, label) {
+        const btn = document.getElementById('bookingBtn');
+        if (!btn) return;
+        if (isLoading) {
+            btn.disabled = true;
+            btn.innerHTML = `<span class="spinner-border spinner-border-sm me-2"></span> ${label || 'Memproses...'}`;
+        }
+    }
+
+    function showGuestOtpModal() {
+        const guestEmail = document.getElementById('guestEmail');
+        const email = guestEmail ? guestEmail.value.trim() : '';
+        if (!email || !/^[^\s@]+@[^\s@]+\.[^\s@]+$/.test(email)) {
+            if (guestEmail) { guestEmail.classList.add('is-invalid'); guestEmail.focus(); }
+            return false;
+        }
+        if (guestEmail) guestEmail.classList.remove('is-invalid');
+        document.getElementById('modalEmailDisplay').textContent = email;
+        document.getElementById('step-otp-input').style.display = 'none';
+        document.getElementById('step-email-confirm').style.display = 'block';
+        setModalStep(1);
+        resetOtpInputs();
+        const emailModalEl = document.getElementById('emailConfirmModal');
+        if (emailModalEl && typeof bootstrap !== 'undefined') {
+            bootstrap.Modal.getOrCreateInstance(emailModalEl).show();
+        }
+        return true;
+    }
+
+    function performFormSubmit() {
+        if (selectedSeats.length === 0) {
+            alert('Silakan pilih minimal 1 kursi terlebih dahulu.');
+            return;
+        }
+        populateSeatIds();
+        skipOtpCheck = true;
+        setSubmitLoading(true);
+        document.getElementById('bookingForm')?.requestSubmit();
+    }
 
     // Fungsi utama submit booking - dipanggil langsung dari onclick tombol
     function submitBooking() {
@@ -289,39 +723,11 @@
         }
 
         if (!isAuthenticated) {
-            // Guest: tampilkan modal OTP
-            const guestEmail = document.getElementById('guestEmail');
-            const email = guestEmail ? guestEmail.value.trim() : '';
-            if (!email || !/^[^\s@]+@[^\s@]+\.[^\s@]+$/.test(email)) {
-                if (guestEmail) { guestEmail.classList.add('is-invalid'); guestEmail.focus(); }
-                return;
-            }
-            if (guestEmail) guestEmail.classList.remove('is-invalid');
-            document.getElementById('modalEmailDisplay').textContent = email;
-            document.getElementById('step-otp-input').style.display = 'none';
-            document.getElementById('step-email-confirm').style.display = 'block';
-            document.getElementById('guestOtpCode').value = '';
-            const emailModalEl = document.getElementById('emailConfirmModal');
-            if (emailModalEl && typeof bootstrap !== 'undefined') {
-                new bootstrap.Modal(emailModalEl).show();
-            }
+            showGuestOtpModal();
             return;
         }
 
-        // User sudah login: isi seat_ids[] dan submit form
-        const container = document.getElementById('seatIdsContainer');
-        if (container) {
-            container.innerHTML = selectedSeats.map(s => '<input type="hidden" name="seat_ids[]" value="' + s.id + '">').join('');
-        }
-
-        const btn = document.getElementById('bookingBtn');
-        if (btn) {
-            btn.disabled = true;
-            btn.innerHTML = '<span class="spinner-border spinner-border-sm me-2"></span> Memproses...';
-        }
-
-        const form = document.getElementById('bookingForm');
-        if (form) form.submit();
+        performFormSubmit();
     }
 
     // Initialize Pusher untuk Real-Time Seat Updates
@@ -359,28 +765,88 @@
             initPromoHandler();
         }
         initGuestCheckout();
+        initOtpInputs();
         initFormSubmit();
+        initAuthRedirectLinks();
     });
 
-    function restoreSelectedSeats() {
-        const saved = sessionStorage.getItem('selected_seats_' + scheduleId);
-        if (saved) {
-            try {
-                const parsedSeats = JSON.parse(saved);
-                selectedSeats = [];
-                parsedSeats.forEach(seat => {
-                    const btn = document.querySelector(`[data-seat-id="${seat.id}"]`);
-                    if (btn && !btn.disabled) {
-                        btn.classList.add('seat-selected');
-                        selectedSeats.push(seat);
-                    }
+    function initAuthRedirectLinks() {
+        document.querySelectorAll('a[href*="/login"], a[href*="/register"]').forEach(link => {
+            link.addEventListener('click', function(e) {
+                if (selectedSeats.length === 0) {
+                    return;
+                }
+
+                e.preventDefault();
+                const targetUrl = this.href;
+                persistSeatSelection().finally(() => {
+                    window.location.href = targetUrl;
                 });
-                sessionStorage.setItem('selected_seats_' + scheduleId, JSON.stringify(selectedSeats));
-                updateSummary();
-            } catch (e) {
-                console.error('Failed to restore selected seats:', e);
+            });
+        });
+    }
+
+    function persistSeatSelection() {
+        persistSeatSelectionToStorage();
+
+        if (selectedSeats.length === 0) {
+            return Promise.resolve();
+        }
+
+        return fetch(rememberSeatsUrl, {
+            method: 'POST',
+            headers: {
+                'Content-Type': 'application/json',
+                'X-CSRF-TOKEN': '{{ csrf_token() }}',
+                'Accept': 'application/json',
+            },
+            body: JSON.stringify({
+                seat_ids: selectedSeats.map(seat => Number(seat.id)),
+            }),
+        }).catch(error => {
+            console.error('Failed to persist seats on server:', error);
+        });
+    }
+
+    function persistSeatSelectionToStorage() {
+        sessionStorage.setItem('selected_seats_' + scheduleId, JSON.stringify(selectedSeats));
+    }
+
+    function restoreSelectedSeats() {
+        let seatsToRestore = [];
+
+        if (serverRestoredSeats.length > 0) {
+            seatsToRestore = serverRestoredSeats;
+        } else {
+            const saved = sessionStorage.getItem('selected_seats_' + scheduleId);
+            if (saved) {
+                try {
+                    seatsToRestore = JSON.parse(saved);
+                } catch (e) {
+                    console.error('Failed to parse saved seats:', e);
+                }
             }
         }
+
+        if (!seatsToRestore || seatsToRestore.length === 0) {
+            return;
+        }
+
+        selectedSeats = [];
+        seatsToRestore.forEach(seat => {
+            const seatId = Number(seat.id);
+            const btn = document.querySelector(`[data-seat-id="${seatId}"]`);
+            if (btn && !btn.disabled) {
+                btn.classList.add('seat-selected');
+                selectedSeats.push({
+                    id: seatId,
+                    code: seat.code || btn.getAttribute('data-seat-code') || '',
+                });
+            }
+        });
+
+        persistSeatSelectionToStorage();
+        updateSummary();
     }
 
     function initGuestCheckout() {
@@ -418,16 +884,23 @@
                 },
                 body: JSON.stringify({ email: email })
             })
-            .then(response => response.json())
+            .then(async response => {
+                const data = await response.json();
+                if (!response.ok) {
+                    throw new Error(data.message || 'Gagal mengirim OTP');
+                }
+                return data;
+            })
             .then(data => {
                 btn.disabled = false;
-                btn.innerHTML = 'Kirim OTP Validasi';
+                btn.innerHTML = 'Kirim Kode OTP';
 
                 if (data.success) {
-                    // Pindah ke Step Input OTP
                     document.getElementById('step-email-confirm').style.display = 'none';
                     document.getElementById('step-otp-input').style.display = 'block';
-                    setTimeout(() => document.getElementById('guestOtpCode').focus(), 300);
+                    setModalStep(2);
+                    resetOtpInputs();
+                    setTimeout(() => focusOtpDigit(0), 300);
                 } else {
                     alert(data.message || 'Gagal mengirim OTP');
                 }
@@ -435,7 +908,7 @@
             .catch(error => {
                 console.error('Error:', error);
                 btn.disabled = false;
-                btn.innerHTML = 'Kirim OTP Validasi';
+                btn.innerHTML = 'Kirim Kode OTP';
                 alert('Terjadi kesalahan sistem saat mengirim OTP.');
             });
         });
@@ -443,17 +916,24 @@
         document.getElementById('btnBackToEmail')?.addEventListener('click', function() {
             document.getElementById('step-otp-input').style.display = 'none';
             document.getElementById('step-email-confirm').style.display = 'block';
+            setModalStep(1);
+            resetOtpInputs();
         });
 
         document.getElementById('btnVerifyOtp')?.addEventListener('click', function() {
             const email = guestEmail.value.trim();
-            const otp = document.getElementById('guestOtpCode').value.trim();
+            const otp = getOtpValue();
             const btn = this;
 
             if (!otp || otp.length !== 6) {
-                alert('Masukkan 6-digit kode OTP dengan benar.');
+                showOtpError('Masukkan 6 digit kode OTP.');
+                focusOtpDigit(0);
                 return;
             }
+
+            const err = document.getElementById('otpErrorMsg');
+            if (err) { err.textContent = ''; err.hidden = true; }
+            getOtpDigits().forEach(input => input.classList.remove('is-error'));
 
             btn.disabled = true;
             btn.innerHTML = '<span class="spinner-border spinner-border-sm me-2"></span> Memverifikasi...';
@@ -467,31 +947,31 @@
                 },
                 body: JSON.stringify({ email: email, otp: otp })
             })
-            .then(response => response.json())
+            .then(async response => {
+                const data = await response.json();
+                if (!response.ok) {
+                    throw new Error(data.message || 'Verifikasi OTP gagal.');
+                }
+                return data;
+            })
             .then(data => {
                 if (data.success) {
                     if (emailModal) emailModal.hide();
-
-                    const mainBtn = document.getElementById('bookingBtn');
-                    if (mainBtn) {
-                        mainBtn.innerHTML = '<span class="spinner-border spinner-border-sm me-2"></span> Mengunci Kursi...';
-                        setTimeout(function() {
-                            mainBtn.disabled = true;
-                        }, 50);
-                    }
-
-                    bookingForm.submit();
+                    setSubmitLoading(true, 'Mengunci Kursi...');
+                    performFormSubmit();
                 } else {
                     btn.disabled = false;
                     btn.innerHTML = 'Verifikasi & Lanjut';
-                    alert(data.message || 'Kode OTP Salah!');
+                    showOtpError(data.message || 'Kode OTP salah. Coba lagi.');
+                    focusOtpDigit(0);
                 }
             })
             .catch(error => {
                 console.error('Error:', error);
                 btn.disabled = false;
                 btn.innerHTML = 'Verifikasi & Lanjut';
-                alert('Terjadi kesalahan saat memverifikasi OTP.');
+                showOtpError(error.message || 'Terjadi kesalahan saat memverifikasi OTP.');
+                focusOtpDigit(0);
             });
         });
     }
@@ -558,12 +1038,12 @@
             selectedSeats.splice(index, 1);
             btn.classList.remove('seat-selected');
         } else {
-            selectedSeats.push({ id: seatId, code: seatCode });
+            selectedSeats.push({ id: Number(seatId), code: seatCode });
             btn.classList.add('seat-selected');
         }
 
-        // Save to sessionStorage
-        sessionStorage.setItem('selected_seats_' + scheduleId, JSON.stringify(selectedSeats));
+        persistSeatSelectionToStorage();
+        persistSeatSelection();
 
         updateSummary();
     }
@@ -696,53 +1176,24 @@
             return;
         }
 
-        if (isAuthenticated) {
-            // User sudah login: langsung submit
-            bookingForm.addEventListener('submit', function(e) {
-                if (selectedSeats.length === 0) {
-                    e.preventDefault();
-                    alert('Silakan pilih minimal 1 kursi terlebih dahulu.');
-                    return;
-                }
-                // Isi ulang seat_ids[] dari selectedSeats array sebelum submit
-                const container = document.getElementById('seatIdsContainer');
-                if (container) {
-                    container.innerHTML = selectedSeats.map(s => `<input type="hidden" name="seat_ids[]" value="${s.id}">`).join('');
-                }
-                const btn = document.getElementById('bookingBtn');
-                if (btn) {
-                    btn.innerHTML = '<span class="spinner-border spinner-border-sm me-2"></span> Memproses...';
-                    setTimeout(function() { btn.disabled = true; }, 100);
-                }
-            });
-        } else {
-            // User belum login: butuh OTP
-            bookingForm.addEventListener('submit', function(e) {
+        bookingForm.addEventListener('submit', function(e) {
+            if (selectedSeats.length === 0) {
                 e.preventDefault();
-                if (selectedSeats.length === 0) {
-                    alert('Silakan pilih minimal 1 kursi terlebih dahulu.');
-                    return;
-                }
-                const guestEmail = document.getElementById('guestEmail');
-                const email = guestEmail ? guestEmail.value.trim() : '';
-                if (!email || !/^[^\s@]+@[^\s@]+\.[^\s@]+$/.test(email)) {
-                    if (guestEmail) {
-                        guestEmail.classList.add('is-invalid');
-                        guestEmail.focus();
-                    }
-                    return;
-                }
-                if (guestEmail) guestEmail.classList.remove('is-invalid');
-                document.getElementById('modalEmailDisplay').textContent = email;
-                document.getElementById('step-otp-input').style.display = 'none';
-                document.getElementById('step-email-confirm').style.display = 'block';
-                document.getElementById('guestOtpCode').value = '';
-                const emailModalEl = document.getElementById('emailConfirmModal');
-                if (emailModalEl && typeof bootstrap !== 'undefined') {
-                    new bootstrap.Modal(emailModalEl).show();
-                }
-            });
-        }
+                alert('Silakan pilih minimal 1 kursi terlebih dahulu.');
+                return;
+            }
+
+            populateSeatIds();
+
+            if (!isAuthenticated && !skipOtpCheck) {
+                e.preventDefault();
+                showGuestOtpModal();
+                return;
+            }
+
+            skipOtpCheck = false;
+            setSubmitLoading(true);
+        });
     }
 </script>
 

@@ -26,13 +26,57 @@ class Schedule extends Model
         'ticket_price'  => 'decimal:2',
     ];
 
+    /** Maksimal hari ke depan jadwal bisa dipesan / ditampilkan ke customer. */
+    public const BOOKING_WINDOW_DAYS = 7;
 
+    /**
+     * Jadwal upcoming yang boleh ditampilkan & dipesan (hari ini s/d +7 hari).
+     */
+    public function scopeUpcomingForBooking($query, ?\Carbon\Carbon $now = null)
+    {
+        $now = $now ?? \Carbon\Carbon::now();
+        $todayStr = $now->toDateString();
+        $timeStr = $now->toTimeString();
+        $maxDateStr = $now->copy()->addDays(self::BOOKING_WINDOW_DAYS)->toDateString();
+
+        return $query
+            ->where(function ($q) use ($todayStr, $timeStr) {
+                $q->where('schedule_date', '>', $todayStr)
+                    ->orWhere(function ($sub) use ($todayStr, $timeStr) {
+                        $sub->where('schedule_date', '=', $todayStr)
+                            ->where('start_time', '>', $timeStr);
+                    });
+            })
+            ->where('schedule_date', '<=', $maxDateStr)
+            ->where('status', 'on schedule');
+    }
+
+    public function isWithinBookingWindow(?\Carbon\Carbon $now = null): bool
+    {
+        $now = $now ?? \Carbon\Carbon::now();
+        $todayStr = $now->toDateString();
+        $timeStr = $now->toTimeString();
+        $maxDateStr = $now->copy()->addDays(self::BOOKING_WINDOW_DAYS)->toDateString();
+
+        if ($this->status !== 'on schedule') {
+            return false;
+        }
+
+        if ($this->schedule_date->toDateString() > $maxDateStr) {
+            return false;
+        }
+
+        if ($this->schedule_date->toDateString() === $todayStr) {
+            return $this->start_time->format('H:i:s') > $timeStr;
+        }
+
+        return $this->schedule_date->toDateString() > $todayStr;
+    }
 
     public function film()
     {
         return $this->belongsTo(Film::class);
     }
-
     public function studio()
     {
         return $this->belongsTo(Studio::class);

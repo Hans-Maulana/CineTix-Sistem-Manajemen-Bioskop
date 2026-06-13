@@ -3,6 +3,7 @@
 namespace App\Http\Controllers;
 
 use App\Models\Film;
+use App\Models\Genre;
 use App\Models\Schedule;
 use Illuminate\Http\Request;
 use Carbon\Carbon;
@@ -14,45 +15,83 @@ class HomeController extends Controller
      */
     public function index()
     {
-        $now = Carbon::now();
-        $todayStr = $now->toDateString();
-        $timeStr = $now->toTimeString();
+        $nowPlayingBaseQuery = Film::where('status', 'now_playing')
+            ->whereHas('schedules', fn ($query) => $query->upcomingForBooking());
 
-        $nowPlayingFilms = Film::where('status', 'now_playing')
-            ->whereHas('schedules', function ($query) use ($todayStr, $timeStr) {
-                $query->where(function ($q) use ($todayStr, $timeStr) {
-                    $q->where('schedule_date', '>', $todayStr)
-                      ->orWhere(function ($sub) use ($todayStr, $timeStr) {
-                          $sub->where('schedule_date', '=', $todayStr)
-                              ->where('start_time', '>', $timeStr);
-                      });
-                })->where('status', 'on schedule');
-            })
+        $nowPlayingTotal = (clone $nowPlayingBaseQuery)->count();
+
+        $nowPlayingFilms = (clone $nowPlayingBaseQuery)
+            ->with(['genres', 'reviews'])
+            ->latest()
+            ->take(12)
+            ->get();
+
+        $comingSoonTotal = Film::where('status', 'coming_soon')->count();
+
+        $comingSoonFilms = Film::where('status', 'coming_soon')
             ->with(['genres', 'reviews'])
             ->latest()
             ->take(8)
             ->get();
 
-        $comingSoonFilms = Film::where('status', 'coming_soon')
-            ->with(['genres'])
-            ->latest()
-            ->take(4)
-            ->get();
-
-        $upcomingSchedules = Schedule::where(function ($query) use ($todayStr, $timeStr) {
-                $query->where('schedule_date', '>', $todayStr)
-                      ->orWhere(function ($sub) use ($todayStr, $timeStr) {
-                          $sub->where('schedule_date', '=', $todayStr)
-                              ->where('start_time', '>', $timeStr);
-                      });
-            })
-            ->where('status', 'on schedule')
+        $upcomingSchedules = Schedule::upcomingForBooking()
             ->with('film', 'studio')
             ->orderBy('schedule_date')
             ->take(10)
             ->get();
 
-        return view('landing-page', compact('nowPlayingFilms', 'comingSoonFilms', 'upcomingSchedules'));
+        $topFilms = $this->getTopFilms(5);
+
+        $filterGenres = Genre::orderBy('genre_name')->pluck('genre_name');
+        $filterClassifications = Film::classificationOptions();
+
+        return view('landing-page', compact(
+            'nowPlayingFilms',
+            'nowPlayingTotal',
+            'comingSoonFilms',
+            'comingSoonTotal',
+            'upcomingSchedules',
+            'topFilms',
+            'filterGenres',
+            'filterClassifications'
+        ));
+    }
+
+    /**
+     * Top 5 film berdasarkan tiket terjual minggu ini (fallback: film sedang tayang terbaru).
+     */
+    private function getTopFilms(int $limit = 5)
+    {
+        $weekStart = Carbon::now()->startOfWeek();
+
+        $weeklyTicketScope = function ($query) use ($weekStart) {
+            $query->join('ticket_bookings', 'schedules.id', '=', 'ticket_bookings.schedule_id')
+                ->join('bookings', 'ticket_bookings.booking_id', '=', 'bookings.id')
+                ->where('bookings.status', 'confirmed')
+                ->where('bookings.created_at', '>=', $weekStart);
+        };
+
+        $topFilms = Film::query()
+            ->select('films.*')
+            ->with(['genres', 'reviews'])
+            ->withCount(['schedules as tickets_sold' => $weeklyTicketScope])
+            ->where('status', 'now_playing')
+            ->whereHas('schedules', fn ($query) => $query->upcomingForBooking())
+            ->orderByDesc('tickets_sold')
+            ->take($limit)
+            ->get();
+
+        if ($topFilms->isEmpty() || $topFilms->every(fn ($film) => (int) $film->tickets_sold === 0)) {
+            return Film::where('status', 'now_playing')
+                ->whereHas('schedules', fn ($query) => $query->upcomingForBooking())
+                ->with(['genres', 'reviews'])
+                ->latest()
+                ->take($limit)
+                ->get()
+                ->each(fn ($film) => $film->tickets_sold = 0);
+        }
+
+        return $topFilms;
     }
 
     /**
@@ -61,10 +100,7 @@ class HomeController extends Controller
     public function search(Request $request)
     {
         $query = $request->get('q');
-        $now = Carbon::now();
-        $todayStr = $now->toDateString();
-        $timeStr = $now->toTimeString();
-        
+
         $films = Film::whereIn('status', ['now_playing', 'coming_soon'])
             ->where(function ($q) use ($query) {
                 $q->where('title', 'like', "%{$query}%")
@@ -73,17 +109,10 @@ class HomeController extends Controller
                       $subQuery->where('genre_name', 'like', "%{$query}%");
                   });
             })
-            ->with(['genres', 'schedules' => function ($q) use ($todayStr, $timeStr) {
-                $q->where(function ($query) use ($todayStr, $timeStr) {
-                    $query->where('schedule_date', '>', $todayStr)
-                          ->orWhere(function ($sub) use ($todayStr, $timeStr) {
-                              $sub->where('schedule_date', '=', $todayStr)
-                                  ->where('start_time', '>', $timeStr);
-                          });
-                })
-                ->where('status', 'on schedule')
-                ->orderBy('schedule_date')
-                ->with('studio');
+            ->with(['genres', 'schedules' => function ($q) {
+                $q->upcomingForBooking()
+                    ->orderBy('schedule_date')
+                    ->with('studio');
             }])
             ->paginate(12);
 
@@ -95,23 +124,12 @@ class HomeController extends Controller
      */
     public function filmDetail(Film $film)
     {
-        $now = Carbon::now();
-        $todayStr = $now->toDateString();
-        $timeStr = $now->toTimeString();
-
         $film->load(['genres', 'reviews' => function ($q) {
             $q->orderBy('created_at', 'desc')->take(5);
-        }, 'schedules' => function ($q) use ($todayStr, $timeStr) {
-            $q->where(function ($query) use ($todayStr, $timeStr) {
-                $query->where('schedule_date', '>', $todayStr)
-                      ->orWhere(function ($sub) use ($todayStr, $timeStr) {
-                          $sub->where('schedule_date', '=', $todayStr)
-                              ->where('start_time', '>', $timeStr);
-                      });
-            })
-            ->where('status', 'on schedule')
-            ->orderBy('schedule_date')
-            ->with('studio');
+        }, 'schedules' => function ($q) {
+            $q->upcomingForBooking()
+                ->orderBy('schedule_date')
+                ->with('studio');
         }]);
 
         $avgRating = $film->reviews()->avg('rating') ?? 0;

@@ -24,13 +24,13 @@ class SeatAvailabilityHandler extends BookingApprovalHandler
         
         foreach ($seatIds as $seatId) {
             $seat = Seat::find($seatId);
-            
+
             if (!$seat) {
                 $unavailableSeats[] = "Kursi tidak ditemukan (ID: $seatId)";
                 continue;
             }
 
-            if (!$seat->isAvailable()) {
+            if (!$seat->isAvailable($scheduleId)) {
                 $unavailableSeats[] = $seat->seat_code;
             }
         }

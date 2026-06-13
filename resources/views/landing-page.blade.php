@@ -9,6 +9,7 @@
   <link rel="stylesheet" href="{{asset('assets/libs/owl.carousel/dist/assets/owl.carousel.min.css')}}">
   <link rel="stylesheet" href="{{asset('assets/libs/aos-master/dist/aos.css')}}">
   <link rel="stylesheet" href="{{asset('assets/css/styles.css')}}" />
+  @include('partials.customer_film_styles')
   <style>
     .header {
       background: #1A1953 !important;
@@ -27,14 +28,10 @@
       background-color: #f5f7fb !important;
     }
 
-    .bg-light-gray {
-      background-color: #ebedf3 !important;
-    }
     .banner-section {
       background-color: #0c0b24 !important;
     }
 
-    /* Fullscreen YouTube Background Video */
     .banner-video-container {
       position: absolute;
       top: 0;
@@ -62,9 +59,7 @@
     }
 
     @keyframes videoFadeIn {
-      to {
-        opacity: 1;
-      }
+      to { opacity: 1; }
     }
 
     .banner-overlay {
@@ -73,251 +68,8 @@
       left: 0;
       width: 100%;
       height: 100%;
-      background: linear-gradient(to bottom, rgba(12, 11, 36, 0.1) 0%, rgba(12, 11, 36, 0.5) 100%);
+      background: linear-gradient(to bottom, rgba(12, 11, 36, 0.1) 0%, rgba(12, 11, 36, 0.55) 100%);
       z-index: 1;
-    }
-
-    /* Coming Soon Card Styles */
-    .poster-film {
-      transition: transform 0.3s ease;
-    }
-    .poster-film:hover {
-      transform: translateY(-5px);
-    }
-    .poster-film-img {
-      position: relative;
-      overflow: hidden;
-      border-radius: 12px;
-      box-shadow: 0 4px 15px rgba(0, 0, 0, 0.1);
-    }
-    .poster-film-img::before {
-      content: "";
-      display: block;
-      padding-top: 72% !important; /* Matches Now Playing landscape aspect ratio */
-    }
-    .poster-film-img img {
-      position: absolute !important;
-      top: 0 !important;
-      left: 0 !important;
-      width: 100% !important;
-      height: 100% !important;
-      object-fit: fill !important; /* Stretches the image to fill the box completely without cropping or black bars */
-      transition: transform 0.5s ease;
-    }
-    .poster-film-img:hover img {
-      transform: scale(1.05);
-    }
-    .poster-film-overlay {
-      position: absolute;
-      top: 0;
-      left: 0;
-      width: 100%;
-      height: 100%;
-      background: rgba(26, 25, 83, 0.85) !important; /* CineTix deep purple-blue with transparency */
-      display: flex;
-      flex-direction: column;
-      align-items: center;
-      justify-content: center;
-      opacity: 0;
-      visibility: hidden;
-      transition: opacity 0.3s ease, visibility 0.3s ease;
-      z-index: 2;
-    }
-    .poster-film-img:hover .poster-film-overlay {
-      opacity: 1;
-      visibility: visible;
-    }
-    .poster-film-overlay .btn-detail {
-      background: #ffffff;
-      color: #1A1953;
-      font-weight: 700;
-      padding: 10px 20px;
-      border-radius: 50px;
-      text-decoration: none;
-      display: inline-flex;
-      align-items: center;
-      gap: 8px;
-      box-shadow: 0 10px 20px rgba(0,0,0,0.2);
-      transition: all 0.3s ease;
-      transform: translateY(15px);
-    }
-    .poster-film-img:hover .poster-film-overlay .btn-detail {
-      transform: translateY(0);
-    }
-    .poster-film-overlay .btn-detail:hover {
-      background: #1A1953;
-      color: #ffffff;
-      transform: scale(1.05);
-    }
-
-    /* Override Now Playing images to fit without cropping */
-    .portfolio-img > img {
-      object-fit: fill !important; /* Stretches the image to fill the box completely without cropping or black bars */
-    }
-
-    /* Now Playing (Sedang Tayang) Hover Overlay Styling */
-    .portfolio-img .portfolio-overlay {
-      position: absolute;
-      top: 0;
-      left: 0;
-      width: 100%;
-      height: 100%;
-      background: rgba(26, 25, 83, 0.85) !important; /* CineTix deep purple-blue with transparency */
-      display: flex;
-      flex-direction: column;
-      align-items: center;
-      justify-content: center;
-      opacity: 0;
-      visibility: hidden;
-      transition: opacity 0.3s ease, visibility 0.3s ease;
-      z-index: 2;
-      transform: none !important; /* Overrides default template slide transition */
-    }
-    .portfolio-img:hover .portfolio-overlay {
-      opacity: 1 !important;
-      visibility: visible !important;
-    }
-    .portfolio-overlay .btn-detail-playing {
-      background: #ffffff;
-      color: #1A1953;
-      font-weight: 700;
-      padding: 10px 20px;
-      border-radius: 50px;
-      text-decoration: none;
-      display: inline-flex;
-      align-items: center;
-      gap: 8px;
-      box-shadow: 0 10px 20px rgba(0,0,0,0.2);
-      transition: all 0.3s ease;
-      transform: translateY(15px);
-    }
-    .portfolio-img:hover .portfolio-overlay .btn-detail-playing {
-      transform: translateY(0);
-    }
-    .portfolio-overlay .btn-detail-playing:hover {
-      background: #1A1953;
-      color: #ffffff;
-      transform: scale(1.05);
-    }
-
-    /* Style for static 'Pesan' button inside now playing cards */
-    .btn-pesan {
-      background-color: #1A1953;
-      color: #ffffff;
-      font-weight: 700;
-      font-size: 0.8rem;
-      padding: 6px 14px;
-      border-radius: 50px;
-      text-decoration: none;
-      display: inline-flex;
-      align-items: center;
-      gap: 6px;
-      transition: all 0.3s ease;
-      border: 1px solid #1A1953;
-    }
-    .btn-pesan:hover {
-      background-color: #ffffff;
-      color: #1A1953;
-      border-color: #1A1953;
-      transform: translateY(-2px);
-      box-shadow: 0 4px 10px rgba(26, 25, 83, 0.2);
-    }
-    .btn-pesan iconify-icon {
-      font-size: 0.95rem;
-    }
-
-    /* Style for Coming Soon film details to match Now Playing details */
-    .poster-film-details {
-      padding: 10px 5px;
-      text-align: left;
-    }
-    .poster-film-details h3 {
-      font-size: 1.15rem !important;
-      font-weight: 700 !important;
-      margin-bottom: 8px !important;
-      color: #1F2A2E !important;
-    }
-
-    /* Premium Filter Dropdowns */
-    .filter-container {
-      background: rgba(26, 25, 83, 0.04);
-      border: 1px solid rgba(26, 25, 83, 0.08);
-      border-radius: 16px;
-      padding: 12px 20px;
-      backdrop-filter: blur(10px);
-      box-shadow: 0 10px 30px rgba(26, 25, 83, 0.03);
-      display: inline-flex;
-      align-items: center;
-      gap: 15px;
-      margin-top: 15px;
-      margin-bottom: 25px;
-    }
-
-    .filter-select-wrapper {
-      position: relative;
-      display: inline-block;
-    }
-
-    .filter-select-wrapper iconify-icon {
-      position: absolute;
-      left: 14px;
-      top: 50%;
-      transform: translateY(-50%);
-      color: #1A1953;
-      font-size: 1.15rem;
-      pointer-events: none;
-      transition: color 0.3s ease;
-      z-index: 2;
-    }
-
-    .custom-filter-select {
-      appearance: none;
-      -webkit-appearance: none;
-      -moz-appearance: none;
-      background-color: #ffffff;
-      border: 1.5px solid rgba(26, 25, 83, 0.15);
-      border-radius: 12px;
-      padding: 10px 40px 10px 38px;
-      font-size: 0.95rem;
-      font-weight: 600;
-      color: #1a1953;
-      cursor: pointer;
-      outline: none;
-      transition: all 0.3s cubic-bezier(0.4, 0, 0.2, 1);
-      box-shadow: 0 4px 6px rgba(0, 0, 0, 0.02);
-      min-width: 190px;
-    }
-
-    .custom-filter-select:hover {
-      border-color: #1A1953;
-      transform: translateY(-1px);
-      box-shadow: 0 6px 12px rgba(26, 25, 83, 0.08);
-    }
-
-    .custom-filter-select:focus {
-      border-color: #1A1953;
-      box-shadow: 0 0 0 4px rgba(26, 25, 83, 0.15);
-    }
-
-    /* Custom arrow indicator */
-    .filter-select-wrapper::after {
-      content: "";
-      position: absolute;
-      right: 16px;
-      top: 50%;
-      transform: translateY(-50%);
-      width: 0;
-      height: 0;
-      border-left: 5px solid transparent;
-      border-right: 5px solid transparent;
-      border-top: 5px solid #1A1953;
-      pointer-events: none;
-      transition: transform 0.3s ease;
-      z-index: 2;
-    }
-
-    .filter-select-wrapper:focus-within::after {
-      transform: translateY(-50%) rotate(180deg);
     }
   </style>
 </head>
@@ -456,158 +208,144 @@
       </div>
     </section>
 
-    <section class="featured-projects py-4 py-lg-8 py-xl-10 bg-light-gray">
-      <div class="d-flex flex-column gap-5 gap-xl-11">
-        <div class="container">
-          <div class="row gap-7 gap-xl-0">
-            <div class="col-xl-4 col-xxl-4">
-              <div class="d-flex align-items-center gap-7 py-2" data-aos="fade-right" data-aos-delay="100"
-                data-aos-duration="1000">
-                <span
-                  class="round-36 flex-shrink-0 text-white rounded-circle bg-primary hstack justify-content-center fw-medium">02</span>
-                <hr class="border-line">
-                <span class="badge text-bg-dark">Film</span>
-              </div>
+    {{-- Top 5 Film Populer --}}
+    <section class="cx-section">
+      <div class="container">
+        <div class="cx-hero-panel" data-aos="fade-up">
+          <div class="d-flex flex-wrap justify-content-between align-items-center gap-3">
+            <div>
+              <span class="cx-hero-eyebrow">
+                <iconify-icon icon="lucide:flame"></iconify-icon> Top 5 Minggu Ini
+              </span>
+              <h2 class="mb-1">Film Paling Populer</h2>
+              <p>Berdasarkan jumlah tiket terjual minggu ini — pilih favoritmu dan pesan sekarang.</p>
             </div>
-            <div class="col-xl-8 col-xxl-7">
-              <div class="row">
-                <div class="col-xxl-8">
-                  <div class="d-flex flex-column gap-6" data-aos="fade-up" data-aos-delay="100"
-                    data-aos-duration="1000">
-                    <h2 class="mb-0">Sedang Tayang</h2>
-                    <p class="fs-5 mb-0">A glimpse into our creativity—exploring innovative designs, successful
-                      collaborations, and transformative digital experiences.</p>
-                  </div>
-                </div>
-              </div>
-            </div>
+            <a href="{{ route('films.search') }}" class="btn cx-hero-btn rounded-pill px-4">
+              Lihat Semua Film
+            </a>
           </div>
-
-          <div class="row mt-2 mb-2">
-            <div class="col-12">
-              <div class="filter-container align-items-center flex-wrap" data-aos="fade-up" data-aos-delay="200">
-                <span class="fs-6 fw-bold text-dark me-2 d-flex align-items-center gap-2">
-                  <iconify-icon icon="lucide:sliders-horizontal" class="text-primary"></iconify-icon>
-                  Filter Film:
-                </span>
-                
-                <div class="filter-select-wrapper">
-                  <iconify-icon icon="lucide:film"></iconify-icon>
-                  <select id="filter-genre" class="custom-filter-select">
-                    <option value="">Semua Genre</option>
-                    <option value="Action">Action</option>
-                    <option value="Comedy">Comedy</option>
-                    <option value="Drama">Drama</option>
-                    <option value="Horror">Horror</option>
-                    <option value="Romance">Romance</option>
-                  </select>
-                </div>
-
-                <div class="filter-select-wrapper">
-                  <iconify-icon icon="lucide:user-check"></iconify-icon>
-                  <select id="filter-classification" class="custom-filter-select">
-                    <option value="">Semua Rating Umur</option>
-                    <option value="SU">SU</option>
-                    <option value="13+">13+</option>
-                    <option value="17+">17+</option>
-                  </select>
-                </div>
-              </div>
-            </div>
-          </div>
-
         </div>
-        <div class="featured-projects-slider px-3">
-          <div id="owl-now-playing" class="owl-carousel owl-theme">
-            @foreach($nowPlayingFilms as $film)
-              <div class="item">
-                <div class="portfolio d-flex flex-column gap-6">
-                  <div class="portfolio-img position-relative overflow-hidden">
-                    <img src="{{ $film->cover_url }}" alt="{{ $film->title }}"
-                      class="img-fluid w-100 object-fit-cover shadow-sm rounded-3">
-                    <div class="portfolio-overlay">
-                      <a href="{{ route('films.detail', $film) }}" class="btn-detail-playing">
-                        <iconify-icon icon="lucide:ticket" class="fs-5"></iconify-icon>
-                        <span>Pesan Tiket</span>
-                      </a>
-                    </div>
-                  </div>
-                  <div class="portfolio-details d-flex flex-column gap-3">
-                    <h3 class="mb-0">{{ $film->title }}</h3>
-                    <div class="d-flex align-items-center justify-content-between gap-2 mt-1">
-                      <div class="hstack gap-2 flex-wrap">
-                        @foreach($film->genres as $genre)
-                          <span class="badge text-dark border">{{ $genre->genre_name }}</span>
-                        @endforeach
-                      </div>
-                      <a href="{{ route('films.detail', $film) }}" class="btn-pesan flex-shrink-0">
-                        <iconify-icon icon="lucide:ticket" class="fs-5"></iconify-icon>
-                        <span>Pesan Sekarang</span>
-                      </a>
-                    </div>
-                  </div>
-                </div>
-              </div>
-            @endforeach
-          </div>
+
+        <div class="cx-film-grid cx-top-grid">
+          @foreach($topFilms as $index => $film)
+            @include('partials.customer_film_card', [
+              'film' => $film,
+              'rank' => $index + 1,
+              'ticketsSold' => $film->tickets_sold ?? 0,
+            ])
+          @endforeach
         </div>
       </div>
     </section>
 
-    <section class="meet-our-team py-4 py-lg-8 py-xl-10">
+    {{-- Sedang Tayang --}}
+    <section class="cx-section cx-section-alt">
       <div class="container">
-        <div class="d-flex flex-column gap-5 gap-xl-11">
-          <div class="row gap-7 gap-xl-0">
-            <div class="col-xl-4 col-xxl-4">
-              <div class="d-flex align-items-center gap-7 py-2" data-aos="fade-right" data-aos-delay="100"
-                data-aos-duration="1000">
-                <span
-                  class="round-36 flex-shrink-0 text-white rounded-circle bg-primary hstack justify-content-center fw-medium">06</span>
-                <hr class="border-line bg-white">
-                <span class="badge text-bg-dark">Segera Tayang</span>
-              </div>
-            </div>
-            <div class="col-xl-8 col-xxl-7">
-              <div class="row">
-                <div class="col-xxl-8">
-                  <div class="d-flex flex-column gap-6" data-aos="fade-up" data-aos-delay="100"
-                    data-aos-duration="1000">
-                    <h2 class="mb-0">Segera Tayang</h2>
-                    <p class="fs-5 mb-0 text-opacity-70">Bersiaplah untuk film-film blockbuster yang sangat dinantikan
-                      ini, segera tayang di layar lebar.</p>
-                  </div>
-                </div>
-              </div>
-            </div>
-          </div>
-          <div class="row">
-            @foreach($comingSoonFilms as $film)
-              <div class="col-md-6 col-xl-3 mb-7 mb-xl-0">
-                <div class="poster-film d-flex flex-column gap-6" data-aos="fade-up"
-                  data-aos-delay="{{ $loop->iteration * 100 }}" data-aos-duration="1000">
-                  <div class="poster-film-img position-relative overflow-hidden">
-                    <img src="{{ $film->cover_url }}" alt="{{ $film->title }}"
-                      class="img-fluid w-100 object-fit-cover shadow-sm rounded-3">
-                    <div class="poster-film-overlay">
-                      <a href="{{ route('films.detail', $film) }}" class="btn-detail">
-                        <iconify-icon icon="lucide:eye" class="fs-5"></iconify-icon>
-                        <span>Detail Film</span>
-                      </a>
-                    </div>
-                  </div>
-                  <div class="poster-film-details d-flex flex-column gap-3">
-                    <h3 class="mb-0">{{ $film->title }}</h3>
-                    <div class="hstack gap-2 flex-wrap">
-                      @foreach($film->genres as $genre)
-                        <span class="badge text-dark border">{{ $genre->genre_name }}</span>
-                      @endforeach
-                    </div>
-                  </div>
-                </div>
-              </div>
-            @endforeach
+        <div class="cx-section-header d-flex flex-wrap justify-content-between align-items-end gap-3" data-aos="fade-up">
+          <div>
+            <span class="cx-section-eyebrow">
+              <iconify-icon icon="lucide:play-circle"></iconify-icon> Sedang Tayang
+            </span>
+            <h2 class="cx-section-title">Jadwal Film Hari Ini</h2>
+            <p class="cx-section-desc">Geser ke samping untuk lihat film lainnya — tidak perlu scroll panjang ke bawah.</p>
           </div>
         </div>
+
+        <div class="cx-filter-bar" data-aos="fade-up" data-aos-delay="100">
+          <span class="cx-filter-label">
+            <iconify-icon icon="lucide:sliders-horizontal"></iconify-icon> Filter:
+          </span>
+          <select id="filter-genre" class="cx-filter-select">
+            <option value="">Semua Genre</option>
+            @foreach($filterGenres as $genreName)
+              <option value="{{ $genreName }}">{{ $genreName }}</option>
+            @endforeach
+          </select>
+          <select id="filter-classification" class="cx-filter-select">
+            <option value="">Semua Rating Umur</option>
+            @foreach($filterClassifications as $value => $label)
+              <option value="{{ $value }}">{{ $label }}</option>
+            @endforeach
+          </select>
+        </div>
+
+        <p class="cx-rail-hint d-none d-md-flex">
+          <iconify-icon icon="lucide:move-horizontal"></iconify-icon>
+          Gunakan tombol panah atau geser track film ke kiri/kanan
+        </p>
+        <p class="cx-rail-hint d-md-none">
+          <iconify-icon icon="lucide:move-horizontal"></iconify-icon>
+          Geser ke kiri/kanan untuk melihat film lainnya
+        </p>
+
+        <div class="cx-rail-wrap" data-rail="now-playing">
+          <button type="button" class="cx-rail-btn cx-rail-prev" aria-label="Film sebelumnya">
+            <iconify-icon icon="lucide:chevron-left"></iconify-icon>
+          </button>
+          <div class="cx-film-rail" id="now-playing-rail">
+            <div class="cx-film-rail-track" id="now-playing-grid">
+              @foreach($nowPlayingFilms as $film)
+                @include('partials.customer_film_card', ['film' => $film])
+              @endforeach
+            </div>
+          </div>
+          <button type="button" class="cx-rail-btn cx-rail-next" aria-label="Film berikutnya">
+            <iconify-icon icon="lucide:chevron-right"></iconify-icon>
+          </button>
+        </div>
+
+        <div class="cx-section-footer">
+          <span class="cx-section-footer-meta" id="now-playing-meta">
+            Menampilkan {{ $nowPlayingFilms->count() }} dari {{ $nowPlayingTotal }} film sedang tayang
+          </span>
+          @if($nowPlayingTotal > $nowPlayingFilms->count())
+            <a href="{{ route('films.search') }}" class="cx-section-footer-link">
+              Lihat semua {{ $nowPlayingTotal }} film
+              <iconify-icon icon="lucide:arrow-right"></iconify-icon>
+            </a>
+          @endif
+        </div>
+      </div>
+    </section>
+
+    {{-- Segera Tayang --}}
+    <section class="cx-section">
+      <div class="container">
+        <div class="cx-section-header" data-aos="fade-up">
+          <span class="cx-section-eyebrow">
+            <iconify-icon icon="lucide:clock"></iconify-icon> Segera Tayang
+          </span>
+          <h2 class="cx-section-title">Coming Soon</h2>
+          <p class="cx-section-desc">Blockbuster yang paling dinantikan — geser untuk jelajahi lebih banyak.</p>
+        </div>
+
+        <div class="cx-rail-wrap" data-rail="coming-soon">
+          <button type="button" class="cx-rail-btn cx-rail-prev" aria-label="Film sebelumnya">
+            <iconify-icon icon="lucide:chevron-left"></iconify-icon>
+          </button>
+          <div class="cx-film-rail" id="coming-soon-rail">
+            <div class="cx-film-rail-track">
+              @foreach($comingSoonFilms as $film)
+                @include('partials.customer_film_card', ['film' => $film])
+              @endforeach
+            </div>
+          </div>
+          <button type="button" class="cx-rail-btn cx-rail-next" aria-label="Film berikutnya">
+            <iconify-icon icon="lucide:chevron-right"></iconify-icon>
+          </button>
+        </div>
+
+        @if($comingSoonTotal > $comingSoonFilms->count())
+          <div class="cx-section-footer">
+            <span class="cx-section-footer-meta">
+              Menampilkan {{ $comingSoonFilms->count() }} dari {{ $comingSoonTotal }} film segera tayang
+            </span>
+            <a href="{{ route('films.search') }}?q=coming" class="cx-section-footer-link">
+              Lihat semua
+              <iconify-icon icon="lucide:arrow-right"></iconify-icon>
+            </a>
+          </div>
+        @endif
       </div>
     </section>
 
@@ -675,42 +413,55 @@
 
   <script>
     $(document).ready(function() {
-      // Encapsulation: Mengisolasi logika request filter ke dalam fungsi mandiri
+      const scrollStep = 240;
+
+      document.addEventListener('click', function(e) {
+        const prevBtn = e.target.closest('.cx-rail-prev');
+        const nextBtn = e.target.closest('.cx-rail-next');
+        if (!prevBtn && !nextBtn) return;
+
+        const wrap = (prevBtn || nextBtn).closest('.cx-rail-wrap');
+        const rail = wrap?.querySelector('.cx-film-rail');
+        if (!rail) return;
+
+        rail.scrollBy({
+          left: prevBtn ? -scrollStep : scrollStep,
+          behavior: 'smooth'
+        });
+      });
+
       function fetchFilteredFilms() {
-        let genre = $('#filter-genre').val();
-        let classification = $('#filter-classification').val();
-        let $carousel = $('#owl-now-playing');
+        const genre = $('#filter-genre').val();
+        const classification = $('#filter-classification').val();
+        const $track = $('#now-playing-grid');
 
         $.ajax({
           url: "{{ route('films.filter') }}",
           type: "GET",
           data: { genre: genre, classification: classification },
           beforeSend: function() {
-            $carousel.css('opacity', '0.5'); 
+            $track.css('opacity', '0.5');
           },
           success: function(data) {
-            $carousel.css('opacity', '1');
-
-            // State Reset: Menghancurkan instance Owl Carousel lama agar DOM HTML baru tidak mengalami freeze/bug
-            $carousel.trigger('destroy.owl.carousel');
-            $carousel.find('.owl-stage-outer').children().unwrap();
-            $carousel.removeClass('owl-loaded');
-
-            $carousel.html(data);
-
-            // Re-initialization: Menyalakan kembali plugin slider carousel dengan data baru
-            $carousel.owlCarousel({
-              loop: false, margin: 20, nav: false, dots: true,
-              responsive: { 0: { items: 1 }, 576: { items: 2 }, 992: { items: 3 }, 1200: { items: 4 } }
-            });
+            $track.css('opacity', '1').html(data);
+            const count = $track.find('.cx-film-card').length;
+            $('#now-playing-meta').text(
+              count > 0
+                ? 'Menampilkan ' + count + ' film hasil filter'
+                : 'Tidak ada film yang cocok dengan filter'
+            );
+            document.getElementById('now-playing-rail')?.scrollTo({ left: 0, behavior: 'smooth' });
+            if (typeof AOS !== 'undefined') {
+              AOS.refreshHard();
+            }
+          },
+          error: function() {
+            $track.css('opacity', '1');
           }
         });
       }
 
-      // Event Binding: Mengikat event listener 'change' pada elemen dropdown ke fungsi AJAX
-      $('#filter-genre, #filter-classification').on('change', function() {
-        fetchFilteredFilms();
-      });
+      $('#filter-genre, #filter-classification').on('change', fetchFilteredFilms);
     });
   </script>
 </body>

@@ -12,7 +12,8 @@ $(function () {
     */
 
 
-    // Featured Owl Carousel
+    // Featured Owl Carousel (only if present on page)
+    if ($('.featured-projects-slider .owl-carousel').length) {
     $('.featured-projects-slider .owl-carousel').owlCarousel({
         center: true,
         loop: true,
@@ -41,8 +42,10 @@ $(function () {
             }
         }
     })
+    }
 
-    // Coming Soon Owl Carousel
+    // Coming Soon Owl Carousel (only if present on page)
+    if ($('.coming-soon-slider .owl-carousel').length) {
     $('.coming-soon-slider .owl-carousel').owlCarousel({
         center: false,
         loop: false,
@@ -69,9 +72,7 @@ $(function () {
             }
         }
     })
-
-
-    // Count
+    }
     $('.count').each(function () {
 		$(this).prop('Counter', 0).animate({
 			Counter: $(this).text()

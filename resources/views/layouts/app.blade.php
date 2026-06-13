@@ -19,6 +19,7 @@
             background: #1A1953 !important;
             padding: 15px 0 !important;
             transition: none !important;
+            z-index: 1030;
         }
         .header .logo img {
             max-height: 40px;
@@ -63,9 +64,12 @@
                             <span class="fw-bold text-white">{{ auth()->user()->name }}</span>
                         </div>
                     @else
+                        @php
+                            $authRedirect = request()->routeIs('login', 'register') ? [] : ['redirect' => request()->fullUrl()];
+                        @endphp
                         <div class="hstack gap-3">
-                            <a href="{{ route('login') }}" class="btn btn-outline-light btn-md fs-6 bg-white px-3 py-1 text-dark hstack justify-content-center">Sign In</a>
-                            <a href="{{ route('register') }}" class="btn btn-dark btn-md text-white fs-6 bg-dark px-3 py-1 hstack justify-content-center">Sign Up</a>
+                            <a href="{{ route('login', $authRedirect) }}" class="btn btn-outline-light btn-md fs-6 bg-white px-3 py-1 text-dark hstack justify-content-center">Sign In</a>
+                            <a href="{{ route('register', $authRedirect) }}" class="btn btn-dark btn-md text-white fs-6 bg-dark px-3 py-1 hstack justify-content-center">Sign Up</a>
                         </div>
                     @endif
 

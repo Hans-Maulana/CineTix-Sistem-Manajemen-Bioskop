@@ -67,7 +67,13 @@
                 <p class="text-muted small mb-0">Sign up to get started</p>
               </div>
 
-              <a href="{{ route('login.google') }}" class="btn w-100 d-flex align-items-center justify-content-center gap-2 mb-3 google-btn">
+              @php
+                $authRedirect = request('redirect');
+                $googleLoginUrl = $authRedirect ? route('login.google', ['redirect' => $authRedirect]) : route('login.google');
+                $loginUrl = $authRedirect ? route('login', ['redirect' => $authRedirect]) : route('login');
+              @endphp
+
+              <a href="{{ $googleLoginUrl }}" class="btn w-100 d-flex align-items-center justify-content-center gap-2 mb-3 google-btn">
                 <img src="https://www.gstatic.com/firebasejs/ui/2.0.0/images/auth/google.svg" width="18" height="18">
                 Continue with Google
               </a>
@@ -126,7 +132,7 @@
 
                 <p class="small mb-0">
                   Already have an account?
-                  <a href="{{ route('login') }}" class="fw-semibold text-dark">Sign In</a>
+                  <a href="{{ $loginUrl }}" class="fw-semibold text-dark">Sign In</a>
                 </p>
               </div>
 

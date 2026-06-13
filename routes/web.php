@@ -27,11 +27,13 @@ Route::get('/promos', [PromoController::class, 'myPromos'])->name('customer.prom
 
 // Booking & pembayaran (guest & user login)
 Route::get('/booking/schedule/{schedule}', [BookingController::class, 'show'])->name('booking.show');
+Route::post('/booking/schedule/{schedule}/remember-seats', [BookingController::class, 'rememberSeats'])->name('booking.remember-seats');
 Route::post('/booking/store', [BookingController::class, 'store'])->name('booking.store');
 Route::get('/booking/payment/{booking}', [BookingController::class, 'payment'])->name('booking.payment');
 Route::post('/booking/initiate-payment/{booking}', [BookingController::class, 'initiatePayment'])->name('booking.initiate-payment');
 Route::get('/booking/process-payment/{booking}/{payment}', [BookingController::class, 'processPayment'])->name('booking.process-payment');
 Route::post('/booking/confirm-payment/{booking}/{payment}', [BookingController::class, 'confirmPayment'])->name('booking.confirm-payment');
+Route::post('/booking/resend-ticket/{booking}', [BookingController::class, 'resendTicketEmail'])->name('booking.resend-ticket');
 Route::get('/booking/guest-ticket/{booking}', [BookingController::class, 'guestTicket'])->name('booking.guest-ticket');
 
 // Kode OTP Guest

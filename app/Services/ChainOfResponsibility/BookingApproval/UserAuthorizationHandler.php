@@ -29,6 +29,11 @@ class UserAuthorizationHandler extends BookingApprovalHandler
             return $this->reject('Email wajib diisi dengan format yang valid untuk pengiriman tiket.');
         }
 
+        $verifiedEmail = strtolower(trim((string) session('verified_guest_email', '')));
+        if ($verifiedEmail === '' || $verifiedEmail !== $email) {
+            return $this->reject('Email belum diverifikasi via OTP. Silakan verifikasi ulang.');
+        }
+
         $bookingData['user_id'] = null;
         $bookingData['guest_email'] = $email;
 

@@ -1,231 +1,531 @@
 @extends('layouts.app')
 
+@push('styles')
+@include('partials.customer_film_styles')
+<style>
+    body {
+        background-color: #e4e8ef !important;
+    }
+
+    .cx-payment-page {
+        padding-bottom: 2.5rem;
+    }
+
+    .cx-payment-hero {
+        background: linear-gradient(135deg, #1A1953 0%, #2d2b7a 100%);
+        border-radius: 18px;
+        padding: 22px 24px;
+        color: #fff;
+        margin-bottom: 1.5rem;
+        box-shadow: 0 8px 24px rgba(26, 25, 83, 0.15);
+    }
+
+    .cx-payment-hero h4 {
+        font-weight: 800;
+        margin-bottom: 4px;
+    }
+
+    .cx-payment-card {
+        background: #fff;
+        border: 1px solid rgba(26, 25, 83, 0.1);
+        border-radius: 18px;
+        box-shadow: 0 4px 16px rgba(26, 25, 83, 0.07);
+        overflow: hidden;
+    }
+
+    .cx-payment-card-head {
+        padding: 16px 20px;
+        background: #1A1953;
+        color: #fff;
+        display: flex;
+        align-items: center;
+        gap: 12px;
+    }
+
+    .cx-payment-card-head iconify-icon {
+        font-size: 1.25rem;
+        opacity: 0.9;
+    }
+
+    .cx-payment-card-head h5 {
+        margin: 0;
+        font-size: 1rem;
+        font-weight: 800;
+    }
+
+    .cx-payment-card-body {
+        padding: 20px;
+    }
+
+    .cx-pay-method {
+        cursor: pointer;
+        display: block;
+    }
+
+    .cx-pay-method input {
+        position: absolute;
+        opacity: 0;
+        pointer-events: none;
+    }
+
+    .cx-pay-method-box {
+        display: flex;
+        align-items: center;
+        gap: 14px;
+        padding: 16px 18px;
+        border: 1.5px solid #dfe4ec;
+        border-radius: 14px;
+        background: #fafbfc;
+        transition: all 0.18s ease;
+    }
+
+    .cx-pay-method-box:hover {
+        border-color: rgba(26, 25, 83, 0.35);
+        background: #fff;
+    }
+
+    .cx-pay-method input:checked + .cx-pay-method-box {
+        border-color: #1A1953;
+        background: rgba(26, 25, 83, 0.04);
+        box-shadow: 0 4px 14px rgba(26, 25, 83, 0.1);
+    }
+
+    .cx-pay-method-icon {
+        width: 52px;
+        height: 52px;
+        border-radius: 12px;
+        background: #fff;
+        border: 1px solid rgba(26, 25, 83, 0.08);
+        display: flex;
+        align-items: center;
+        justify-content: center;
+        font-size: 1.6rem;
+        flex-shrink: 0;
+    }
+
+    .cx-pay-method-text h6 {
+        margin: 0 0 2px;
+        font-size: 0.95rem;
+        font-weight: 800;
+        color: #1f2533;
+    }
+
+    .cx-pay-method-text p {
+        margin: 0;
+        font-size: 0.8rem;
+        color: #8a93a6;
+    }
+
+    .cx-pay-method-check {
+        margin-left: auto;
+        width: 22px;
+        height: 22px;
+        border-radius: 999px;
+        border: 2px solid #dfe4ec;
+        display: flex;
+        align-items: center;
+        justify-content: center;
+        flex-shrink: 0;
+        transition: all 0.18s ease;
+    }
+
+    .cx-pay-method input:checked + .cx-pay-method-box .cx-pay-method-check {
+        background: #1A1953;
+        border-color: #1A1953;
+        color: #fff;
+    }
+
+    .cx-pay-method-check iconify-icon {
+        font-size: 0.85rem;
+        opacity: 0;
+        transition: opacity 0.15s ease;
+    }
+
+    .cx-pay-method input:checked + .cx-pay-method-box .cx-pay-method-check iconify-icon {
+        opacity: 1;
+    }
+
+    .cx-pay-submit {
+        width: 100%;
+        border: none;
+        border-radius: 12px;
+        padding: 14px 18px;
+        font-size: 0.95rem;
+        font-weight: 800;
+        background: #1A1953;
+        color: #fff;
+        transition: all 0.18s ease;
+    }
+
+    .cx-pay-submit:hover:not(:disabled) {
+        background: #14123e;
+        transform: translateY(-1px);
+        box-shadow: 0 6px 16px rgba(26, 25, 83, 0.22);
+    }
+
+    .cx-pay-submit:disabled {
+        background: #c5cad6;
+        color: #fff;
+        cursor: not-allowed;
+        transform: none;
+        box-shadow: none;
+    }
+
+    .cx-pay-back {
+        display: inline-flex;
+        align-items: center;
+        justify-content: center;
+        gap: 6px;
+        width: 100%;
+        padding: 12px;
+        border-radius: 12px;
+        font-size: 0.88rem;
+        font-weight: 700;
+        color: #1A1953;
+        text-decoration: none;
+        border: 1.5px solid rgba(26, 25, 83, 0.15);
+        background: #fff;
+        transition: all 0.18s ease;
+    }
+
+    .cx-pay-back:hover {
+        background: #f4f6fa;
+        color: #1A1953;
+    }
+
+    .cx-payment-summary {
+        background: #fff;
+        border: 1px solid rgba(26, 25, 83, 0.1);
+        border-radius: 18px;
+        box-shadow: 0 4px 16px rgba(26, 25, 83, 0.07);
+        overflow: hidden;
+    }
+
+    @media (min-width: 992px) {
+        .cx-payment-summary {
+            position: sticky;
+            top: 108px;
+            z-index: 5;
+        }
+    }
+
+    .cx-summary-head {
+        padding: 16px 20px;
+        border-bottom: 1px solid rgba(26, 25, 83, 0.08);
+        font-size: 1rem;
+        font-weight: 800;
+        color: #1f2533;
+    }
+
+    .cx-summary-body {
+        padding: 20px;
+    }
+
+    .cx-summary-film {
+        display: flex;
+        gap: 14px;
+        padding-bottom: 16px;
+        margin-bottom: 16px;
+        border-bottom: 1px dashed rgba(26, 25, 83, 0.12);
+    }
+
+    .cx-summary-poster {
+        width: 72px;
+        height: 96px;
+        border-radius: 10px;
+        background: linear-gradient(135deg, #1A1953, #3a37a0);
+        display: flex;
+        align-items: center;
+        justify-content: center;
+        flex-shrink: 0;
+    }
+
+    .cx-summary-poster iconify-icon {
+        font-size: 1.8rem;
+        color: rgba(255, 255, 255, 0.5);
+    }
+
+    .cx-summary-meta {
+        font-size: 0.82rem;
+        color: #8a93a6;
+        margin: 0;
+        display: flex;
+        align-items: center;
+        gap: 4px;
+    }
+
+    .cx-seat-badge {
+        display: inline-flex;
+        padding: 4px 10px;
+        border-radius: 999px;
+        font-size: 0.78rem;
+        font-weight: 800;
+        background: rgba(26, 25, 83, 0.08);
+        color: #1A1953;
+        margin-left: 4px;
+    }
+
+    .cx-summary-total {
+        display: flex;
+        justify-content: space-between;
+        align-items: center;
+        padding-top: 14px;
+        margin-top: 8px;
+        border-top: 1px solid rgba(26, 25, 83, 0.1);
+    }
+
+    .cx-summary-total span:last-child {
+        font-size: 1.35rem;
+        font-weight: 800;
+        color: #1A1953;
+    }
+
+    .cx-summary-note {
+        display: flex;
+        gap: 10px;
+        padding: 12px 14px;
+        background: rgba(251, 140, 0, 0.08);
+        border: 1px solid rgba(251, 140, 0, 0.2);
+        border-radius: 12px;
+        font-size: 0.8rem;
+        color: #5c6478;
+        line-height: 1.5;
+    }
+
+    .cx-summary-note iconify-icon {
+        color: #fb8c00;
+        font-size: 1.1rem;
+        flex-shrink: 0;
+        margin-top: 1px;
+    }
+
+    .btn-back-custom {
+        border: 2px solid #1A1953 !important;
+        color: #1A1953 !important;
+        font-weight: bold;
+        background: transparent;
+        transition: all 0.3s ease;
+    }
+    .btn-back-custom:hover {
+        background-color: #1A1953 !important;
+        color: #ffffff !important;
+    }
+</style>
+@endpush
+
 @section('content')
-<div class="container py-5">
-    <div class="row justify-content-center">
-        <div class="col-md-9">
+@php
+    $firstTicket = $booking->ticketBookings->first();
+    $schedule = $firstTicket?->schedule;
+    $film = $schedule?->film;
+@endphp
 
-            {{-- Flash Messages --}}
-            @if(session('error'))
-                <div class="alert alert-danger alert-dismissible fade show rounded-4 border-0 shadow-sm" role="alert">
-                    <iconify-icon icon="lucide:alert-circle" class="me-2"></iconify-icon>
-                    {{ session('error') }}
-                    <button type="button" class="btn-close" data-bs-dismiss="alert"></button>
+<div class="cx-payment-page">
+<div class="container py-4 py-lg-5">
+    <div class="d-flex justify-content-between align-items-center mb-4">
+        <nav aria-label="breadcrumb" class="mb-0">
+            <ol class="breadcrumb mb-0">
+                <li class="breadcrumb-item"><a href="{{ route('landing-page') }}" class="text-primary text-decoration-none">Beranda</a></li>
+                @if($film)
+                    <li class="breadcrumb-item"><a href="{{ route('films.detail', $film) }}" class="text-primary text-decoration-none">{{ $film->title }}</a></li>
+                @endif
+                <li class="breadcrumb-item active">Pembayaran</li>
+            </ol>
+        </nav>
+        @if($schedule)
+            <a href="{{ route('booking.show', $schedule) }}" class="btn btn-back-custom rounded-pill px-4 py-2 d-none d-md-flex align-items-center gap-2">
+                <iconify-icon icon="lucide:arrow-left"></iconify-icon>
+                <span>Kembali</span>
+            </a>
+        @endif
+    </div>
+
+    @if(session('error'))
+        <div class="alert alert-danger alert-dismissible fade show rounded-4 border-0 shadow-sm mb-4" role="alert">
+            <iconify-icon icon="lucide:alert-circle" class="me-2"></iconify-icon>
+            {{ session('error') }}
+            <button type="button" class="btn-close" data-bs-dismiss="alert"></button>
+        </div>
+    @endif
+
+    @if(!empty($activePendingPayment))
+        <div class="alert alert-info alert-dismissible fade show rounded-4 border-0 shadow-sm mb-4 d-flex flex-wrap align-items-center justify-content-between gap-2" role="alert">
+            <div>
+                <iconify-icon icon="lucide:clock" class="me-2"></iconify-icon>
+                Anda masih punya pembayaran {{ $activePendingPayment->method_label }} yang belum selesai.
+            </div>
+            <a href="{{ route('booking.process-payment', array_filter(['booking' => $booking, 'payment' => $activePendingPayment, 'token' => request('token')])) }}"
+               class="btn btn-sm btn-primary rounded-pill px-3">
+                Lanjutkan Pembayaran
+            </a>
+        </div>
+    @endif
+
+    <div class="cx-payment-hero">
+        <div class="d-flex flex-wrap justify-content-between align-items-center gap-3">
+            <div>
+                <span class="badge bg-white bg-opacity-20 text-white rounded-pill mb-2 px-3 py-2">
+                    <iconify-icon icon="lucide:credit-card" class="me-1"></iconify-icon> Pembayaran
+                </span>
+                <h4 class="text-white mb-1">Selesaikan Pesanan Anda</h4>
+                <p class="text-white-50 small mb-0">Pilih metode pembayaran lalu konfirmasi untuk melanjutkan</p>
+            </div>
+            <div class="text-white text-end">
+                <div class="small text-white-50">Total tagihan</div>
+                <div class="fs-3 fw-bold">Rp {{ number_format($booking->total_amount, 0, ',', '.') }}</div>
+            </div>
+        </div>
+    </div>
+
+    <div class="row g-4">
+        {{-- Metode Pembayaran --}}
+        <div class="col-lg-7 order-lg-1 order-2">
+            <div class="cx-payment-card">
+                <div class="cx-payment-card-head">
+                    <iconify-icon icon="lucide:wallet"></iconify-icon>
+                    <h5>Pilih Metode Pembayaran</h5>
                 </div>
-            @endif
+                <div class="cx-payment-card-body">
+                    <form method="POST" action="{{ route('booking.initiate-payment', array_filter(['booking' => $booking, 'token' => request('token')])) }}" id="paymentForm">
+                        @csrf
 
-            <div class="row g-4">
-                {{-- Left Side: Payment Selection --}}
-                <div class="col-lg-7">
-                    <div class="card border-0 shadow-sm rounded-4 overflow-hidden mb-4">
-                        <div class="card-header py-3 px-4 border-0" style="background: #1A1953 !important;">
-                            <div class="d-flex align-items-center gap-3">
-                                <div class="bg-white bg-opacity-20 p-2 rounded-3 hstack">
-                                    <iconify-icon icon="solar:card-2-bold-duotone" class="fs-6 text-white"></iconify-icon>
-                                </div>
-                                <h5 class="mb-0 fw-bold text-white">Pilih Metode Pembayaran</h5>
+                        <div class="d-flex flex-column gap-3 mb-4">
+                            @foreach($paymentMethods as $method)
+                                <label class="cx-pay-method" for="method_{{ $method['key'] }}">
+                                    <input type="radio"
+                                           name="payment_method"
+                                           value="{{ $method['key'] }}"
+                                           id="method_{{ $method['key'] }}"
+                                           required>
+                                    <span class="cx-pay-method-box">
+                                        <span class="cx-pay-method-icon">{{ $method['icon'] }}</span>
+                                        <span class="cx-pay-method-text flex-grow-1">
+                                            <h6>{{ $method['label'] }}</h6>
+                                            <p>{{ $method['description'] }}</p>
+                                        </span>
+                                        <span class="cx-pay-method-check">
+                                            <iconify-icon icon="lucide:check"></iconify-icon>
+                                        </span>
+                                    </span>
+                                </label>
+                            @endforeach
+                        </div>
+
+                        <button type="submit" class="cx-pay-submit mb-3" id="payBtn" disabled>
+                            Konfirmasi & Bayar Sekarang
+                        </button>
+
+                        @if($schedule)
+                            <a href="{{ route('booking.show', $schedule) }}" class="cx-pay-back">
+                                <iconify-icon icon="lucide:arrow-left"></iconify-icon>
+                                Kembali ke Pemilihan Kursi
+                            </a>
+                        @endif
+                    </form>
+                </div>
+            </div>
+        </div>
+
+        {{-- Ringkasan --}}
+        <div class="col-lg-5 order-lg-2 order-1">
+            <div class="cx-payment-summary">
+                <div class="cx-summary-head">Ringkasan Pesanan</div>
+                <div class="cx-summary-body">
+                    @if(!empty($isGuest))
+                        <div class="cx-summary-note mb-3" style="background: rgba(26,25,83,0.06); border-color: rgba(26,25,83,0.12);">
+                            <iconify-icon icon="lucide:mail" style="color:#1A1953;"></iconify-icon>
+                            <div>
+                                <div class="small text-muted mb-1">Tiket akan dikirim ke</div>
+                                <strong class="text-dark">{{ $booking->guest_email }}</strong>
                             </div>
                         </div>
-                        <div class="card-body p-4 bg-white">
-                            <form method="POST" action="{{ route('booking.initiate-payment', array_filter(['booking' => $booking, 'token' => request('token')])) }}" id="paymentForm">
-                                @csrf
+                    @endif
 
-                                <div class="d-flex flex-column gap-3">
-                                    @foreach($paymentMethods as $method)
-                                        <div class="payment-option">
-                                            <input class="form-check-input visually-hidden" type="radio" 
-                                                   name="payment_method" value="{{ $method['key'] }}" 
-                                                   id="method_{{ $method['key'] }}" required>
-                                            <label class="payment-method-card d-flex align-items-center p-3 rounded-4 border w-100" for="method_{{ $method['key'] }}" onclick="selectMethod('{{ $method['key'] }}')">
-                                                <div class="method-icon bg-light rounded-3 p-3 me-3 hstack justify-content-center" style="width: 60px; height: 60px;">
-                                                    <span class="fs-2">{{ $method['icon'] }}</span>
-                                                </div>
-                                                <div class="flex-grow-1">
-                                                    <h6 class="mb-1 fw-bold text-dark">{{ $method['label'] }}</h6>
-                                                    <p class="text-muted small mb-0">{{ $method['description'] }}</p>
-                                                </div>
-                                                <div class="selection-indicator bg-light rounded-circle hstack justify-content-center" style="width: 24px; height: 24px;">
-                                                    <iconify-icon icon="lucide:check" class="text-white d-none"></iconify-icon>
-                                                </div>
-                                            </label>
-                                        </div>
-                                    @endforeach
-                                </div>
-
-                                <div class="mt-5">
-                                    <button type="submit" class="btn btn-primary btn-lg w-100 py-3 fw-bold rounded-4 shadow-sm mb-3 pay-btn-custom" id="payBtn" disabled>
-                                        Konfirmasi & Bayar Sekarang
-                                    </button>
-                                    <a href="{{ route('booking.show', $booking->ticketBookings->first()->schedule) }}" class="btn btn-link text-primary text-white w-100 text-decoration-none fw-bold">
-                                        <iconify-icon icon="lucide:arrow-left" class="me-1"></iconify-icon> Kembali ke Pemilihan Kursi
-                                    </a>
-                                </div>
-                            </form>
+                    <div class="cx-summary-film">
+                        <div class="cx-summary-poster">
+                            <iconify-icon icon="lucide:film"></iconify-icon>
+                        </div>
+                        <div>
+                            <h6 class="fw-bold text-dark mb-2">{{ $film?->title ?? '—' }}</h6>
+                            @if($schedule)
+                                <p class="cx-summary-meta mb-1">
+                                    <iconify-icon icon="lucide:calendar"></iconify-icon>
+                                    {{ $schedule->schedule_date->format('d M Y') }}
+                                </p>
+                                <p class="cx-summary-meta mb-1">
+                                    <iconify-icon icon="lucide:clock"></iconify-icon>
+                                    {{ $schedule->start_time->format('H:i') }} – {{ $schedule->end_time->format('H:i') }}
+                                </p>
+                                <p class="cx-summary-meta mb-0">
+                                    <iconify-icon icon="lucide:building-2"></iconify-icon>
+                                    {{ $schedule->studio->name }}
+                                </p>
+                            @endif
                         </div>
                     </div>
-                </div>
 
-                {{-- Right Side: Summary --}}
-                <div class="col-lg-5">
-                    <div class="card border-0 shadow-sm rounded-4 overflow-hidden sticky-top" style="top: 110px;">
-                        <div class="card-header bg-white py-3 px-4 border-bottom">
-                            <h5 class="mb-0 fw-bold text-dark">Ringkasan Pesanan</h5>
+                    <div class="mb-3">
+                        <div class="d-flex justify-content-between align-items-start gap-2 mb-2">
+                            <span class="text-muted small fw-semibold">Kursi ({{ $booking->ticketBookings->count() }})</span>
                         </div>
-                        <div class="card-body p-4">
-                            @if(!empty($isGuest))
-                            <div class="alert alert-info border-0 rounded-3 mb-4 py-3">
-                                <div class="d-flex gap-2 align-items-start">
-                                    <iconify-icon icon="lucide:mail" class="fs-5 mt-1"></iconify-icon>
-                                    <div>
-                                        <div class="small text-muted mb-1">Tiket akan dikirim ke</div>
-                                        <strong class="text-dark">{{ $booking->guest_email }}</strong>
-                                    </div>
-                                </div>
-                            </div>
-                            @endif
-
-                            {{-- Film Info --}}
-                            <div class="d-flex gap-3 mb-4 pb-4 border-bottom">
-                                <div class="bg-light rounded-3 hstack justify-content-center" style="width: 80px; height: 110px; flex-shrink: 0;">
-                                    <iconify-icon icon="lucide:film" class="fs-8 text-secondary opacity-50"></iconify-icon>
-                                </div>
-                                <div class="d-flex flex-column justify-content-center">
-                                    <h6 class="fw-bold text-dark mb-1">
-                                        @foreach($booking->ticketBookings as $ticket)
-                                            {{ $ticket->schedule->film->title }}
-                                            @break
-                                        @endforeach
-                                    </h6>
-                                    <p class="text-muted small mb-1">
-                                        <iconify-icon icon="lucide:calendar" class="me-1"></iconify-icon>
-                                        @foreach($booking->ticketBookings as $ticket)
-                                            {{ $ticket->schedule->schedule_date->format('d M Y') }}
-                                            @break
-                                        @endforeach
-                                    </p>
-                                    <p class="text-muted small mb-0">
-                                        <iconify-icon icon="lucide:clock" class="me-1"></iconify-icon>
-                                        @foreach($booking->ticketBookings as $ticket)
-                                            {{ $ticket->schedule->start_time->format('H:i') }} - {{ $ticket->schedule->end_time->format('H:i') }}
-                                            @break
-                                        @endforeach
-                                    </p>
-                                </div>
-                            </div>
-
-                            {{-- Seat Detail --}}
-                            <div class="mb-4">
-                                <div class="d-flex justify-content-between align-items-center mb-2">
-                                    <span class="text-muted small fw-medium">Kursi Pilihan ({{ $booking->ticketBookings->count() }})</span>
-                                    <span class="fw-bold text-dark">
-                                        @foreach($booking->ticketBookings as $ticket)
-                                            <span class="badge rounded-pill px-3 py-2 ms-1" style="background: #f0f1ff; color: #1A1953; border: 1px solid #d1d5ff;">{{ $ticket->seat->seat_code }}</span>
-                                        @endforeach
-                                    </span>
-                                </div>
-                            </div>
-
-                            <hr class="opacity-10 my-4">
-
-                            {{-- Price Detail --}}
-                            <div class="d-flex flex-column gap-2 mb-4">
-                                <div class="d-flex justify-content-between">
-                                    <span class="text-muted">Total Harga Tiket</span>
-                                    <span class="text-dark fw-medium">Rp {{ number_format($booking->ticketBookings->sum('price_at_sale'), 0, ',', '.') }}</span>
-                                </div>
-                                
-                                @if($booking->promo)
-                                    @php
-                                        $ticketSubtotal = $booking->ticketBookings->sum('price_at_sale');
-                                        $promoDiscount = $booking->promo->calculateDiscount($ticketSubtotal);
-                                    @endphp
-                                    <div class="d-flex justify-content-between text-success">
-                                        <span class="small fw-medium">
-                                            <iconify-icon icon="lucide:ticket" class="me-1"></iconify-icon>
-                                            Promo ({{ $booking->promo->code }})
-                                        </span>
-                                        <span class="small fw-bold">- Rp {{ number_format($promoDiscount, 0, ',', '.') }}</span>
-                                    </div>
-                                @endif
-
-                                <div class="d-flex justify-content-between mt-2 pt-3 border-top">
-                                    <span class="fw-bold text-dark">Total Pembayaran</span>
-                                    <span class="fs-4 fw-bold" style="color: #1A1953;">Rp {{ number_format($booking->total_amount, 0, ',', '.') }}</span>
-                                </div>
-                            </div>
-
-                            {{-- Warning --}}
-                            <div class="p-3 bg-warning bg-opacity-10 border border-warning border-opacity-25 rounded-3 mb-0">
-                                <div class="d-flex gap-2">
-                                    <iconify-icon icon="lucide:info" class="text-warning fs-5 mt-1"></iconify-icon>
-                                    <p class="small text-dark mb-0">Tiket akan di-lock selama 5 menit untuk proses pembayaran ini.</p>
-                                </div>
-                            </div>
+                        <div>
+                            @foreach($booking->ticketBookings as $ticket)
+                                <span class="cx-seat-badge">{{ $ticket->seat->seat_code }}</span>
+                            @endforeach
                         </div>
+                    </div>
+
+                    <div class="d-flex flex-column gap-2 small">
+                        <div class="d-flex justify-content-between">
+                            <span class="text-muted">Subtotal tiket</span>
+                            <span class="fw-semibold">Rp {{ number_format($booking->ticketBookings->sum('price_at_sale'), 0, ',', '.') }}</span>
+                        </div>
+
+                        @if($booking->promo)
+                            @php
+                                $ticketSubtotal = $booking->ticketBookings->sum('price_at_sale');
+                                $promoDiscount = $booking->promo->calculateDiscount($ticketSubtotal);
+                            @endphp
+                            <div class="d-flex justify-content-between text-success">
+                                <span>Promo ({{ $booking->promo->code }})</span>
+                                <span class="fw-bold">- Rp {{ number_format($promoDiscount, 0, ',', '.') }}</span>
+                            </div>
+                        @endif
+                    </div>
+
+                    <div class="cx-summary-total">
+                        <span class="fw-bold">Total Pembayaran</span>
+                        <span>Rp {{ number_format($booking->total_amount, 0, ',', '.') }}</span>
+                    </div>
+
+                    <div class="cx-summary-note mt-4 mb-0">
+                        <iconify-icon icon="lucide:timer"></iconify-icon>
+                        <span>Kursi dikunci selama 5 menit. Selesaikan pembayaran sebelum waktu habis.</span>
                     </div>
                 </div>
             </div>
         </div>
     </div>
 </div>
-
-@push('styles')
-<style>
-    .payment-option input:checked + .payment-method-card {
-        border-color: #1A1953 !important;
-        background-color: #f8f9ff !important;
-        box-shadow: 0 4px 15px rgba(26, 25, 83, 0.08);
-    }
-    .payment-option input:checked + .payment-method-card .selection-indicator {
-        background-color: #1A1953 !important;
-    }
-    .payment-option input:checked + .payment-method-card .selection-indicator iconify-icon {
-        display: block !important;
-    }
-    .pay-btn-custom {
-        background: #1A1953 !important;
-        border: none !important;
-        color: white !important;
-        transition: all 0.3s ease;
-    }
-    .pay-btn-custom:hover:not(:disabled) {
-        background: #2a297a !important;
-        transform: translateY(-2px);
-        box-shadow: 0 5px 15px rgba(26, 25, 83, 0.3) !important;
-    }
-    .pay-btn-custom:disabled {
-        background: #ccc !important;
-        color: #666 !important;
-        cursor: not-allowed;
-    }
-    .payment-method-card {
-        cursor: pointer;
-        transition: all 0.2s ease;
-        background: #fff;
-        border: 1px solid #eee !important;
-    }
-    .payment-method-card:hover {
-        border-color: #1A1953 !important;
-        transform: translateX(5px);
-    }
-    .method-icon {
-        transition: all 0.2s ease;
-    }
-    .payment-method-card:hover .method-icon {
-        background-color: #f0f1ff !important;
-    }
-</style>
-@endpush
+</div>
 
 @push('scripts')
 <script>
-    // Clear selected seats for this schedule since booking was successful
-    sessionStorage.removeItem('selected_seats_' + {{ $booking->schedule_id }});
+    sessionStorage.removeItem('selected_seats_' + {{ $booking->schedule_id ?? 0 }});
 
-    function selectMethod(method) {
-        // Method selection handled by CSS + HTML radio
-        document.getElementById('payBtn').disabled = false;
-    }
+    document.querySelectorAll('input[name="payment_method"]').forEach(radio => {
+        radio.addEventListener('change', () => {
+            document.getElementById('payBtn').disabled = false;
+        });
+    });
+
+    document.getElementById('paymentForm')?.addEventListener('submit', function() {
+        const btn = document.getElementById('payBtn');
+        if (btn) {
+            btn.disabled = true;
+            btn.innerHTML = '<span class="spinner-border spinner-border-sm me-2"></span> Memproses...';
+        }
+    });
 </script>
 @endpush
 @endsection

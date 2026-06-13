@@ -37,6 +37,21 @@ class PaymentObserver
     private function returnSeatsToAvailable(Payment $payment): void
     {
         try {
+            $booking = $payment->booking;
+
+            if ($booking && $booking->status === 'confirmed') {
+                return;
+            }
+
+            $hasOtherActivePayment = Payment::where('booking_id', $payment->booking_id)
+                ->where('id', '!=', $payment->id)
+                ->where('status', 'pending')
+                ->exists();
+
+            if ($hasOtherActivePayment) {
+                return;
+            }
+
             // Dapatkan semua ticket booking yang terkait dengan booking ini
             $ticketBookings = TicketBooking::where('booking_id', $payment->booking_id)
                 ->with('seat')

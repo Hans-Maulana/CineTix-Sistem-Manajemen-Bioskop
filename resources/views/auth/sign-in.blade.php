@@ -105,8 +105,13 @@
 
 
             <!-- Google  -->
+            @php
+                $authRedirect = request('redirect');
+                $googleLoginUrl = $authRedirect ? route('login.google', ['redirect' => $authRedirect]) : route('login.google');
+                $registerUrl = $authRedirect ? route('register', ['redirect' => $authRedirect]) : route('register');
+            @endphp
             <div class="hstack gap-3">
-              <a href="{{ route('login.google') }}"
+              <a href="{{ $googleLoginUrl }}"
                 class="btn btn-outline-light bg-white px-3 py-2 fs-4 text-dark w-100 fw-medium hstack gap-2 lh-lg justify-content-center">
                 Sign In with
                 <img src="{{ asset('assets/images/svgs/icon-google.svg') }}" alt="google" class="img-fluid">
@@ -140,7 +145,7 @@
             <!-- Register -->
             <p class="mb-0 fw-medium text-center">
               Not a member yet?
-              <a class="text-dark" href="{{ route('register') }}">Sign Up</a>
+              <a class="text-dark" href="{{ $registerUrl }}">Sign Up</a>
             </p>
 
           </div>

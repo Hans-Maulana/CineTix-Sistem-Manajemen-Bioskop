@@ -4,6 +4,7 @@ namespace App\Http\Controllers\Auth;
 
 use App\Http\Controllers\Controller;
 use App\Http\Requests\Auth\LoginRequest;
+use App\Support\RedirectAfterAuth;
 use Illuminate\Http\Request;
 use Illuminate\Support\Facades\Auth;
 use Illuminate\View\View;
@@ -14,12 +15,7 @@ class AuthenticatedSessionController extends Controller
 {
     public function create(): View
     {
-        $referer = request()->headers->get('referer');
-        if ($referer && !str_contains($referer, '/login') && !str_contains($referer, '/register') && !str_contains($referer, '/logout') && !str_contains($referer, '/password')) {
-            if (str_starts_with($referer, request()->getSchemeAndHttpHost())) {
-                session(['url.intended' => $referer]);
-            }
-        }
+        RedirectAfterAuth::remember(request('redirect'));
 
         return view('auth.sign-in');
     }
@@ -30,7 +26,7 @@ class AuthenticatedSessionController extends Controller
 
         $request->session()->regenerate();
 
-        return redirect()->intended(route('dashboard', absolute: false));
+        return redirect()->intended(RedirectAfterAuth::fallback());
     }
 
     public function destroy(Request $request): RedirectResponse

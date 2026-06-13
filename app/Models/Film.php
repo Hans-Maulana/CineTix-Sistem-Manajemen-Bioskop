@@ -66,8 +66,24 @@ class Film extends Model
 
     // Builder Pattern: scope untuk memfilter berdasarkan Rating Usia
     public function scopeFilterClassification($query, $classification) {
-        if (!$classification) return $query; // Penerapan KISS: Early Return
+        if (!$classification) return $query;
 
-        return $query->where('classification', $classification);
+        $values = match ($classification) {
+            'SU' => ['SU', 'G'],
+            '13+' => ['13+', 'PG-13'],
+            '17+' => ['17+', 'R'],
+            default => [$classification],
+        };
+
+        return $query->whereIn('classification', $values);
+    }
+
+    public static function classificationOptions(): array
+    {
+        return [
+            'SU' => 'SU (Semua Umur)',
+            '13+' => '13+ (Remaja)',
+            '17+' => '17+ (Dewasa)',
+        ];
     }
 }
