@@ -109,7 +109,7 @@
 
     .cx-film-grid {
         display: grid;
-        grid-template-columns: repeat(auto-fill, minmax(220px, 1fr));
+        grid-template-columns: repeat(auto-fill, minmax(330px, 1fr));
         gap: 22px;
     }
     .cx-top-grid {
@@ -152,12 +152,12 @@
         display: flex;
         gap: 20px;
         width: max-content;
-        min-width: min(100%, 220px);
+        min-width: min(100%, 330px);
     }
     .cx-film-rail .cx-film-card,
     .cx-film-rail-track > .cx-film-card {
-        flex: 0 0 220px;
-        width: 220px;
+        flex: 0 0 330px;
+        width: 330px;
         scroll-snap-align: start;
     }
     .cx-film-rail-track > .cx-empty {
@@ -251,8 +251,8 @@
             -webkit-overflow-scrolling: touch;
         }
         .cx-top-grid .cx-film-card {
-            flex: 0 0 220px;
-            width: 220px;
+            flex: 0 0 330px;
+            width: 330px;
             scroll-snap-align: start;
         }
     }
@@ -289,7 +289,7 @@
 
     .cx-film-poster {
         position: relative;
-        aspect-ratio: 2 / 3;
+        aspect-ratio: 16 / 9;
         overflow: hidden;
         background: linear-gradient(135deg, #1A1953, #3a37a0);
     }
@@ -552,5 +552,111 @@
         background: #fff !important;
         border-bottom: 1px solid var(--cx-border) !important;
         font-weight: 800;
+    }
+
+    /* ===== LIVE BADGE (on poster) ===== */
+    .cx-live-badge {
+        position: absolute;
+        top: 10px;
+        left: 10px;
+        z-index: 3;
+        display: inline-flex;
+        align-items: center;
+        gap: 5px;
+        background: rgba(220, 53, 69, 0.92);
+        color: #fff;
+        font-size: 0.6rem;
+        font-weight: 800;
+        letter-spacing: 0.08em;
+        text-transform: uppercase;
+        padding: 4px 9px;
+        border-radius: 6px;
+        backdrop-filter: blur(4px);
+    }
+    .cx-live-dot {
+        display: inline-block;
+        width: 6px;
+        height: 6px;
+        border-radius: 50%;
+        background: #fff;
+        animation: pulseLiveDot 1.2s ease-in-out infinite;
+    }
+    @keyframes pulseLiveDot {
+        0%, 100% { opacity: 1; transform: scale(1); }
+        50% { opacity: 0.5; transform: scale(1.4); }
+    }
+
+    /* ===== SHOWTIME PILLS ===== */
+    .cx-showtime-row {
+        display: flex;
+        align-items: center;
+        flex-wrap: wrap;
+        gap: 6px;
+        padding: 8px 0 2px;
+        border-top: 1px dashed #e6e8f0;
+    }
+    .cx-showtime-label {
+        display: inline-flex;
+        align-items: center;
+        gap: 4px;
+        font-size: 0.7rem;
+        font-weight: 700;
+        color: var(--cx-primary);
+        white-space: nowrap;
+        flex-shrink: 0;
+    }
+    .cx-showtime-label iconify-icon {
+        font-size: 0.82rem;
+    }
+    .cx-showtime-pills {
+        display: flex;
+        flex-wrap: wrap;
+        gap: 4px;
+    }
+    .cx-showtime-pill {
+        display: inline-flex;
+        align-items: center;
+        gap: 4px;
+        font-size: 0.68rem;
+        font-weight: 800;
+        padding: 3px 9px;
+        border-radius: 6px;
+        border: 1.5px solid rgba(26, 25, 83, 0.18);
+        background: rgba(26, 25, 83, 0.05);
+        color: var(--cx-primary);
+        text-decoration: none;
+        transition: all 0.18s ease;
+        cursor: pointer;
+        position: relative;
+        z-index: 3;
+    }
+    .cx-showtime-pill:hover {
+        background: var(--cx-primary);
+        color: #fff;
+        border-color: var(--cx-primary);
+    }
+    .cx-showtime-pill--live {
+        background: rgba(220, 53, 69, 0.1);
+        border-color: rgba(220, 53, 69, 0.4);
+        color: #dc3545;
+    }
+    .cx-showtime-pill--live:hover {
+        background: #dc3545;
+        color: #fff;
+        border-color: #dc3545;
+    }
+    .cx-pill-dot {
+        display: inline-block;
+        width: 5px;
+        height: 5px;
+        border-radius: 50%;
+        background: #dc3545;
+        animation: pulseLiveDot 1.2s ease-in-out infinite;
+    }
+    .cx-showtime-pill--more {
+        background: #f0f1ff;
+        color: var(--cx-primary);
+        border-color: rgba(26, 25, 83, 0.2);
+        font-size: 0.65rem;
     }
 </style>

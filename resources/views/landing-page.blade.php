@@ -62,6 +62,11 @@
       to { opacity: 1; }
     }
 
+    @keyframes pulseDot {
+      0%, 100% { transform: scale(1); opacity: 1; }
+      50% { transform: scale(1.5); opacity: 0.6; }
+    }
+
     .banner-overlay {
       position: absolute;
       top: 0;
@@ -243,11 +248,12 @@
       <div class="container">
         <div class="cx-section-header d-flex flex-wrap justify-content-between align-items-end gap-3" data-aos="fade-up">
           <div>
-            <span class="cx-section-eyebrow">
-              <iconify-icon icon="lucide:play-circle"></iconify-icon> Sedang Tayang
+            <span class="cx-section-eyebrow" style="background:rgba(220,53,69,.12);color:#dc3545;border-color:rgba(220,53,69,.2);">
+              <span style="display:inline-block;width:8px;height:8px;border-radius:50%;background:#dc3545;margin-right:6px;animation:pulseDot 1.4s ease-in-out infinite;"></span>
+              Now Playing
             </span>
-            <h2 class="cx-section-title">Jadwal Film Hari Ini</h2>
-            <p class="cx-section-desc">Geser ke samping untuk lihat film lainnya — tidak perlu scroll panjang ke bawah.</p>
+            <h2 class="cx-section-title">Film Sedang Tayang</h2>
+            <p class="cx-section-desc">Semua film yang sedang tayang sekarang — pilih dan pesan tiket sebelum habis.</p>
           </div>
         </div>
 
@@ -296,7 +302,11 @@
 
         <div class="cx-section-footer">
           <span class="cx-section-footer-meta" id="now-playing-meta">
-            Menampilkan {{ $nowPlayingFilms->count() }} dari {{ $nowPlayingTotal }} film sedang tayang
+            <span style="display:inline-block;width:7px;height:7px;border-radius:50%;background:#dc3545;margin-right:5px;animation:pulseDot 1.4s ease-in-out infinite;"></span>
+            {{ $nowPlayingFilms->count() }} film sedang tayang
+            @if($nowPlayingTotal > $nowPlayingFilms->count())
+              dari total {{ $nowPlayingTotal }} film
+            @endif
           </span>
           @if($nowPlayingTotal > $nowPlayingFilms->count())
             <a href="{{ route('films.search') }}" class="cx-section-footer-link">

@@ -123,13 +123,32 @@
                                                         <span class="fw-bold text-primary fs-6">Rp {{ number_format($booking->total_amount, 0, ',', '.') }}</span>
                                                     </div>
                                                     
-                                                    <div class="text-end">
+                                                    <div class="text-end d-flex flex-column align-items-end gap-1">
                                                         @if($booking->status === 'pending' && $pendingPayment)
                                                             <a href="{{ route('booking.process-payment', ['booking' => $booking, 'payment' => $pendingPayment]) }}" class="btn btn-sm btn-info px-4 py-1.5 rounded-pill text-white fw-bold">Lanjutkan Pembayaran</a>
                                                         @elseif($booking->status === 'pending')
                                                             <a href="{{ route('booking.payment', $booking) }}" class="btn btn-sm btn-success px-4 py-1.5 rounded-pill text-white fw-bold">Bayar</a>
                                                         @elseif($booking->status === 'confirmed' && $firstTicket && $firstTicket->schedule->status !== 'complete')
                                                             <a href="{{ route('booking.tickets') }}" class="text-primary small fw-bold text-decoration-none" style="font-size: 0.8rem;">Lihat Tiket <iconify-icon icon="lucide:chevron-right"></iconify-icon></a>
+                                                        @elseif($booking->status === 'refunded')
+                                                            <span class="badge bg-success bg-opacity-10 text-success small px-2 py-1 rounded-pill fw-bold">
+                                                                <iconify-icon icon="lucide:check-circle" class="me-1"></iconify-icon>Refund Selesai
+                                                            </span>
+                                                        @endif
+
+                                                        {{-- Refund Status Badge --}}
+                                                        @if($booking->refund_status === 'requested')
+                                                            <span class="badge small px-2 py-1 rounded-pill fw-bold" style="background:#fff3cd;color:#856404;font-size:.7rem;">
+                                                                <iconify-icon icon="lucide:hourglass" class="me-1"></iconify-icon>Refund Diajukan
+                                                            </span>
+                                                        @elseif($booking->refund_status === 'approved')
+                                                            <span class="badge small px-2 py-1 rounded-pill fw-bold" style="background:#d1f0e2;color:#155e35;font-size:.7rem;">
+                                                                <iconify-icon icon="lucide:check-circle" class="me-1"></iconify-icon>Refund Disetujui
+                                                            </span>
+                                                        @elseif($booking->refund_status === 'rejected')
+                                                            <span class="badge small px-2 py-1 rounded-pill fw-bold" style="background:#fde8e8;color:#7b2020;font-size:.7rem;">
+                                                                <iconify-icon icon="lucide:x-circle" class="me-1"></iconify-icon>Refund Ditolak
+                                                            </span>
                                                         @endif
                                                     </div>
                                                 </div>

@@ -184,11 +184,33 @@
 
                         @if($isAuthenticated)
                         <div class="mb-4" id="promoSection">
-                            <label for="promoCode" class="form-label fw-bold text-dark small">Kode Promo (Opsional)</label>
-                            <div class="input-group input-group-sm">
-                                <input type="text" class="form-control border-primary-subtle" id="promoCode" name="promo_code" placeholder="Masukkan kode promo" autocomplete="off">
-                                <button class="btn btn-primary fw-bold text-white px-3" type="button" id="applyPromo">Terapkan</button>
+                            <label class="form-label fw-bold text-dark small">Kode Promo (Opsional)</label>
+
+                            {{-- Selected promo chip (hidden until promo applied) --}}
+                            <div id="selectedPromoChip" class="d-none mb-2">
+                                <div class="d-flex align-items-center gap-2 px-3 py-2 rounded-3" style="background:rgba(26,25,83,.07);border:1.5px solid #1A1953;">
+                                    <iconify-icon icon="lucide:tag" style="color:#1A1953;font-size:1rem;"></iconify-icon>
+                                    <div class="flex-grow-1">
+                                        <div class="fw-bold text-dark small" id="selectedPromoCode">—</div>
+                                        <div class="text-muted" style="font-size:.72rem;" id="selectedPromoDesc"></div>
+                                    </div>
+                                    <button type="button" class="btn-close" style="font-size:.6rem;" id="removePromoBtn" title="Hapus promo"></button>
+                                </div>
                             </div>
+
+                            {{-- Picker button --}}
+                            <button type="button" class="w-100 d-flex align-items-center justify-content-between px-3 py-2 rounded-3 border fw-semibold" id="openPromoModal"
+                                    style="background:#fafbfc;border-color:rgba(26,25,83,.15) !important;color:#5c6478;font-size:.88rem;transition:all .18s ease;">
+                                <span>
+                                    <iconify-icon icon="lucide:ticket-percent" class="me-2" style="color:#1A1953;"></iconify-icon>
+                                    <span id="promoPickerLabel">Pilih Kode Promo</span>
+                                </span>
+                                <iconify-icon icon="lucide:chevron-right" style="color:#aaa;"></iconify-icon>
+                            </button>
+
+                            {{-- hidden input untuk submit form --}}
+                            <input type="hidden" id="promoCode" name="promo_code">
+
                             <div id="promoMessage" class="small mt-2"></div>
                             <div id="discountRow" class="d-none justify-content-between text-success small mt-2">
                                 <span>Diskon promo:</span>
@@ -569,7 +591,102 @@
             gap: 6px;
         }
     }
+
+    /* ===== PROMO PICKER CARD ===== */
+    .promo-card {
+        border: 1.5px dashed rgba(26,25,83,.18);
+        border-radius: 14px;
+        padding: 14px 16px;
+        margin-bottom: 10px;
+        cursor: pointer;
+        transition: all .18s ease;
+        background: #fafbfc;
+        position: relative;
+        overflow: hidden;
+    }
+    .promo-card::before {
+        content: '';
+        position: absolute;
+        left: 0; top: 0; bottom: 0;
+        width: 4px;
+        background: linear-gradient(180deg,#1A1953,#2d2b7a);
+        border-radius: 14px 0 0 14px;
+        opacity: 0;
+        transition: opacity .18s ease;
+    }
+    .promo-card:hover { border-color: #1A1953; background: #fff; transform: translateY(-1px); box-shadow: 0 6px 20px rgba(26,25,83,.1); }
+    .promo-card:hover::before { opacity: 1; }
+    .promo-card--selected { border-color: #1A1953 !important; background: #f0f1ff !important; }
+    .promo-card--selected::before { opacity: 1; }
+    .promo-icon {
+        width: 30px; height: 30px;
+        background: rgba(26,25,83,.08);
+        border-radius: 8px;
+        display: flex; align-items: center; justify-content: center;
+        color: #1A1953; font-size: .95rem;
+        flex-shrink: 0;
+    }
+    .promo-code-text { font-weight: 800; font-size: .95rem; color: #1A1953; letter-spacing: .02em; }
+    .promo-discount-badge {
+        background: linear-gradient(135deg,#1A1953,#2d2b7a);
+        color: #fff; border-radius: 50px;
+        padding: 3px 10px; font-size: .72rem; font-weight: 800;
+        white-space: nowrap;
+    }
+    .promo-desc { font-size: .8rem; color: #6c7489; margin: 6px 0 0; line-height: 1.45; }
+    .promo-savings { font-size: .8rem; color: #15864c; }
+    .promo-expiry { font-size: .72rem; color: #a0aab8; }
+    .promo-selected-check {
+        display: inline-flex; align-items: center; gap: 5px;
+        margin-top: 8px; font-size: .78rem; font-weight: 700; color: #1A1953;
+    }
+    #openPromoModal:hover { background: #f0f1ff !important; border-color: #1A1953 !important; color: #1A1953 !important; }
 </style>
+
+{{-- ===== PROMO PICKER MODAL ===== --}}
+<div class="modal fade" id="promoPickerModal" tabindex="-1" aria-labelledby="promoPickerModalLabel" aria-hidden="true">
+    <div class="modal-dialog modal-dialog-centered modal-dialog-scrollable" style="max-width:480px;">
+        <div class="modal-content" style="border:none;border-radius:20px;overflow:hidden;box-shadow:0 24px 60px rgba(26,25,83,.22);">
+            {{-- Header --}}
+            <div style="background:linear-gradient(160deg,#1A1953 0%,#2a2880 100%);padding:24px 24px 18px;color:#fff;position:relative;">
+                <button type="button" class="btn-close position-absolute" style="top:14px;right:14px;filter:invert(1);opacity:.85;" data-bs-dismiss="modal"></button>
+                <div style="width:48px;height:48px;background:rgba(255,255,255,.14);border-radius:13px;display:flex;align-items:center;justify-content:center;font-size:1.4rem;margin-bottom:10px;">
+                    <iconify-icon icon="lucide:ticket-percent"></iconify-icon>
+                </div>
+                <h5 style="margin:0 0 4px;font-weight:800;font-size:1.15rem;">Pilih Kode Promo</h5>
+                <p style="font-size:.8rem;color:rgba(255,255,255,.7);margin:0;">Klik promo untuk langsung menerapkan diskon</p>
+            </div>
+
+            {{-- Search --}}
+            <div style="padding:14px 20px 0;background:#fff;">
+                <div style="position:relative;">
+                    <iconify-icon icon="lucide:search" style="position:absolute;left:12px;top:50%;transform:translateY(-50%);color:#aaa;font-size:.95rem;"></iconify-icon>
+                    <input type="text" id="promoSearchInput" placeholder="Cari kode promo..."
+                           style="width:100%;padding:10px 12px 10px 36px;border:1.5px solid rgba(26,25,83,.12);border-radius:10px;font-size:.85rem;outline:none;background:#fafbfc;"
+                           oninput="filterPromoList(this.value)">
+                </div>
+            </div>
+
+            {{-- Body / List --}}
+            <div class="modal-body" style="padding:14px 20px 20px;background:#fff;max-height:360px;overflow-y:auto;">
+                {{-- Loading state --}}
+                <div id="promoLoadingState" class="text-center py-4">
+                    <div class="spinner-border text-primary spinner-border-sm mb-2"></div>
+                    <div class="text-muted small">Memuat promo...</div>
+                </div>
+
+                {{-- Empty state --}}
+                <div id="promoEmptyState" class="text-center py-4 d-none">
+                    <iconify-icon icon="lucide:tag-off" style="font-size:2.5rem;color:#c5cad6;"></iconify-icon>
+                    <p class="text-muted small mb-0 mt-2">Tidak ada promo tersedia saat ini.</p>
+                </div>
+
+                {{-- Promo list --}}
+                <div id="promoListContainer"></div>
+            </div>
+        </div>
+    </div>
+</div>
 
 <script src="https://js.pusher.com/8.2.0/pusher.min.js"></script>
 <script src="https://cdn.socket.io/4.5.4/socket.io.min.js"></script>
@@ -1119,54 +1236,155 @@
         }
     }
 
+    // ─── PROMO PICKER MODAL ───────────────────────────────────────────────────
+
+    let allPromos = [];        // cache promo list
+    let promoModalInstance = null;
+
     function initPromoHandler() {
-        const applyBtn = document.getElementById('applyPromo');
-        if (!applyBtn) return;
+        const openBtn = document.getElementById('openPromoModal');
+        if (!openBtn) return;
 
-        applyBtn.addEventListener('click', function() {
-            const code = document.getElementById('promoCode').value.trim();
-            const message = document.getElementById('promoMessage');
+        const modalEl = document.getElementById('promoPickerModal');
+        if (modalEl && typeof bootstrap !== 'undefined') {
+            promoModalInstance = new bootstrap.Modal(modalEl);
+        }
 
-            if (!code) {
-                message.innerHTML = '<span class="text-danger">Masukkan kode promo</span>';
-                return;
-            }
-
-            fetch('{{ route('promo.validate') }}', {
-                method: 'POST',
-                headers: {
-                    'Content-Type': 'application/json',
-                    'X-CSRF-TOKEN': '{{ csrf_token() }}',
-                    'Accept': 'application/json',
-                },
-                body: JSON.stringify({ code: code })
-            })
-            .then(response => response.json())
-            .then(data => {
-                if (data.valid) {
-                    window.activePromo = {
-                        code: data.code,
-                        discount_type: data.discount_type,
-                        discount_value: parseFloat(data.discount_value),
-                    };
-                    promoApplied = true;
-                    document.getElementById('promoCode').readOnly = true;
-                    applyBtn.disabled = true;
-                    message.innerHTML = `<span class="text-success">✓ ${data.message}</span>`;
-                    updateSummary();
-                } else {
-                    window.activePromo = null;
-                    promoApplied = false;
-                    appliedDiscount = 0;
-                    message.innerHTML = `<span class="text-danger">✗ ${data.message}</span>`;
-                    updateSummary();
-                }
-            })
-            .catch(error => {
-                console.error('Error:', error);
-                message.innerHTML = '<span class="text-danger">Terjadi kesalahan saat validasi promo</span>';
-            });
+        // Open modal + fetch promos
+        openBtn.addEventListener('click', () => {
+            if (promoModalInstance) promoModalInstance.show();
+            fetchAvailablePromos();
         });
+
+        // Remove promo button
+        document.getElementById('removePromoBtn')?.addEventListener('click', () => {
+            clearPromo();
+        });
+    }
+
+    function fetchAvailablePromos() {
+        showPromoLoading(true);
+        const url = new URL('{{ route('promo.available') }}', location.origin);
+        url.searchParams.set('ticket_price', ticketPrice);
+        url.searchParams.set('seat_count', Math.max(1, selectedSeats.length));
+
+        fetch(url, {
+            headers: { 'Accept': 'application/json', 'X-CSRF-TOKEN': '{{ csrf_token() }}' }
+        })
+        .then(r => r.json())
+        .then(data => {
+            allPromos = data.promos || [];
+            showPromoLoading(false);
+            renderPromoList(allPromos);
+        })
+        .catch(() => {
+            showPromoLoading(false);
+            renderPromoList([]);
+        });
+    }
+
+    function showPromoLoading(loading) {
+        document.getElementById('promoLoadingState').classList.toggle('d-none', !loading);
+        document.getElementById('promoListContainer').classList.toggle('d-none', loading);
+    }
+
+    function renderPromoList(promos) {
+        const container = document.getElementById('promoListContainer');
+        const emptyState = document.getElementById('promoEmptyState');
+
+        if (!promos.length) {
+            emptyState.classList.remove('d-none');
+            container.innerHTML = '';
+            return;
+        }
+        emptyState.classList.add('d-none');
+
+        const activeCode = document.getElementById('promoCode').value;
+
+        container.innerHTML = promos.map(p => {
+            const isSelected = p.code === activeCode;
+            const savingsText = p.savings > 0
+                ? `Hemat <strong>Rp ${p.savings.toLocaleString('id-ID')}</strong>`
+                : `Diskon <strong>${p.discount_label}</strong>`;
+
+            return `
+            <div class="promo-card${isSelected ? ' promo-card--selected' : ''}"
+                 onclick="selectPromo(${JSON.stringify(p).replace(/"/g, '&quot;')})"
+                 data-code="${p.code}">
+
+                <div class="d-flex align-items-center justify-content-between mb-1">
+                    <div class="d-flex align-items-center gap-2">
+                        <div class="promo-icon">
+                            <iconify-icon icon="lucide:tag"></iconify-icon>
+                        </div>
+                        <span class="promo-code-text">${p.code}</span>
+                    </div>
+                    <div class="promo-discount-badge">${p.discount_label} OFF</div>
+                </div>
+
+                ${p.description ? `<p class="promo-desc">${p.description}</p>` : ''}
+
+                <div class="d-flex justify-content-between align-items-center mt-2">
+                    <span class="promo-savings">${savingsText}</span>
+                    <span class="promo-expiry">Berlaku hingga ${p.valid_until}</span>
+                </div>
+
+                ${isSelected ? '<div class="promo-selected-check"><iconify-icon icon="lucide:check-circle-2"></iconify-icon> Diterapkan</div>' : ''}
+            </div>`;
+        }).join('');
+    }
+
+    function filterPromoList(query) {
+        const q = query.toLowerCase();
+        const filtered = q
+            ? allPromos.filter(p =>
+                p.code.toLowerCase().includes(q) ||
+                (p.description || '').toLowerCase().includes(q)
+              )
+            : allPromos;
+        renderPromoList(filtered);
+    }
+
+    function selectPromo(promo) {
+        // Apply promo
+        window.activePromo = {
+            code: promo.code,
+            discount_type: promo.discount_type,
+            discount_value: promo.discount_value,
+        };
+        promoApplied = true;
+
+        document.getElementById('promoCode').value = promo.code;
+        document.getElementById('promoPickerLabel').textContent = promo.code;
+
+        // Show selected chip
+        const chip = document.getElementById('selectedPromoChip');
+        chip.classList.remove('d-none');
+        document.getElementById('selectedPromoCode').textContent = promo.code + ' — ' + promo.discount_label + ' OFF';
+        document.getElementById('selectedPromoDesc').textContent = promo.description || '';
+
+        // Success message
+        const savings = calculateDiscount(ticketPrice * Math.max(1, selectedSeats.length));
+        document.getElementById('promoMessage').innerHTML =
+            `<span class="text-success fw-semibold">✓ Promo ${promo.code} diterapkan${savings > 0 ? '. Hemat Rp ' + savings.toLocaleString('id-ID') : ''}!</span>`;
+
+        updateSummary();
+
+        // Close modal
+        if (promoModalInstance) promoModalInstance.hide();
+    }
+
+    function clearPromo() {
+        window.activePromo = null;
+        promoApplied = false;
+        appliedDiscount = 0;
+
+        document.getElementById('promoCode').value = '';
+        document.getElementById('promoPickerLabel').textContent = 'Pilih Kode Promo';
+        document.getElementById('selectedPromoChip').classList.add('d-none');
+        document.getElementById('promoMessage').innerHTML = '';
+
+        updateSummary();
     }
 
     function initFormSubmit() {

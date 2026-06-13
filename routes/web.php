@@ -3,6 +3,7 @@
 use App\Http\Controllers\ProfileController;
 use App\Http\Controllers\HomeController;
 use App\Http\Controllers\BookingController;
+use App\Http\Controllers\RefundController;
 use App\Http\Controllers\PromoController;
 use App\Http\Controllers\AdminController;
 use App\Http\Controllers\Admin\FilmController as AdminFilmController;
@@ -78,9 +79,15 @@ Route::middleware('auth')->group(function () {
     Route::get('admin/reports', [ReportController::class, 'index'])->name('admin.reports.index');
     Route::get('admin/reports/export', [ReportController::class, 'export'])->name('admin.reports.export');
 
+    // Refund — Admin
+    Route::get('admin/refunds', [RefundController::class, 'adminIndex'])->name('admin.refunds.index');
+    Route::post('admin/refunds/{booking}/approve', [RefundController::class, 'approve'])->name('admin.refunds.approve');
+    Route::post('admin/refunds/{booking}/reject', [RefundController::class, 'reject'])->name('admin.refunds.reject');
+
     Route::get('/customer', [HomeController::class, 'index'])->name('customer.dashboard');
 
     Route::post('/promo/validate', [PromoController::class, 'validate'])->name('promo.validate');
+    Route::get('/promo/available', [PromoController::class, 'availableForBooking'])->name('promo.available');
 
     Route::post('/seat/select', [BookingController::class, 'selectSeat'])->name('seat.select');
     Route::get('/payment/{seat_id}', [BookingController::class, 'showPayment'])->name('payment.page');
@@ -99,6 +106,10 @@ Route::middleware('auth')->group(function () {
         Route::post('cancel/{booking}', [BookingController::class, 'cancel'])->name('cancel');
         Route::post('store-review', [BookingController::class, 'storeReview'])->name('store-review');
     });
+
+    // Refund — Customer (auth required)
+    Route::get('booking/refund/{booking}', [RefundController::class, 'request'])->name('booking.refund.request');
+    Route::post('booking/refund/{booking}', [RefundController::class, 'store'])->name('booking.refund.store');
 });
 
 require __DIR__.'/auth.php';

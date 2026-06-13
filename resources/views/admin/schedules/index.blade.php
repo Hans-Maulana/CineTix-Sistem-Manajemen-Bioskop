@@ -522,8 +522,8 @@
                 <div class="col-md-3 col-6">
                     <label>Urutkan</label>
                     <select name="sort" class="form-select">
-                        <option value="date_asc"   {{ request('sort', 'date_asc') == 'date_asc'   ? 'selected' : '' }}>Tanggal Terdekat</option>
-                        <option value="date_desc"  {{ request('sort') == 'date_desc'  ? 'selected' : '' }}>Tanggal Terjauh</option>
+                        <option value="date_desc"  {{ request('sort', 'date_desc') == 'date_desc' ? 'selected' : '' }}>Tanggal Terbaru (Paling Baru)</option>
+                        <option value="date_asc"   {{ request('sort') == 'date_asc'   ? 'selected' : '' }}>Tanggal Lama</option>
                         <option value="price_high" {{ request('sort') == 'price_high' ? 'selected' : '' }}>Harga Tertinggi</option>
                         <option value="price_low"  {{ request('sort') == 'price_low'  ? 'selected' : '' }}>Harga Terendah</option>
                     </select>
@@ -584,11 +584,12 @@
         Menampilkan <span class="fw-bold text-dark">{{ $schedules->count() }}</span> dari <span class="fw-bold text-dark">{{ $schedules->total() }}</span> jadwal
     </span>
     <small class="text-muted"><i class="bi bi-arrow-down-up me-1"></i>
-        @switch(request('sort', 'date_asc'))
-            @case('date_desc')  Tanggal Terjauh @break
+        @switch(request('sort', 'date_desc'))
+            @case('date_desc')  Tanggal Terbaru @break
+            @case('date_asc')   Tanggal Lama @break
             @case('price_high') Harga Tertinggi @break
             @case('price_low')  Harga Terendah @break
-            @default Tanggal Terdekat
+            @default Tanggal Terbaru
         @endswitch
     </small>
 </div>

@@ -82,8 +82,8 @@ class ScheduleController extends Controller
         }
 
         switch ($request->get('sort')) {
-            case 'date_desc':
-                $query->orderByDesc('schedule_date')->orderByDesc('start_time');
+            case 'date_asc':
+                $query->orderBy('schedule_date')->orderBy('start_time');
                 break;
             case 'price_high':
                 $query->orderByDesc('ticket_price');
@@ -91,9 +91,9 @@ class ScheduleController extends Controller
             case 'price_low':
                 $query->orderBy('ticket_price');
                 break;
-            case 'date_asc':
+            case 'date_desc':
             default:
-                $query->orderBy('schedule_date')->orderBy('start_time');
+                $query->orderByDesc('schedule_date')->orderByDesc('start_time');
                 break;
         }
 

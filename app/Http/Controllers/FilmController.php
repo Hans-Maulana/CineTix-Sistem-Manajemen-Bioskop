@@ -78,8 +78,17 @@ class FilmController extends Controller
     // SOLID - SRP (Single Responsibility): mengurus request filter AJAX & return data partial HTML
     public function filterNowPlaying(Request $request)
     {
+        $today = \Carbon\Carbon::today()->toDateString();
+
         // Builder Pattern: Menyusun query filter dinamis menggunakan Scope dari Model
-        $nowPlayingFilms = Film::with(['genres', 'reviews'])
+        $nowPlayingFilms = Film::with([
+                'genres',
+                'reviews',
+                'todaySchedules' => fn ($q) => $q
+                    ->where('schedule_date', $today)
+                    ->where('status', 'on schedule')
+                    ->orderBy('start_time'),
+            ])
             ->where('status', 'now_playing')
             ->whereHas('schedules', fn ($query) => $query->upcomingForBooking())
             ->filterGenre($request->genre)

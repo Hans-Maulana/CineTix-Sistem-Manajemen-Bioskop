@@ -197,6 +197,46 @@ class PromoController extends Controller
     }
 
     /**
+     * AJAX: Ambil daftar promo yang tersedia & bisa digunakan user saat ini (untuk modal picker).
+     */
+    public function availableForBooking(Request $request)
+    {
+        if (!Auth::check()) {
+            return response()->json(['promos' => []]);
+        }
+
+        $userId = Auth::id();
+        $ticketPrice = (float) $request->input('ticket_price', 0);
+        $seatCount   = (int) $request->input('seat_count', 1);
+        $subtotal    = $ticketPrice * max(1, $seatCount);
+
+        $promos = Promo::query()
+            ->where('valid_from', '<=', now())
+            ->where('valid_until', '>=', now())
+            ->where(function ($q) {
+                $q->whereNull('max_usage')
+                  ->orWhereColumn('usage_count', '<', 'max_usage');
+            })
+            ->orderByDesc('discount_value')
+            ->get()
+            ->filter(fn (Promo $promo) => $promo->canBeUsedBy($userId))
+            ->map(fn (Promo $promo) => [
+                'id'             => $promo->id,
+                'code'           => $promo->code,
+                'description'    => $promo->description,
+                'discount_type'  => $promo->discount_type,
+                'discount_value' => (float) $promo->discount_value,
+                'discount_label' => $promo->discountLabel(),
+                'valid_until'    => $promo->valid_until->translatedFormat('d M Y'),
+                'savings'        => $subtotal > 0 ? $promo->calculateDiscount($subtotal) : 0,
+                'remaining_uses' => $promo->remainingUsesFor($userId),
+            ])
+            ->values();
+
+        return response()->json(['promos' => $promos]);
+    }
+
+    /**
      * AJAX: Check apakah promo code valid untuk authenticated user
      * Guest akan redirect ke login
      */

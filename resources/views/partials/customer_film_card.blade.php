@@ -2,7 +2,7 @@
     $rating = round($film->reviews->avg('rating') ?? (float) ($film->rating ?? 0), 1);
     $status = $film->status ?? 'now_playing';
     $statusLabel = match ($status) {
-        'now_playing' => 'Sedang Tayang',
+        'now_playing' => 'Now Playing',
         'coming_soon' => 'Segera Tayang',
         default => ucfirst(str_replace('_', ' ', $status)),
     };
@@ -15,9 +15,26 @@
         3 => 'rank-3',
         default => 'rank-x',
     };
+
+    // Jadwal hari ini (dari eager-load todaySchedules di HomeController)
+    $todaySchedules = $film->relationLoaded('todaySchedules')
+        ? $film->todaySchedules
+        : collect();
+
+    // Cek apakah ada jadwal yang sedang bermain sekarang (status 'now playing')
+    $isLiveNow = $film->schedules()->where('status', 'now playing')->exists() ?? false;
+    // Simpel: cek dari todaySchedules apakah ada yang sedang live (start <= now <= end)
+    $nowTime = \Carbon\Carbon::now();
+    $liveSchedule = $todaySchedules->first(function ($s) use ($nowTime) {
+        $start = \Carbon\Carbon::parse($s->schedule_date->format('Y-m-d') . ' ' . $s->start_time->format('H:i:s'));
+        $end   = \Carbon\Carbon::parse($s->schedule_date->format('Y-m-d') . ' ' . $s->end_time->format('H:i:s'));
+        if ($end->lte($start)) $end->addDay();
+        return $nowTime->between($start, $end);
+    });
 @endphp
 
-<div class="cx-film-card {{ $rank ? 'cx-film-card--ranked' : '' }}" data-aos="fade-up" data-aos-duration="800">
+<div class="cx-film-card {{ $rank ? 'cx-film-card--ranked' : '' }}" data-aos="fade-up" data-aos-duration="800"
+     @if($todaySchedules->count()) data-genre="{{ $film->genres->pluck('genre_name')->implode(',') }}" data-classification="{{ $film->classification }}" @endif>
     @if($rank)
         <span class="cx-rank-badge {{ $rankClass }}" aria-label="Peringkat {{ $rank }}">{{ $rank }}</span>
     @endif
@@ -26,6 +43,14 @@
         @if($film->classification)
             <span class="cx-classification">{{ strtoupper($film->classification) }}</span>
         @endif
+
+        {{-- Live now badge --}}
+        @if($liveSchedule)
+            <span class="cx-live-badge">
+                <span class="cx-live-dot"></span> LIVE
+            </span>
+        @endif
+
         <div class="cx-poster-overlay">
             <div class="cx-poster-bottom">
                 <span class="cx-status-badge {{ $isNowPlaying ? 'cx-status-now' : 'cx-status-soon' }}">
@@ -66,6 +91,58 @@
             @endif
         </div>
 
+        {{-- Showtime pills (hanya untuk now playing) --}}
+        @if($isNowPlaying && $todaySchedules->count())
+            <div class="cx-showtime-row">
+                <span class="cx-showtime-label">
+                    <iconify-icon icon="lucide:calendar-check"></iconify-icon>
+                    Hari ini:
+                </span>
+                <div class="cx-showtime-pills">
+                    @foreach($todaySchedules->take(3) as $sched)
+                        @php
+                            $schedStart = \Carbon\Carbon::parse($sched->schedule_date->format('Y-m-d') . ' ' . $sched->start_time->format('H:i:s'));
+                            $schedEnd   = \Carbon\Carbon::parse($sched->schedule_date->format('Y-m-d') . ' ' . $sched->end_time->format('H:i:s'));
+                            if ($schedEnd->lte($schedStart)) $schedEnd->addDay();
+                            $isThisLive = $nowTime->between($schedStart, $schedEnd);
+                        @endphp
+                        <a href="{{ route('booking.show', $sched) }}"
+                           class="cx-showtime-pill {{ $isThisLive ? 'cx-showtime-pill--live' : '' }}"
+                           title="{{ $sched->studio->name ?? 'Studio' }} · Rp {{ number_format($sched->ticket_price, 0, ',', '.') }}">
+                            @if($isThisLive)
+                                <span class="cx-pill-dot"></span>
+                            @endif
+                            {{ $sched->start_time->format('H:i') }}
+                        </a>
+                    @endforeach
+                    @if($todaySchedules->count() > 3)
+                        <a href="{{ route('films.detail', $film) }}" class="cx-showtime-pill cx-showtime-pill--more">
+                            +{{ $todaySchedules->count() - 3 }}
+                        </a>
+                    @endif
+                </div>
+            </div>
+        @elseif($isNowPlaying && $todaySchedules->isEmpty())
+            {{-- Tidak ada jadwal hari ini, cari jadwal terdekat --}}
+            @php
+                $nextSched = $film->schedules()
+                    ->upcomingForBooking()
+                    ->orderBy('schedule_date')->orderBy('start_time')
+                    ->first();
+            @endphp
+            @if($nextSched)
+                <div class="cx-showtime-row">
+                    <span class="cx-showtime-label" style="color:#8a93a6;">
+                        <iconify-icon icon="lucide:calendar"></iconify-icon>
+                        Jadwal berikutnya:
+                    </span>
+                    <span class="cx-showtime-pill" style="background:#f4f6fa;color:#5c6478;border-color:#e0e4ee;">
+                        {{ $nextSched->schedule_date->translatedFormat('d M') }}, {{ $nextSched->start_time->format('H:i') }}
+                    </span>
+                </div>
+            @endif
+        @endif
+
         <div class="cx-film-actions">
             @if($isNowPlaying)
                 <a href="{{ route('films.detail', $film) }}" class="cx-btn-book">
@@ -81,3 +158,4 @@
         </div>
     </div>
 </div>
+

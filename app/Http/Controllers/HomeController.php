@@ -20,8 +20,18 @@ class HomeController extends Controller
 
         $nowPlayingTotal = (clone $nowPlayingBaseQuery)->count();
 
+        $today = \Carbon\Carbon::today()->toDateString();
+
         $nowPlayingFilms = (clone $nowPlayingBaseQuery)
-            ->with(['genres', 'reviews'])
+            ->with([
+                'genres',
+                'reviews',
+                // Jadwal hari ini (untuk tampilkan jam di film card)
+                'todaySchedules' => fn ($q) => $q
+                    ->where('schedule_date', $today)
+                    ->where('status', 'on schedule')
+                    ->orderBy('start_time'),
+            ])
             ->latest()
             ->take(12)
             ->get();

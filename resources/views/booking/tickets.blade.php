@@ -43,6 +43,39 @@
         background-color: #1A1953 !important;
         color: #ffffff !important;
     }
+
+    .btn-refund {
+        display: inline-flex;
+        align-items: center;
+        gap: 6px;
+        background: transparent;
+        border: 1.5px solid #e74c3c;
+        color: #e74c3c;
+        border-radius: 50px;
+        padding: 7px 16px;
+        font-size: .8rem;
+        font-weight: 700;
+        text-decoration: none;
+        transition: all .2s ease;
+        cursor: pointer;
+    }
+    .btn-refund:hover {
+        background: #e74c3c;
+        color: #fff;
+    }
+
+    .refund-status-badge {
+        display: inline-flex;
+        align-items: center;
+        gap: 5px;
+        padding: 5px 12px;
+        border-radius: 50px;
+        font-size: .75rem;
+        font-weight: 700;
+    }
+    .refund-requested { background: #fff3cd; color: #856404; }
+    .refund-approved  { background: #d1f0e2; color: #155e35; }
+    .refund-rejected  { background: #fde8e8; color: #7b2020; }
 </style>
 @endpush
 
@@ -72,12 +105,37 @@
 
         <div class="row g-4">
             @foreach($bookings as $booking)
-                <div class="col-lg-6 d-flex justify-content-center">
+                <div class="col-lg-6 d-flex flex-column align-items-center gap-3">
                     @include('partials.e_ticket_card', [
                         'booking' => $booking,
                         'downloadable' => true,
                         'ticketDomId' => 'ticket-' . $booking->id,
                     ])
+
+                    {{-- Refund action / status --}}
+                    @php $booking->load('ticketBookings.schedule'); @endphp
+                    @if(is_null($booking->refund_status) && $booking->canRequestRefund())
+                        <a href="{{ route('booking.refund.request', $booking) }}"
+                           class="btn-refund">
+                            <iconify-icon icon="lucide:rotate-ccw"></iconify-icon>
+                            Ajukan Refund
+                        </a>
+                    @elseif($booking->refund_status === 'requested')
+                        <div class="refund-status-badge refund-requested">
+                            <iconify-icon icon="lucide:hourglass"></iconify-icon>
+                            Refund Dalam Proses Review
+                        </div>
+                    @elseif($booking->refund_status === 'approved')
+                        <div class="refund-status-badge refund-approved">
+                            <iconify-icon icon="lucide:check-circle"></iconify-icon>
+                            Refund Disetujui — Dana Sedang Diproses
+                        </div>
+                    @elseif($booking->refund_status === 'rejected')
+                        <div class="refund-status-badge refund-rejected">
+                            <iconify-icon icon="lucide:x-circle"></iconify-icon>
+                            Refund Ditolak
+                        </div>
+                    @endif
                 </div>
             @endforeach
         </div>

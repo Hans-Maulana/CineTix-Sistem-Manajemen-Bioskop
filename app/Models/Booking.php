@@ -10,6 +10,9 @@ class Booking extends Model
 {
     use HasFactory;
 
+    const REFUND_ADMIN_FEE_PERCENT = 10;
+    const REFUND_MIN_HOURS_BEFORE = 2;
+
     protected $fillable = [
         'user_id',
         'guest_email',
@@ -21,10 +24,20 @@ class Booking extends Model
         'status',
         'qr_redeem',
         'status_redeem',
+        'refund_status',
+        'refund_reason',
+        'refund_amount',
+        'refund_requested_at',
+        'refund_processed_at',
+        'refund_processed_by',
+        'refund_rejection_reason',
     ];
 
     protected $casts = [
-        'total_amount' => 'decimal:2',
+        'total_amount'         => 'decimal:2',
+        'refund_amount'        => 'decimal:2',
+        'refund_requested_at'  => 'datetime',
+        'refund_processed_at'  => 'datetime',
     ];
 
     public function user()
@@ -71,6 +84,61 @@ class Booking extends Model
     public function promo()
     {
         return $this->belongsTo(Promo::class);
+    }
+
+    public function refundProcessedBy()
+    {
+        return $this->belongsTo(User::class, 'refund_processed_by');
+    }
+
+    /**
+     * Cek apakah booking ini bisa diajukan refund.
+     * Syarat: status confirmed, belum ada refund sebelumnya,
+     * film belum tayang (minimal REFUND_MIN_HOURS_BEFORE jam sebelum tayang),
+     * dan bukan guest booking.
+     */
+    public function canRequestRefund(): bool
+    {
+        if ($this->user_id === null) {
+            return false; // guest tidak bisa refund
+        }
+
+        if ($this->status !== 'confirmed') {
+            return false;
+        }
+
+        if (!is_null($this->refund_status)) {
+            return false; // sudah pernah mengajukan
+        }
+
+        $firstTicket = $this->ticketBookings->first();
+        if (!$firstTicket || !$firstTicket->schedule) {
+            return false;
+        }
+
+        $showDateTime = \Carbon\Carbon::parse(
+            $firstTicket->schedule->schedule_date->format('Y-m-d')
+            . ' ' .
+            $firstTicket->schedule->start_time->format('H:i:s')
+        );
+
+        return now()->addHours(self::REFUND_MIN_HOURS_BEFORE)->lessThan($showDateTime);
+    }
+
+    /**
+     * Potongan admin fee (dalam rupiah).
+     */
+    public function refundAdminFee(): float
+    {
+        return round($this->total_amount * self::REFUND_ADMIN_FEE_PERCENT / 100, 2);
+    }
+
+    /**
+     * Jumlah yang dikembalikan ke customer (setelah potongan).
+     */
+    public function refundNetAmount(): float
+    {
+        return max(0, $this->total_amount - $this->refundAdminFee());
     }
 
     public function ticketBookings()

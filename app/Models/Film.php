@@ -44,6 +44,18 @@ class Film extends Model
     }
 
     /**
+     * Jadwal hari ini (untuk film card di landing page).
+     * Eager-loadable; filter tanggal harus dilakukan saat with().
+     */
+    public function todaySchedules()
+    {
+        return $this->hasMany(Schedule::class)
+            ->where('schedule_date', \Carbon\Carbon::today()->toDateString())
+            ->where('status', 'on schedule')
+            ->orderBy('start_time');
+    }
+
+    /**
      * Get the URL for the film cover.
      */
     public function getCoverUrlAttribute()

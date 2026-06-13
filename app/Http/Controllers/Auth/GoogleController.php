@@ -65,7 +65,7 @@ class GoogleController extends Controller
         $user->load('role');
 
         if ($user->isAdmin()) {
-            return redirect()->intended('/admin');
+            return redirect()->route('admin.dashboard');
         }
 
         if ($user->isCustomer()) {
