@@ -20,6 +20,7 @@ class Film extends Model
         'status',
         'classification',
         'cover',
+        'trailer_url',
         'release_date',
     ];
 
@@ -65,6 +66,25 @@ class Film extends Model
         }
 
         return asset('storage/cover/default-cover.svg');
+    }
+
+    /**
+     * Get the YouTube video ID from the trailer URL.
+     */
+    public function getYoutubeIdAttribute()
+    {
+        if (!$this->trailer_url) return null;
+        preg_match('%(?:youtube(?:-nocookie)?\.com/(?:[^/]+/.+/|(?:v|e(?:mbed)?)/|.*[?&]v=)|youtu\.be/)([^"&?/\s]{11})%i', $this->trailer_url, $match);
+        return $match[1] ?? null;
+    }
+
+    /**
+     * Get the YouTube embed URL.
+     */
+    public function getEmbedUrlAttribute()
+    {
+        $id = $this->youtube_id;
+        return $id ? "https://www.youtube.com/embed/{$id}?rel=0&modestbranding=1&autoplay=1" : null;
     }
 
     // Builder Pattern: scope untuk memfilter berdasarkan Genre

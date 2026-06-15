@@ -470,6 +470,12 @@
                 @if($film->status === 'coming_soon')
                     <span class="fd-badge-soon">COMING SOON</span>
                 @endif
+                @if($film->trailer_url)
+                    <button type="button" class="btn btn-outline-danger rounded-pill px-3 py-1 d-flex align-items-center gap-2 fw-bold" data-bs-toggle="modal" data-bs-target="#trailerModal" style="border-width: 2px;">
+                        <iconify-icon class="text-white" icon="lucide:play-circle" style="font-size: 1.2rem;"></iconify-icon>
+                        <h10 class="text-white">Tonton Trailer</h10>
+                    </button>
+                @endif
             </div>
 
             @if($film->synopsis)
@@ -675,6 +681,23 @@
 </div>
 </div>
 
+@if($film->trailer_url && $film->embed_url)
+<div class="modal fade" id="trailerModal" tabindex="-1" aria-hidden="true">
+  <div class="modal-dialog modal-lg modal-dialog-centered">
+    <div class="modal-content bg-dark border-0 rounded-4 overflow-hidden shadow-lg">
+      <div class="modal-header border-0 pb-0 justify-content-end" style="position:absolute; right:10px; top:10px; z-index:10;">
+        <button type="button" class="btn-close btn-close-white bg-dark rounded-circle p-2" data-bs-dismiss="modal" aria-label="Close"></button>
+      </div>
+      <div class="modal-body p-0">
+        <div class="ratio ratio-16x9">
+          <iframe id="trailerIframe" src="{{ $film->embed_url }}" allow="accelerometer; autoplay; clipboard-write; encrypted-media; gyroscope; picture-in-picture" allowfullscreen></iframe>
+        </div>
+      </div>
+    </div>
+  </div>
+</div>
+@endif
+
 @push('scripts')
 <script>
     document.addEventListener('DOMContentLoaded', function() {
@@ -692,6 +715,18 @@
                 });
             });
         });
+
+        // Stop video when modal closes
+        const trailerModal = document.getElementById('trailerModal');
+        if (trailerModal) {
+            trailerModal.addEventListener('hidden.bs.modal', function () {
+                const iframe = document.getElementById('trailerIframe');
+                if (iframe) {
+                    const src = iframe.src;
+                    iframe.src = src;
+                }
+            });
+        }
     });
 </script>
 @endpush

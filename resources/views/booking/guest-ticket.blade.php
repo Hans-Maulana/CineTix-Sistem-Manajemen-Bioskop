@@ -123,11 +123,34 @@
 <div class="cx-ticket-success-page">
 <div class="container py-4 py-lg-5">
     @if(session('success'))
-        <div class="alert alert-success alert-dismissible fade show rounded-4 border-0 shadow-sm mb-4 mx-auto" style="max-width:720px;" role="alert">
-            <iconify-icon icon="lucide:check-circle" class="me-2"></iconify-icon>
-            {{ session('success') }}
-            <button type="button" class="btn-close" data-bs-dismiss="alert"></button>
+        <!-- Modal Success Resend -->
+        <div class="modal fade" id="successResendModal" tabindex="-1" aria-hidden="true">
+            <div class="modal-dialog modal-dialog-centered" style="max-width: 400px;">
+                <div class="modal-content" style="border: none; border-radius: 24px; text-align: center; padding: 32px 24px; box-shadow: 0 24px 60px rgba(26,25,83,0.15);">
+                    <div style="width: 72px; height: 72px; background: rgba(25,167,95,0.12); color: #19a75f; border-radius: 50%; display: flex; align-items: center; justify-content: center; font-size: 2.2rem; margin: 0 auto 20px;">
+                        <iconify-icon icon="lucide:check-circle-2"></iconify-icon>
+                    </div>
+                    <h5 style="font-weight: 800; color: #1f2533; margin-bottom: 12px; font-size: 1.25rem;">Berhasil!</h5>
+                    <p style="color: #5c6478; font-size: 0.95rem; line-height: 1.6; margin-bottom: 24px;">
+                        {{ session('success') }}
+                    </p>
+                    <button type="button" class="cx-ticket-btn cx-ticket-btn-primary w-100" data-bs-dismiss="modal">
+                        Oke, Selesai
+                    </button>
+                </div>
+            </div>
         </div>
+        
+        @push('scripts')
+        <script>
+            document.addEventListener("DOMContentLoaded", function() {
+                if (typeof bootstrap !== 'undefined') {
+                    var successModal = new bootstrap.Modal(document.getElementById('successResendModal'));
+                    successModal.show();
+                }
+            });
+        </script>
+        @endpush
     @endif
 
     @if(session('error'))
@@ -177,6 +200,17 @@
     </div>
 
     <div class="cx-ticket-actions">
+        @if($booking->canGuestRequestRefund())
+            <a href="{{ route('booking.guest-refund.request', ['booking' => $booking, 'token' => request('token')]) }}" class="cx-ticket-btn" style="background: #fff; color: #dc3545; border: 1px solid #dc3545; transition: all 0.2s;" onmouseover="this.style.background='#dc3545'; this.style.color='#fff';" onmouseout="this.style.background='#fff'; this.style.color='#dc3545';">
+                <iconify-icon icon="lucide:rotate-ccw"></iconify-icon>
+                Ajukan Refund Tiket
+            </a>
+        @elseif($booking->status === 'refunded')
+            <div class="alert alert-info py-2">
+                <iconify-icon icon="lucide:info" class="me-1"></iconify-icon> Status Refund: <strong>Refunded</strong>
+            </div>
+        @endif
+
         @if($recipientEmail)
             <form method="POST" action="{{ route('booking.resend-ticket', array_filter(['booking' => $booking, 'token' => request('token')])) }}">
                 @csrf

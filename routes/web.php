@@ -37,6 +37,10 @@ Route::post('/booking/confirm-payment/{booking}/{payment}', [BookingController::
 Route::post('/booking/resend-ticket/{booking}', [BookingController::class, 'resendTicketEmail'])->name('booking.resend-ticket');
 Route::get('/booking/guest-ticket/{booking}', [BookingController::class, 'guestTicket'])->name('booking.guest-ticket');
 
+// Refund Guest
+Route::get('/booking/guest-refund/{booking}', [RefundController::class, 'guestRequest'])->name('booking.guest-refund.request');
+Route::post('/booking/guest-refund/{booking}', [RefundController::class, 'guestStore'])->name('booking.guest-refund.store');
+
 // Kode OTP Guest
 Route::post('/guest/send-otp', [BookingController::class, 'sendOtp'])->name('guest.send-otp');
 Route::post('/guest/verify-otp', [BookingController::class, 'verifyOtp'])->name('guest.verify-otp');
@@ -78,11 +82,6 @@ Route::middleware('auth')->group(function () {
     Route::post('admin/tickets/scan', [TicketManagementController::class, 'scan'])->name('admin.tickets.scan');
     Route::get('admin/reports', [ReportController::class, 'index'])->name('admin.reports.index');
     Route::get('admin/reports/export', [ReportController::class, 'export'])->name('admin.reports.export');
-
-    // Refund — Admin
-    Route::get('admin/refunds', [RefundController::class, 'adminIndex'])->name('admin.refunds.index');
-    Route::post('admin/refunds/{booking}/approve', [RefundController::class, 'approve'])->name('admin.refunds.approve');
-    Route::post('admin/refunds/{booking}/reject', [RefundController::class, 'reject'])->name('admin.refunds.reject');
 
     Route::get('/customer', [HomeController::class, 'index'])->name('customer.dashboard');
 

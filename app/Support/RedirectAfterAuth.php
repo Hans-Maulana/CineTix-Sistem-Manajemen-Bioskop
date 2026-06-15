@@ -32,32 +32,14 @@ class RedirectAfterAuth
 
     private static function normalize(string $url): string
     {
-        if (str_starts_with($url, '/')) {
-            return $url;
-        }
+        $path = parse_url($url, PHP_URL_PATH) ?: '/';
+        $query = parse_url($url, PHP_URL_QUERY);
 
-        $host = request()->getSchemeAndHttpHost();
-        if (str_starts_with($url, $host)) {
-            $path = parse_url($url, PHP_URL_PATH) ?: '/';
-            $query = parse_url($url, PHP_URL_QUERY);
-
-            return $query ? $path . '?' . $query : $path;
-        }
-
-        return $url;
+        return $query ? $path . '?' . $query : $path;
     }
 
     private static function isAllowed(string $url): bool
     {
-        if (str_starts_with($url, '/') && !str_starts_with($url, '//')) {
-            return !self::containsBlockedPath($url);
-        }
-
-        $host = request()->getSchemeAndHttpHost();
-        if (!str_starts_with($url, $host)) {
-            return false;
-        }
-
         $path = parse_url($url, PHP_URL_PATH) ?: '';
 
         return !self::containsBlockedPath($path);

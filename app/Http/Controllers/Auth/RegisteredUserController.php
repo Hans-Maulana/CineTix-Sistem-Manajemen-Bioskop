@@ -53,7 +53,12 @@ class RegisteredUserController extends Controller
 
         Auth::login($user);
 
-        return redirect()->intended(RedirectAfterAuth::fallback())
+        $intended = session()->pull('url.intended');
+        if (!$intended && $request->filled('redirect')) {
+            $intended = \App\Support\RedirectAfterAuth::normalize($request->input('redirect'));
+        }
+
+        return redirect()->intended($intended ?: \App\Support\RedirectAfterAuth::fallback())
             ->with('success', 'Selamat datang! Anda mendapat kode promo WELCOME2026 senilai Rp 20.000 untuk pembelian pertama.');
     }
 }

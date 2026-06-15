@@ -6,7 +6,7 @@
         <div class="col-md-10">
             <div class="d-flex align-items-center justify-content-between mb-4">
                 <h2 class="mb-0 text-dark fw-bold">📜 Daftar Transaksi</h2>
-                <a href="{{ route('landing-page') }}" class="btn btn-outline-secondary text-dark border-secondary px-4 rounded-pill">Kembali</a>
+                <a href="{{ route('landing-page') }}" class="btn btn-outline-secondary text-white border-secondary px-4 rounded-pill">Kembali</a>
             </div>
 
             {{-- Flash Messages --}}
@@ -136,20 +136,7 @@
                                                             </span>
                                                         @endif
 
-                                                        {{-- Refund Status Badge --}}
-                                                        @if($booking->refund_status === 'requested')
-                                                            <span class="badge small px-2 py-1 rounded-pill fw-bold" style="background:#fff3cd;color:#856404;font-size:.7rem;">
-                                                                <iconify-icon icon="lucide:hourglass" class="me-1"></iconify-icon>Refund Diajukan
-                                                            </span>
-                                                        @elseif($booking->refund_status === 'approved')
-                                                            <span class="badge small px-2 py-1 rounded-pill fw-bold" style="background:#d1f0e2;color:#155e35;font-size:.7rem;">
-                                                                <iconify-icon icon="lucide:check-circle" class="me-1"></iconify-icon>Refund Disetujui
-                                                            </span>
-                                                        @elseif($booking->refund_status === 'rejected')
-                                                            <span class="badge small px-2 py-1 rounded-pill fw-bold" style="background:#fde8e8;color:#7b2020;font-size:.7rem;">
-                                                                <iconify-icon icon="lucide:x-circle" class="me-1"></iconify-icon>Refund Ditolak
-                                                            </span>
-                                                        @endif
+
                                                     </div>
                                                 </div>
                                             </div>

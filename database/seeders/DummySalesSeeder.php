@@ -62,10 +62,7 @@ class DummySalesSeeder extends Seeder
                     'status' => $status,
                     'qr_redeem' => Str::random(10),
                     'status_redeem' => rand(0, 1) ? 'redeemed' : 'unredeemed',
-                    'refund_status' => $refundStatus,
-                    'refund_reason' => $refundStatus ? 'Ada keperluan mendadak, tidak bisa hadir.' : null,
-                    'refund_amount' => $refundStatus ? $totalAmount * 0.9 : null,
-                    'refund_requested_at' => $refundStatus ? $bookingDate->copy()->addDay() : null,
+                    'refund_amount' => $status === 'refunded' ? $totalAmount * 0.9 : null,
                     'created_at' => $bookingDate,
                     'updated_at' => $bookingDate,
                 ]);

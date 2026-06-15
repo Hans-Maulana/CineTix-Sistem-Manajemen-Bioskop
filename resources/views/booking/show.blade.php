@@ -54,20 +54,14 @@
                 </div>
             @endif
 
-            @if(session('seats_restored'))
-                <div class="alert alert-info alert-dismissible fade show rounded-4 border-0 shadow-sm mb-4" role="alert">
-                    <iconify-icon icon="lucide:armchair" class="me-2"></iconify-icon>
-                    Pilihan kursi Anda ({{ session('seats_restored') }}) sudah dipulihkan setelah login.
-                    <button type="button" class="btn-close" data-bs-dismiss="alert"></button>
-                </div>
-            @endif
+
         </div>
 
         <div class="col-md-8">
             <div class="cx-booking-hero" data-aos="fade-up">
                 <div class="d-flex flex-wrap justify-content-between align-items-start gap-3">
                     <div>
-                        <span class="badge bg-white bg-opacity-20 text-white rounded-pill mb-2 px-3 py-2">
+                        <span class="badge bg-white text-dark rounded-pill mb-2 px-3 py-2">
                             <iconify-icon icon="lucide:armchair" class="me-1"></iconify-icon> Pilih Kursi
                         </span>
                         <h4 class="mb-1 text-white fw-bold">{{ $schedule->film->title }}</h4>

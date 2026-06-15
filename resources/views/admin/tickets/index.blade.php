@@ -1097,6 +1097,10 @@
             const ct = r.headers.get('content-type') || '';
             if (ct.includes('application/json')) {
                 const data = await r.json();
+                if (!r.ok) {
+                    showResult({ status: 'error', message: data.message || 'Terjadi kesalahan server.' });
+                    return;
+                }
                 showResult(data);
             } else {
                 window.location.reload();

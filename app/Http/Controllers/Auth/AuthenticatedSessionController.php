@@ -30,7 +30,12 @@ class AuthenticatedSessionController extends Controller
             return redirect()->route('admin.dashboard');
         }
 
-        return redirect()->intended(RedirectAfterAuth::fallback());
+        $intended = session()->pull('url.intended');
+        if (!$intended && $request->filled('redirect')) {
+            $intended = RedirectAfterAuth::normalize($request->input('redirect'));
+        }
+
+        return redirect()->intended($intended ?: RedirectAfterAuth::fallback());
     }
 
     public function destroy(Request $request): RedirectResponse

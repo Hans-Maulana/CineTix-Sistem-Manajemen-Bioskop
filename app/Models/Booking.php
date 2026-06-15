@@ -24,20 +24,12 @@ class Booking extends Model
         'status',
         'qr_redeem',
         'status_redeem',
-        'refund_status',
-        'refund_reason',
         'refund_amount',
-        'refund_requested_at',
-        'refund_processed_at',
-        'refund_processed_by',
-        'refund_rejection_reason',
     ];
 
     protected $casts = [
         'total_amount'         => 'decimal:2',
         'refund_amount'        => 'decimal:2',
-        'refund_requested_at'  => 'datetime',
-        'refund_processed_at'  => 'datetime',
     ];
 
     public function user()
@@ -86,11 +78,6 @@ class Booking extends Model
         return $this->belongsTo(Promo::class);
     }
 
-    public function refundProcessedBy()
-    {
-        return $this->belongsTo(User::class, 'refund_processed_by');
-    }
-
     /**
      * Cek apakah booking ini bisa diajukan refund.
      * Syarat: status confirmed, belum ada refund sebelumnya,
@@ -100,15 +87,47 @@ class Booking extends Model
     public function canRequestRefund(): bool
     {
         if ($this->user_id === null) {
-            return false; // guest tidak bisa refund
+            return false; // guest tidak bisa refund via method reguler
         }
 
         if ($this->status !== 'confirmed') {
             return false;
         }
 
-        if (!is_null($this->refund_status)) {
-            return false; // sudah pernah mengajukan
+        if ($this->status === 'refunded') {
+            return false; // sudah direfund
+        }
+
+        $firstTicket = $this->ticketBookings->first();
+        if (!$firstTicket || !$firstTicket->schedule) {
+            return false;
+        }
+
+        $showDateTime = \Carbon\Carbon::parse(
+            $firstTicket->schedule->schedule_date->format('Y-m-d')
+            . ' ' .
+            $firstTicket->schedule->start_time->format('H:i:s')
+        );
+
+        return now()->addHours(self::REFUND_MIN_HOURS_BEFORE)->lessThan($showDateTime);
+    }
+
+    /**
+     * Cek apakah booking ini bisa diajukan refund khusus untuk guest (via token url).
+     * Syarat sama, hanya user_id wajib null dan access_token harus ada.
+     */
+    public function canGuestRequestRefund(): bool
+    {
+        if ($this->user_id !== null || empty($this->access_token)) {
+            return false;
+        }
+
+        if ($this->status !== 'confirmed') {
+            return false;
+        }
+
+        if ($this->status === 'refunded') {
+            return false; // sudah direfund
         }
 
         $firstTicket = $this->ticketBookings->first();

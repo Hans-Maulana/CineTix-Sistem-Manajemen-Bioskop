@@ -21,6 +21,9 @@
             transition: none !important;
             z-index: 1030;
         }
+        .footer {
+            background-color: #1A1953 !important;
+        }
         .header .logo img {
             max-height: 40px;
         }
@@ -163,34 +166,112 @@
         @yield('content')
     </main>
 
-    <footer class="footer bg-dark py-10">
-        <div class="container">
-            <div class="row align-items-center">
-                <div class="col-xl-4 mb-8 mb-xl-0">
-                    <a href="{{ route('landing-page') }}" class="footer-logo">
-                        <img src="{{asset("assets/images/logos/logo-white.svg")}}" alt="logo" class="img-fluid">
-                    </a>
-                    <p class="text-white text-opacity-70 mt-4">Platform pemesanan tiket bioskop terbaik di Indonesia.
-                        Nikmati film favorit Anda dengan mudah dan nyaman.</p>
-                </div>
-                <div class="col-md-4 col-xl-2 offset-xl-1 mb-8 mb-xl-0">
-                    <ul class="footer-menu list-unstyled mb-0 d-flex flex-column gap-2">
-                        <li><a class="link-hover fs-5 text-white" href="{{ route('landing-page') }}">Beranda</a></li>
-                        <li><a class="link-hover fs-5 text-white" href="{{ route('films.search') }}">Film</a></li>
-                        <li><a class="link-hover fs-5 text-white" href="{{ route('customer.promos') }}">Kode Promo</a></li>
-                    </ul>
-                </div>
-                <div class="col-md-4 col-xl-2 mb-8 mb-xl-0">
-                    <ul class="footer-menu list-unstyled mb-0 d-flex flex-column gap-2">
-                        <li><a class="link-hover fs-5 text-white" href="#!">Facebook</a></li>
-                        <li><a class="link-hover fs-5 text-white" href="#!">Instagram</a></li>
-                        <li><a class="link-hover fs-5 text-white" href="#!">Twitter</a></li>
-                    </ul>
-                </div>
-                <div class="col-md-4 col-xl-3 mb-8 mb-xl-0">
-                    <p class="mb-0 text-white text-opacity-70 text-md-end">© CineTix copyright 2025</p>
-                </div>
-            </div>
+    <style>
+        .footer {
+            background-color: #0b1426 !important;
+            color: #ffffff;
+            font-family: inherit;
+        }
+        .footer-bottom {
+            background-color: #1a2235;
+            padding: 16px 0;
+            text-align: center;
+            font-size: 0.75rem;
+            font-weight: 600;
+            letter-spacing: 0.5px;
+            text-transform: uppercase;
+        }
+        .footer-col-title {
+            font-size: 0.85rem;
+            font-weight: 700;
+            text-transform: uppercase;
+            margin-bottom: 12px;
+            letter-spacing: 0.5px;
+        }
+        .footer-link {
+            color: #aeb4c0 !important;
+            font-size: 0.82rem;
+            text-decoration: none;
+            display: block;
+            margin-bottom: 16px;
+            text-transform: uppercase;
+            font-weight: 600;
+            letter-spacing: 0.5px;
+            transition: color 0.2s ease;
+        }
+        .footer-link:hover {
+            color: #ffffff !important;
+        }
+        .footer-text {
+            color: #ffffff;
+            font-size: 0.85rem;
+            line-height: 1.6;
+            margin-top: 15px;
+            font-weight: 500;
+            max-width: 260px;
+        }
+        .footer-socials {
+            display: flex;
+            gap: 16px;
+            margin-top: 10px;
+        }
+        .footer-socials a {
+            color: #ffffff;
+            font-size: 1.1rem;
+            transition: opacity 0.2s;
+        }
+        .footer-socials a:hover {
+            opacity: 0.7;
+        }
+        .footer-email {
+            font-size: 0.82rem;
+            font-weight: 600;
+            text-transform: uppercase;
+            letter-spacing: 0.5px;
+            margin-bottom: 28px;
+        }
+    </style>
+    <footer class="footer pt-5">
+        <div class="container pb-5">
+            <div class="row">
+              <div class="col-lg-3 col-md-6 mb-4 mb-lg-0">
+                  <a href="{{ route('landing-page') }}" class="footer-logo d-block mb-3">
+                      <img src="{{asset("assets/images/logos/logo-white.svg")}}" alt="logo" height="36" style="max-height: 36px; object-fit: contain;">
+                  </a>
+                  <p class="footer-text">
+                      Platform pemesanan tiket bioskop terbaik di Indonesia. Nikmati film favorit Anda dengan mudah dan nyaman bersama CineTix.
+                  </p>
+              </div>
+              <div class="col-lg-3 col-md-6 mb-4 mb-lg-0 pt-lg-2">
+                  <a href="{{ route('landing-page') }}" class="footer-link">BERANDA</a>
+                  <a href="{{ route('films.search') }}" class="footer-link">CARI FILM</a>
+                  <a href="{{ route('customer.promos') }}" class="footer-link">KODE PROMO</a>
+                  @if(auth()->check())
+                  <a href="{{ route('booking.tickets') }}" class="footer-link">LIHAT TIKET</a>
+                  @endif
+              </div>
+              <div class="col-lg-3 col-md-6 mb-4 mb-lg-0 pt-lg-2">
+                  <a href="{{ route('about') }}" class="footer-link">TENTANG KAMI</a>
+                  <a href="{{ route('faq') }}" class="footer-link">FAQ & BANTUAN</a>
+                  <a href="#!" class="footer-link">KEBIJAKAN PRIVASI</a>
+                  <a href="#!" class="footer-link">SYARAT & KETENTUAN</a>
+              </div>
+              <div class="col-lg-3 col-md-6 pt-lg-2">
+                  <div class="footer-col-title">DUKUNGAN CINETIX</div>
+                  <div class="footer-email">E-MAIL: SUPPORT@CINETIX.COM</div>
+                  
+                  <div class="footer-col-title mb-2">HUBUNGI KAMI (WHATSAPP)</div>
+                  <div>
+                      <a href="https://wa.me/6289508101257" target="_blank" class="d-inline-flex align-items-center gap-2 text-white text-decoration-none mt-1" style="font-size: 0.95rem; font-weight: 500; transition: opacity 0.2s;" onmouseover="this.style.opacity=0.7" onmouseout="this.style.opacity=1">
+                          <iconify-icon icon="lucide:phone" style="font-size: 1.2rem;"></iconify-icon>
+                          +62 895-0810-1257
+                      </a>
+                  </div>
+              </div>
+          </div>
+        </div>
+        <div class="footer-bottom">
+            2026 CINETIX - PT NUSANTARA CINETIX. ALL RIGHTS RESERVED.
         </div>
     </footer>
 

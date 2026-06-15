@@ -44,6 +44,12 @@
                         <input type="date" name="release_date" class="form-control" value="{{ old('release_date', $film->release_date) }}" required>
                     </div>
                 </div>
+
+                <div class="mb-4">
+                    <label class="form-label fw-bold">Link Trailer YouTube</label>
+                    <input type="url" name="trailer_url" class="form-control" placeholder="Contoh: https://www.youtube.com/watch?v=..." value="{{ old('trailer_url', $film->trailer_url) }}">
+                    <div class="form-text small text-muted"><i class="bi bi-info-circle me-1"></i> Opsional. Masukkan link YouTube lengkap.</div>
+                </div>
             </div>
 
             <!-- Kolom Kanan -->

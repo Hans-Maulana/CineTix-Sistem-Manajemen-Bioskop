@@ -42,7 +42,7 @@ class BookingController extends Controller
         $schedule->load('film', 'studio.seats');
 
         $bookedSeatIds = TicketBooking::whereHas('booking', function ($q) {
-            $q->whereIn('status', ['pending', 'confirmed']);
+            $q->whereNotIn('status', ['cancelled', 'refunded']);
         })
             ->where('schedule_id', $schedule->id)
             ->pluck('seat_id')
@@ -541,7 +541,7 @@ class BookingController extends Controller
     public function getAvailableSeats(Schedule $schedule)
     {
         $bookedSeats = TicketBooking::whereHas('booking', function ($q) {
-            $q->where('status', '!=', 'cancelled');
+            $q->whereNotIn('status', ['cancelled', 'refunded']);
         })
             ->where('schedule_id', $schedule->id)
             ->pluck('seat_id')

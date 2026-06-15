@@ -29,6 +29,7 @@ class HomeController extends Controller
                 // Jadwal hari ini (untuk tampilkan jam di film card)
                 'todaySchedules' => fn ($q) => $q
                     ->where('schedule_date', $today)
+                    ->where('start_time', '>', \Carbon\Carbon::now()->toTimeString())
                     ->where('status', 'on schedule')
                     ->orderBy('start_time'),
             ])

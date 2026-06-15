@@ -230,8 +230,8 @@
     }
 
     .cx-summary-poster {
-        width: 72px;
-        height: 96px;
+        width: 160px;
+        height: 90px;
         border-radius: 10px;
         background: linear-gradient(135deg, #1A1953, #3a37a0);
         display: flex;
@@ -364,8 +364,8 @@
     <div class="cx-payment-hero">
         <div class="d-flex flex-wrap justify-content-between align-items-center gap-3">
             <div>
-                <span class="badge bg-white bg-opacity-20 text-white rounded-pill mb-2 px-3 py-2">
-                    <iconify-icon icon="lucide:credit-card" class="me-1"></iconify-icon> Pembayaran
+                <span class="badge bg-white rounded-pill mb-2 px-3 py-2" style="color: var(--primary-color) !important;">
+                    <iconify-icon icon="lucide:credit-card" class="me-1 text-dark"></iconify-icon> <h10 class="text-dark">Pembayaran</h10>
                 </span>
                 <h4 class="text-white mb-1">Selesaikan Pesanan Anda</h4>
                 <p class="text-white-50 small mb-0">Pilih metode pembayaran lalu konfirmasi untuk melanjutkan</p>
@@ -383,7 +383,7 @@
             <div class="cx-payment-card">
                 <div class="cx-payment-card-head">
                     <iconify-icon icon="lucide:wallet"></iconify-icon>
-                    <h5>Pilih Metode Pembayaran</h5>
+                    <h5 class="text-white">Pilih Metode Pembayaran</h5>
                 </div>
                 <div class="cx-payment-card-body">
                     <form method="POST" action="{{ route('booking.initiate-payment', array_filter(['booking' => $booking, 'token' => request('token')])) }}" id="paymentForm">
@@ -442,8 +442,12 @@
                     @endif
 
                     <div class="cx-summary-film">
-                        <div class="cx-summary-poster">
-                            <iconify-icon icon="lucide:film"></iconify-icon>
+                        <div class="cx-summary-poster" style="padding: 0; overflow: hidden; background: #e4e8ef;">
+                            @if($film && $film->cover)
+                                <img src="{{ asset('storage/cover/' . $film->cover) }}" alt="{{ $film->title }}" style="width: 100%; height: 100%; object-fit: cover; border-radius: 10px; image-rendering: high-quality;">
+                            @else
+                                <iconify-icon icon="lucide:film"></iconify-icon>
+                            @endif
                         </div>
                         <div>
                             <h6 class="fw-bold text-dark mb-2">{{ $film?->title ?? '—' }}</h6>

@@ -1,7 +1,7 @@
 <style>
     .cx-eticket-wrap {
         position: relative;
-        max-width: 720px;
+        max-width: 840px;
         margin: 0 auto;
     }
 
@@ -106,7 +106,7 @@
 
     .cx-eticket-body {
         display: grid;
-        grid-template-columns: 100px 1fr auto;
+        grid-template-columns: 220px 1fr auto;
         gap: 0;
         position: relative;
     }
@@ -114,7 +114,7 @@
     .cx-eticket-body::before {
         content: "";
         position: absolute;
-        left: 100px;
+        left: 220px;
         top: 12px;
         bottom: 12px;
         width: 1px;
@@ -128,23 +128,23 @@
     }
 
     .cx-eticket-poster {
-        padding: 16px 12px 16px 16px;
+        padding: 24px 24px 24px 46px;
         display: flex;
         align-items: center;
     }
 
     .cx-eticket-poster img {
-        width: 76px;
-        height: 108px;
+        width: 150px;
+        height: 225px;
         object-fit: cover;
-        border-radius: 10px;
+        border-radius: 12px;
         box-shadow: 0 4px 12px rgba(26, 25, 83, 0.15);
         background: linear-gradient(135deg, #1A1953, #3a37a0);
     }
 
     .cx-eticket-poster-placeholder {
-        width: 76px;
-        height: 108px;
+        width: 146px;
+        height: 221px;
         border-radius: 10px;
         background: linear-gradient(135deg, #1A1953, #3a37a0);
         display: flex;

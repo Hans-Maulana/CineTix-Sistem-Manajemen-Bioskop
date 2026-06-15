@@ -39,7 +39,7 @@ class Seat extends Model
     public function checkAvailability(int $scheduleId): bool
     {
         return !$this->ticketBookings()
-            ->whereHas('booking', fn ($q) => $q->where('status', '!=', 'cancelled'))
+            ->whereHas('booking', fn ($q) => $q->whereNotIn('status', ['cancelled', 'refunded']))
             ->where('schedule_id', $scheduleId)
             ->exists();
     }

@@ -180,6 +180,13 @@ class TicketManagementController extends Controller
                 : redirect()->route('admin.tickets.index')->with('error', $msg);
         }
 
+        if ($booking->status === 'refunded') {
+            $msg = 'Tiket ini sudah tidak valid (telah direfund).';
+            return $expectsJson
+                ? response()->json(['status' => 'error', 'message' => $msg], 422)
+                : redirect()->route('admin.tickets.index')->with('error', $msg);
+        }
+
         if ($booking->status !== 'confirmed') {
             $msg = 'Status pemesanan tiket ini belum dikonfirmasi atau dibatalkan.';
             return $expectsJson

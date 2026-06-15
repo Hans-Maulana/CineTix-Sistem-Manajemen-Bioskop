@@ -96,16 +96,11 @@
                 <iconify-icon icon="lucide:mail-warning" class="me-2"></iconify-icon>
                 Email tiket gagal dikirim otomatis. Tiket tetap aktif di halaman ini.
             </div>
-        @elseif(session('success'))
-            <div class="alert alert-success rounded-4 border-0 shadow-sm mb-4" role="alert">
-                <iconify-icon icon="lucide:check-circle" class="me-2"></iconify-icon>
-                {{ session('success') }}
-            </div>
         @endif
 
         <div class="row g-4">
             @foreach($bookings as $booking)
-                <div class="col-lg-6 d-flex flex-column align-items-center gap-3">
+                <div class="col-xl-6 col-12 d-flex flex-column align-items-center gap-3">
                     @include('partials.e_ticket_card', [
                         'booking' => $booking,
                         'downloadable' => true,
@@ -114,26 +109,13 @@
 
                     {{-- Refund action / status --}}
                     @php $booking->load('ticketBookings.schedule'); @endphp
-                    @if(is_null($booking->refund_status) && $booking->canRequestRefund())
-                        <a href="{{ route('booking.refund.request', $booking) }}"
-                           class="btn-refund">
-                            <iconify-icon icon="lucide:rotate-ccw"></iconify-icon>
-                            Ajukan Refund
-                        </a>
-                    @elseif($booking->refund_status === 'requested')
-                        <div class="refund-status-badge refund-requested">
-                            <iconify-icon icon="lucide:hourglass"></iconify-icon>
-                            Refund Dalam Proses Review
-                        </div>
-                    @elseif($booking->refund_status === 'approved')
-                        <div class="refund-status-badge refund-approved">
-                            <iconify-icon icon="lucide:check-circle"></iconify-icon>
-                            Refund Disetujui — Dana Sedang Diproses
-                        </div>
-                    @elseif($booking->refund_status === 'rejected')
-                        <div class="refund-status-badge refund-rejected">
-                            <iconify-icon icon="lucide:x-circle"></iconify-icon>
-                            Refund Ditolak
+                    @if($booking->canRequestRefund())
+                        <div class="mt-4 pt-3 border-top text-center">
+                            <a href="{{ route('booking.refund.request', $booking) }}"
+                               class="btn-refund">
+                                <iconify-icon icon="lucide:rotate-ccw"></iconify-icon>
+                                Ajukan Refund
+                            </a>
                         </div>
                     @endif
                 </div>
@@ -180,12 +162,23 @@
 
 @push('scripts')
 <script src="https://cdnjs.cloudflare.com/ajax/libs/html2canvas/1.4.1/html2canvas.min.js"></script>
+<script src="https://cdn.jsdelivr.net/npm/sweetalert2@11"></script>
 <script>
     document.addEventListener('DOMContentLoaded', function() {
         const successModalEl = document.getElementById('successBookingModal');
         if (successModalEl && typeof bootstrap !== 'undefined') {
             bootstrap.Modal.getOrCreateInstance(successModalEl).show();
         }
+
+        @if(session('success'))
+            Swal.fire({
+                icon: 'success',
+                title: 'Berhasil',
+                text: '{{ session("success") }}',
+                confirmButtonColor: '#1A1953',
+                confirmButtonText: 'Tutup'
+            });
+        @endif
 
         document.addEventListener('click', function(e) {
             const btn = e.target.closest('.download-ticket-btn');

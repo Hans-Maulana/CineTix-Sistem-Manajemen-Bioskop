@@ -206,16 +206,7 @@
                     class="menu-link {{ request()->segment(2) == 'customers' ? 'active' : '' }}">Customer</a>
                 <a href="{{ route('admin.tickets.index') }}"
                     class="menu-link {{ request()->segment(2) == 'tickets' ? 'active' : '' }}">Tiket & Scan</a>
-                <a href="{{ route('admin.refunds.index') }}"
-                    class="menu-link {{ request()->segment(2) == 'refunds' ? 'active' : '' }}" style="position:relative;">
-                    Refund
-                    @php $pendingRefundCount = \App\Models\Booking::where('refund_status', 'requested')->count(); @endphp
-                    @if($pendingRefundCount > 0)
-                        <span class="position-absolute top-0 start-100 translate-middle badge rounded-pill bg-danger" style="font-size:.6rem;">
-                            {{ $pendingRefundCount }}
-                        </span>
-                    @endif
-                </a>
+
                 <a href="{{ route('admin.reports.index') }}"
                     class="menu-link {{ request()->segment(2) == 'reports' ? 'active' : '' }}">Laporan</a>
             </nav>
@@ -491,8 +482,8 @@
                         const width = el.offsetWidth;
                         const height = el.offsetHeight;
                         
-                        // Jika elemen menutupi hampir seluruh layar (width/height > 90%) dan z-index tinggi, sembunyikan (kecuali modal dan sweetalert)
-                        if (!el.classList.contains('modal') && !el.classList.contains('swal2-container') && width > window.innerWidth * 0.9 && height > window.innerHeight * 0.9 && zIndex > 5) {
+                        // Jika elemen menutupi hampir seluruh layar (width/height > 90%) dan z-index tinggi, sembunyikan (kecuali modal, sweetalert, dan scan-overlay)
+                        if (!el.classList.contains('modal') && !el.classList.contains('swal2-container') && !el.classList.contains('scan-overlay') && width > window.innerWidth * 0.9 && height > window.innerHeight * 0.9 && zIndex > 5) {
                             el.style.setProperty('display', 'none', 'important');
                             el.style.setProperty('pointer-events', 'none', 'important');
                             el.style.setProperty('z-index', '-9999', 'important');

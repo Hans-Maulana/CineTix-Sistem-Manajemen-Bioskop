@@ -70,139 +70,122 @@ class RefundController extends Controller
 
         try {
             $booking->update([
-                'refund_status'       => 'requested',
-                'refund_reason'       => $validated['refund_reason'],
                 'refund_amount'       => $booking->refundNetAmount(),
-                'refund_requested_at' => now(),
             ]);
 
+            $this->processAutoRefund($booking);
+
             return redirect()->route('booking.history')
-                ->with('success', 'Pengajuan refund berhasil dikirim. Admin akan mereview dalam 1×24 jam.');
+                ->with('success', 'Refund berhasil disetujui secara otomatis. Dana akan segera dikembalikan ke rekening Anda.');
         } catch (\Throwable $e) {
             Log::error('Refund store error: ' . $e->getMessage(), ['booking_id' => $booking->id]);
             return back()->with('error', 'Gagal mengajukan refund. Silakan coba lagi.');
         }
     }
 
-    // ─────────────────────────────────────────────
-    //  ADMIN AREA
-    // ─────────────────────────────────────────────
-
     /**
-     * Daftar semua pengajuan refund untuk admin.
+     * Tampilkan form refund khusus untuk guest (via token).
      */
-    public function adminIndex(Request $request)
+    public function guestRequest(Request $request, Booking $booking)
     {
-        $query = Booking::with([
-            'user',
-            'ticketBookings.schedule.film',
-            'ticketBookings.seat',
-            'latestPayment',
-        ])->whereNotNull('refund_status');
+        $token = $request->query('token');
 
-        // Filter by status
-        $filterStatus = $request->input('status', 'requested');
-        if (in_array($filterStatus, ['requested', 'approved', 'rejected'])) {
-            $query->where('refund_status', $filterStatus);
+        if (!$booking->access_token || !hash_equals($booking->access_token, $token)) {
+            abort(403, 'Akses tidak sah atau link tidak valid.');
         }
 
-        $refunds = $query->orderByDesc('refund_requested_at')->paginate(15)->withQueryString();
+        if (!$booking->canGuestRequestRefund()) {
+            return redirect()->route('booking.guest-ticket', ['booking' => $booking, 'token' => $token])
+                ->with('error', 'Maaf, refund tidak bisa diajukan saat ini (sudah lewat batas waktu atau status tidak valid).');
+        }
 
-        $counts = [
-            'requested' => Booking::where('refund_status', 'requested')->count(),
-            'approved'  => Booking::where('refund_status', 'approved')->count(),
-            'rejected'  => Booking::where('refund_status', 'rejected')->count(),
-        ];
-
-        return view('admin.refunds.index', compact('refunds', 'filterStatus', 'counts'));
+        return view('booking.guest-refund-request', compact('booking', 'token'));
     }
 
     /**
-     * Admin menyetujui refund.
+     * Proses pengajuan refund khusus guest (via token).
      */
-    public function approve(Booking $booking)
+    public function guestStore(Request $request, Booking $booking)
     {
-        if ($booking->refund_status !== 'requested') {
-            return back()->with('error', 'Refund ini sudah diproses sebelumnya.');
+        $token = $request->query('token');
+
+        if (!$booking->access_token || !hash_equals($booking->access_token, $token)) {
+            abort(403, 'Akses tidak sah atau link tidak valid.');
         }
 
-        try {
-            DB::transaction(function () use ($booking) {
-                // Update booking status
-                $booking->update([
-                    'status'               => 'refunded',
-                    'refund_status'        => 'approved',
-                    'refund_processed_at'  => now(),
-                    'refund_processed_by'  => Auth::id(),
-                ]);
-
-                // Bebaskan kursi kembali menjadi available
-                foreach ($booking->ticketBookings()->with('seat')->get() as $ticket) {
-                    if ($ticket->seat) {
-                        $ticket->seat->update([
-                            'status'      => 'available',
-                            'locked_until' => null,
-                        ]);
-
-                        try {
-                            broadcast(new \App\Events\SeatStatusUpdated($ticket->seat->id, 'available'))->toOthers();
-                        } catch (\Exception $e) {
-                            Log::error('Pusher Error (Refund Approve): ' . $e->getMessage());
-                        }
-                    }
-                }
-            });
-
-            // Kirim email notifikasi ke customer
-            $this->sendRefundApprovedMail($booking->fresh()->load(['user', 'ticketBookings.schedule.film']));
-
-            return back()->with('success', "Refund #$booking->id berhasil disetujui. Kursi sudah dikembalikan.");
-        } catch (\Throwable $e) {
-            Log::error('Refund approve error: ' . $e->getMessage(), ['booking_id' => $booking->id]);
-            return back()->with('error', 'Gagal memproses refund: ' . $e->getMessage());
-        }
-    }
-
-    /**
-     * Admin menolak refund.
-     */
-    public function reject(Request $request, Booking $booking)
-    {
-        if ($booking->refund_status !== 'requested') {
-            return back()->with('error', 'Refund ini sudah diproses sebelumnya.');
+        if (!$booking->canGuestRequestRefund()) {
+            return redirect()->route('booking.guest-ticket', ['booking' => $booking, 'token' => $token])
+                ->with('error', 'Maaf, refund tidak bisa diajukan saat ini.');
         }
 
         $validated = $request->validate([
-            'rejection_reason' => 'required|string|min:5|max:500',
+            'guest_email'    => 'required|email',
+            'refund_reason'  => 'required|string|min:10|max:1000',
+            'bank_name'      => 'required|string|max:100',
+            'account_number' => 'required|string|max:50',
+            'account_name'   => 'required|string|max:100',
         ], [
-            'rejection_reason.required' => 'Alasan penolakan wajib diisi.',
-            'rejection_reason.min'      => 'Alasan penolakan minimal 5 karakter.',
+            'guest_email.required'    => 'Alamat email wajib diisi untuk verifikasi.',
+            'guest_email.email'       => 'Format email tidak valid.',
+            'refund_reason.required'  => 'Alasan refund wajib diisi.',
+            'refund_reason.min'       => 'Alasan refund minimal 10 karakter.',
+            'refund_reason.max'       => 'Alasan refund maksimal 1000 karakter.',
+            'bank_name.required'      => 'Nama bank / E-Wallet wajib diisi.',
+            'account_number.required' => 'Nomor rekening wajib diisi.',
+            'account_name.required'   => 'Nama pemilik rekening wajib diisi.',
         ]);
+
+        if (strtolower(trim($validated['guest_email'])) !== strtolower(trim($booking->customerEmail()))) {
+            return back()->with('error', 'Alamat email tidak cocok dengan data pemesanan. Verifikasi gagal.')->withInput();
+        }
 
         try {
             $booking->update([
-                'refund_status'           => 'rejected',
-                'refund_rejection_reason' => $validated['rejection_reason'],
-                'refund_processed_at'     => now(),
-                'refund_processed_by'     => Auth::id(),
+                'refund_amount'       => $booking->refundNetAmount(),
             ]);
 
-            // Kirim email notifikasi ke customer
-            $this->sendRefundRejectedMail(
-                $booking->fresh()->load(['user', 'ticketBookings.schedule.film']),
-                $validated['rejection_reason']
-            );
+            $this->processAutoRefund($booking);
 
-            return back()->with('success', "Refund #$booking->id berhasil ditolak.");
+            return redirect()->route('booking.guest-ticket', ['booking' => $booking, 'token' => $token])
+                ->with('success', 'Refund berhasil disetujui secara otomatis. Dana akan segera dikembalikan ke rekening Anda.');
         } catch (\Throwable $e) {
-            Log::error('Refund reject error: ' . $e->getMessage(), ['booking_id' => $booking->id]);
-            return back()->with('error', 'Gagal menolak refund: ' . $e->getMessage());
+            Log::error('Guest Refund store error: ' . $e->getMessage(), ['booking_id' => $booking->id]);
+            return back()->with('error', 'Gagal mengajukan refund. Silakan coba lagi.')->withInput();
         }
     }
+
 
     // ─────────────────────────────────────────────
     //  PRIVATE HELPERS
     // ─────────────────────────────────────────────
+
+    private function processAutoRefund(Booking $booking): void
+    {
+        DB::transaction(function () use ($booking) {
+            $booking->update([
+                'status'               => 'refunded',
+            ]);
+
+            // Bebaskan kursi kembali menjadi available
+            foreach ($booking->ticketBookings()->with('seat')->get() as $ticket) {
+                if ($ticket->seat) {
+                    $ticket->seat->update([
+                        'status'      => 'available',
+                        'locked_until' => null,
+                    ]);
+
+                    try {
+                        broadcast(new \App\Events\SeatStatusUpdated($ticket->seat->id, 'available'))->toOthers();
+                    } catch (\Exception $e) {
+                        Log::error('Pusher Error (Auto Refund): ' . $e->getMessage());
+                    }
+                }
+            }
+        });
+
+        // Kirim email notifikasi ke customer
+        $this->sendRefundApprovedMail($booking->fresh()->load(['user', 'ticketBookings.schedule.film']));
+    }
 
     private function refundNotEligibleMessage(Booking $booking): string
     {
@@ -231,16 +214,5 @@ class RefundController extends Controller
         }
     }
 
-    private function sendRefundRejectedMail(Booking $booking, string $reason): void
-    {
-        $email = $booking->customerEmail();
-        if (!$email) {
-            return;
-        }
-        try {
-            Mail::to($email)->send(new RefundRejectedMail($booking, $reason));
-        } catch (\Throwable $e) {
-            Log::error('Gagal kirim email refund rejected: ' . $e->getMessage(), ['booking_id' => $booking->id]);
-        }
-    }
+
 }

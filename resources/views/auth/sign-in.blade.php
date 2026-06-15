@@ -127,6 +127,9 @@
             <!-- Form -->
             <form class="d-flex flex-column gap-3" method="POST" action="{{ route('login') }}">
               @csrf
+              @if(request('redirect'))
+                  <input type="hidden" name="redirect" value="{{ request('redirect') }}">
+              @endif
 
               <div>
                 <input type="email" name="email" class="form-control border-bottom" placeholder="Email" required autofocus>

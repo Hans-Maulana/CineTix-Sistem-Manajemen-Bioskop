@@ -15,12 +15,16 @@ class GoogleController extends Controller
 {
    public function redirectToGoogle()
     {
-        RedirectAfterAuth::remember(request('redirect'));
+        $redirect = request('redirect');
+        RedirectAfterAuth::remember($redirect);
 
-        return Socialite::driver('google')
-            ->with(['prompt' => 'select_account'])
-            ->stateless()
-            ->redirect();
+        $driver = Socialite::driver('google')->with(['prompt' => 'select_account'])->stateless();
+        
+        if ($redirect) {
+            $driver->with(['state' => base64_encode(json_encode(['redirect' => $redirect]))]);
+        }
+
+        return $driver->redirect();
     }
 
     public function handleGoogleCallback()
@@ -53,13 +57,22 @@ class GoogleController extends Controller
 
         Auth::login($user);
 
-        return $this->sendToDashboard($user);
+        $state = request('state');
+        $redirect = null;
+        if ($state) {
+            $decoded = json_decode(base64_decode($state), true);
+            if (is_array($decoded) && isset($decoded['redirect'])) {
+                $redirect = $decoded['redirect'];
+            }
+        }
+
+        return $this->sendToDashboard($user, $redirect);
     }
 
     /**
      * Mengarahkan user ke dashboard yang tepat
      */
-    protected function sendToDashboard($user)
+    protected function sendToDashboard($user, $redirect = null)
     {
 
         $user->load('role');
@@ -68,10 +81,11 @@ class GoogleController extends Controller
             return redirect()->route('admin.dashboard');
         }
 
-        if ($user->isCustomer()) {
-            return redirect()->intended(RedirectAfterAuth::fallback());
+        $intended = session()->pull('url.intended');
+        if (!$intended && $redirect) {
+            $intended = RedirectAfterAuth::normalize($redirect);
         }
 
-        return redirect()->intended(RedirectAfterAuth::fallback());
+        return redirect()->intended($intended ?: RedirectAfterAuth::fallback());
     }
 }
