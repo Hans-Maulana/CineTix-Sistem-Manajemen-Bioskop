@@ -19,7 +19,9 @@
                 CineTix E-Ticket
             </div>
             <div class="cx-eticket-meta-top">
-                <span class="cx-eticket-status">Terkonfirmasi</span>
+                <span class="cx-eticket-status {{ $booking->status === 'refunded' ? 'bg-danger text-white' : '' }}">
+                    {{ $booking->status === 'refunded' ? 'Refund Selesai' : 'Terkonfirmasi' }}
+                </span>
                 <div class="cx-eticket-booking-code">
                     <span class="cx-eticket-booking-label">Kode Booking</span>
                     <span class="cx-eticket-booking-value">{{ $booking->qr_redeem }}</span>
@@ -75,11 +77,20 @@
 
         @if($downloadable)
             <div class="cx-eticket-footer">
-                <p>Simpan tiket di ponsel untuk check-in lebih cepat</p>
-                <button type="button" class="cx-eticket-download download-ticket-btn" data-booking-id="{{ $booking->id }}">
-                    <iconify-icon icon="lucide:download"></iconify-icon>
-                    Unduh Tiket
-                </button>
+                <p class="mb-0">Simpan tiket di ponsel untuk check-in lebih cepat</p>
+                <div class="d-flex align-items-center gap-2">
+                    @php $booking->loadMissing('ticketBookings.schedule'); @endphp
+                    @if($booking->canRequestRefund())
+                        <a href="{{ route('booking.refund.request', $booking) }}" class="cx-eticket-refund">
+                            <iconify-icon icon="lucide:rotate-ccw"></iconify-icon>
+                            Ajukan Refund
+                        </a>
+                    @endif
+                    <button type="button" class="cx-eticket-download download-ticket-btn" data-booking-id="{{ $booking->id }}">
+                        <iconify-icon icon="lucide:download"></iconify-icon>
+                        Unduh Tiket
+                    </button>
+                </div>
             </div>
         @else
             <div class="cx-eticket-footer">

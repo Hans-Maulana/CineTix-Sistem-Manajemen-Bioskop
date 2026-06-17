@@ -1098,11 +1098,19 @@
             if (ct.includes('application/json')) {
                 const data = await r.json();
                 if (!r.ok) {
-                    showResult({ status: 'error', message: data.message || 'Terjadi kesalahan server.' });
+                    let msg = data.message || 'Terjadi kesalahan server.';
+                    if (r.status === 419 || msg.toLowerCase().includes('csrf')) {
+                        msg = 'Sesi halaman telah kadaluwarsa, silakan muat ulang (refresh) halaman dan coba scan lagi.';
+                    }
+                    showResult({ status: 'error', message: msg });
                     return;
                 }
                 showResult(data);
             } else {
+                if (!r.ok && r.status === 419) {
+                    showResult({ status: 'error', message: 'Sesi halaman telah kadaluwarsa, silakan muat ulang (refresh) halaman dan coba scan lagi.' });
+                    return;
+                }
                 window.location.reload();
             }
         })

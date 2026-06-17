@@ -115,7 +115,6 @@ class HomeController extends Controller
         $films = Film::whereIn('status', ['now_playing', 'coming_soon'])
             ->where(function ($q) use ($query) {
                 $q->where('title', 'like', "%{$query}%")
-                  ->orWhere('synopsis', 'like', "%{$query}%")
                   ->orWhereHas('genres', function ($subQuery) use ($query) {
                       $subQuery->where('genre_name', 'like', "%{$query}%");
                   });

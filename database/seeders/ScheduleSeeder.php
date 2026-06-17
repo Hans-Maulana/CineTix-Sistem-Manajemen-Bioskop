@@ -12,8 +12,7 @@ class ScheduleSeeder extends Seeder
 {
     public function run(): void
     {
-        // Hapus jadwal tayang lama agar tidak bentrok
-        Schedule::query()->delete();
+
 
         $films = Film::all();
         $studios = Studio::all();
@@ -29,58 +28,42 @@ class ScheduleSeeder extends Seeder
 
         $today = Carbon::today();
 
-        // Tanggal penayangan dinamis (hari ini, besok, lusa)
-        $julyDates = [
-            $today->toDateString(),
-            $today->copy()->addDay()->toDateString(),
-            $today->copy()->addDays(2)->toDateString(),
-        ];
+        // Buat rentang tanggal dari kemarin (untuk demo riwayat) sampai 14 hari ke depan
+        $dates = [];
+        for ($i = -1; $i <= 14; $i++) {
+            $dates[] = $today->copy()->addDays($i)->toDateString();
+        }
 
-        // Tanggal penayangan dinamis minggu depan (7 hari, 8 hari, 9 hari lagi)
-        $augustDates = [
-            $today->copy()->addDays(7)->toDateString(),
-            $today->copy()->addDays(8)->toDateString(),
-            $today->copy()->addDays(9)->toDateString(),
-        ];
-
-        $startTimes = ['10:00', '13:30', '16:30', '19:30'];
+        $startTimes = ['10:00', '13:00', '15:30', '18:00', '20:30'];
 
         foreach ($films as $filmIndex => $film) {
-            // Distribusikan studio berdasarkan index film
+            // Distribusikan ke beberapa studio secara bergiliran
             $studio = $studios->get($filmIndex % $studios->count());
 
-            // 3 jadwal tayang di bulan Juli
-            foreach ($julyDates as $dayIndex => $dateStr) {
-                $startTimeStr = $startTimes[($filmIndex + $dayIndex) % count($startTimes)];
-                $startTime = Carbon::parse("$dateStr $startTimeStr");
-                $endTime = (clone $startTime)->addMinutes($film->duration);
+            foreach ($dates as $dayIndex => $dateStr) {
+                // Tiap film tayang 3-4 kali sehari per studio
+                $dailyShowtimes = rand(2, 4);
+                
+                for ($s = 0; $s < $dailyShowtimes; $s++) {
+                    $startTimeStr = $startTimes[($filmIndex + $dayIndex + $s) % count($startTimes)];
+                    $startTime = Carbon::parse("$dateStr $startTimeStr");
+                    $endTime = (clone $startTime)->addMinutes($film->duration);
 
-                $schedules[] = [
-                    'film_id' => $film->id,
-                    'studio_id' => $studio->id,
-                    'schedule_date' => $dateStr,
-                    'start_time' => $startTime->format('H:i:s'),
-                    'end_time' => $endTime->format('H:i:s'),
-                    'ticket_price' => 50000 + (($filmIndex % 3) * 10000), // bervariasi 50rb, 60rb, 70rb
-                    'status' => $dayIndex === 0 ? 'complete' : 'on schedule',
-                ];
-            }
-
-            // 3 jadwal tayang di bulan Agustus
-            foreach ($augustDates as $dayIndex => $dateStr) {
-                $startTimeStr = $startTimes[($filmIndex + $dayIndex + 2) % count($startTimes)];
-                $startTime = Carbon::parse("$dateStr $startTimeStr");
-                $endTime = (clone $startTime)->addMinutes($film->duration);
-
-                $schedules[] = [
-                    'film_id' => $film->id,
-                    'studio_id' => $studio->id,
-                    'schedule_date' => $dateStr,
-                    'start_time' => $startTime->format('H:i:s'),
-                    'end_time' => $endTime->format('H:i:s'),
-                    'ticket_price' => 55000 + (($filmIndex % 3) * 10000), // bervariasi 55rb, 65rb, 75rb
-                    'status' => 'on schedule',
-                ];
+                    // Tentukan status: jika jadwal sudah lewat waktu sekarang, set complete
+                    $isPast = $startTime->isPast();
+                    
+                    $schedules[] = [
+                        'film_id' => $film->id,
+                        'studio_id' => $studio->id,
+                        'schedule_date' => $dateStr,
+                        'start_time' => $startTime->format('H:i:s'),
+                        'end_time' => $endTime->format('H:i:s'),
+                        'ticket_price' => 50000 + (($filmIndex % 3) * 10000) + (Carbon::parse($dateStr)->isWeekend() ? 15000 : 0),
+                        'status' => $isPast ? 'complete' : 'on schedule',
+                        'created_at' => Carbon::now(),
+                        'updated_at' => Carbon::now(),
+                    ];
+                }
             }
         }
 

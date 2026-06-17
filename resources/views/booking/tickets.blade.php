@@ -107,17 +107,7 @@
                         'ticketDomId' => 'ticket-' . $booking->id,
                     ])
 
-                    {{-- Refund action / status --}}
-                    @php $booking->load('ticketBookings.schedule'); @endphp
-                    @if($booking->canRequestRefund())
-                        <div class="mt-4 pt-3 border-top text-center">
-                            <a href="{{ route('booking.refund.request', $booking) }}"
-                               class="btn-refund">
-                                <iconify-icon icon="lucide:rotate-ccw"></iconify-icon>
-                                Ajukan Refund
-                            </a>
-                        </div>
-                    @endif
+                    {{-- Refund action moved to e_ticket_card.blade.php footer --}}
                 </div>
             @endforeach
         </div>
@@ -149,7 +139,7 @@
                             <iconify-icon icon="lucide:badge-check"></iconify-icon>
                         </div>
                         <h3 class="fw-bold text-dark mb-2">Pembelian Berhasil!</h3>
-                        <p class="text-muted mb-4">Pembayaran terkonfirmasi. Tiket elektronik Anda sudah siap.</p>
+                        <p class="text-muted mb-4">{{ session('success') ?? 'Pembayaran terkonfirmasi. Tiket elektronik Anda sudah siap.' }}</p>
                         <button class="btn w-100 py-2.5 rounded-3 text-white fw-bold" data-bs-dismiss="modal" style="background:#1A1953;border:none;">
                             Lihat Tiket Saya
                         </button>
@@ -170,7 +160,7 @@
             bootstrap.Modal.getOrCreateInstance(successModalEl).show();
         }
 
-        @if(session('success'))
+        @if(session('success') && !session('success_booking'))
             Swal.fire({
                 icon: 'success',
                 title: 'Berhasil',

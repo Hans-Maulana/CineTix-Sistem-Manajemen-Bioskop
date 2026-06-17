@@ -515,7 +515,7 @@
 
 @push('scripts')
 <script>
-    sessionStorage.removeItem('selected_seats_' + {{ $booking->schedule_id ?? 0 }});
+    // sessionStorage.removeItem('selected_seats_' + {{ $booking->schedule_id ?? 0 }}); // Dihapus agar pilihan kursi tetap ada saat user kembali
 
     document.querySelectorAll('input[name="payment_method"]').forEach(radio => {
         radio.addEventListener('change', () => {

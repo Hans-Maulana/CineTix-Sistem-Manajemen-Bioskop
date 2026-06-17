@@ -41,6 +41,60 @@ class BookingController extends Controller
 
         $schedule->load('film', 'studio.seats');
 
+        $isAuthenticated = Auth::check();
+        $user = Auth::user();
+
+        // Jika user kembali ke halaman pemilihan kursi, batalkan booking pending mereka sebelumnya
+        // agar kursi tidak terkunci oleh sesi mereka sendiri.
+        if ($isAuthenticated) {
+            $pendingBookings = \App\Models\Booking::where('user_id', $user->id)
+                ->where('schedule_id', $schedule->id)
+                ->where('status', 'pending')
+                ->get();
+
+            foreach ($pendingBookings as $pb) {
+                // Lepas lock pada kursi-kursi yang terkait dengan booking ini
+                $seatIds = $pb->ticketBookings()->pluck('seat_id')->toArray();
+                if (!empty($seatIds)) {
+                    \App\Models\Seat::whereIn('id', $seatIds)->update([
+                        'status' => 'available',
+                        'locked_until' => null,
+                        'locked_by_user_id' => null,
+                    ]);
+                }
+                
+                $pb->update(['status' => 'cancelled']);
+                if ($pb->payment) {
+                    $pb->payment->update(['status' => 'failed']);
+                }
+            }
+        } else {
+            // Untuk guest, cek pending booking berdasarkan session
+            $guestEmail = session('guest_email');
+            if ($guestEmail) {
+                $pendingBookings = \App\Models\Booking::where('guest_email', $guestEmail)
+                    ->where('schedule_id', $schedule->id)
+                    ->where('status', 'pending')
+                    ->get();
+                    
+                foreach ($pendingBookings as $pb) {
+                    $seatIds = $pb->ticketBookings()->pluck('seat_id')->toArray();
+                    if (!empty($seatIds)) {
+                        \App\Models\Seat::whereIn('id', $seatIds)->update([
+                            'status' => 'available',
+                            'locked_until' => null,
+                            'locked_by_user_id' => null,
+                        ]);
+                    }
+
+                    $pb->update(['status' => 'cancelled']);
+                    if ($pb->payment) {
+                        $pb->payment->update(['status' => 'failed']);
+                    }
+                }
+            }
+        }
+
         $bookedSeatIds = TicketBooking::whereHas('booking', function ($q) {
             $q->whereNotIn('status', ['cancelled', 'refunded']);
         })
@@ -49,8 +103,6 @@ class BookingController extends Controller
             ->toArray();
 
         $seatsByCode = $schedule->studio->seats->keyBy('seat_code');
-        $isAuthenticated = Auth::check();
-        $user = Auth::user();
 
         $restoredSeats = $this->pullPendingSeatSelection($schedule, $bookedSeatIds);
 
@@ -446,7 +498,7 @@ class BookingController extends Controller
     {
         GuestBookingAccess::authorize($booking, $request);
 
-        if ($booking->status !== 'confirmed') {
+        if (!in_array($booking->status, ['confirmed', 'refunded'])) {
             return redirect()->route('booking.payment', $this->bookingRouteParams($booking))
                 ->with('error', 'Pembayaran belum selesai. Selesaikan pembayaran terlebih dahulu.');
         }
@@ -492,7 +544,7 @@ class BookingController extends Controller
             ->where('status', 'confirmed')
             ->whereHas('ticketBookings.schedule', function ($q) {
                 $q->where('status', '!=', 'complete')
-                  ->where('schedule_date', '>', now());
+                  ->whereDate('schedule_date', '>=', now()->toDateString());
             })
             ->with('ticketBookings.schedule.film', 'ticketBookings.schedule.studio', 'payments')
             ->orderBy('created_at', 'desc')

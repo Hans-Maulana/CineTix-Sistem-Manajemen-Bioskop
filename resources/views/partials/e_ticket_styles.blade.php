@@ -266,6 +266,26 @@
         color: #fff;
     }
 
+    .cx-eticket-refund {
+        border: 1.5px solid #e74c3c;
+        border-radius: 10px;
+        padding: 7px 14px;
+        font-size: 0.78rem;
+        font-weight: 700;
+        background: transparent;
+        color: #e74c3c;
+        display: inline-flex;
+        align-items: center;
+        gap: 6px;
+        text-decoration: none;
+        transition: all 0.18s ease;
+    }
+
+    .cx-eticket-refund:hover {
+        background: #e74c3c;
+        color: #fff;
+    }
+
     .cx-eticket-notch {
         position: absolute;
         width: 22px;

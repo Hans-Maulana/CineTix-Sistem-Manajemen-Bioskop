@@ -207,7 +207,7 @@
             </a>
         @elseif($booking->status === 'refunded')
             <div class="alert alert-info py-2">
-                <iconify-icon icon="lucide:info" class="me-1"></iconify-icon> Status Refund: <strong>Refunded</strong>
+                <iconify-icon icon="lucide:check-circle" class="me-1"></iconify-icon> Status: <strong>Refund Selesai (Auto Refund)</strong>
             </div>
         @endif
 
