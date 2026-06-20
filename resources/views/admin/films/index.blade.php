@@ -127,7 +127,7 @@
     /* Film grid */
     .fm-grid {
         display: grid;
-        grid-template-columns: repeat(auto-fill, minmax(220px, 1fr));
+        grid-template-columns: repeat(auto-fill, minmax(300px, 1fr));
         gap: 22px;
     }
     .fm-card {
@@ -146,7 +146,7 @@
     }
     .fm-card-poster {
         position: relative;
-        aspect-ratio: 2 / 3;
+        aspect-ratio: 16 / 9;
         overflow: hidden;
         background: linear-gradient(135deg, #1A1953, #3a37a0);
     }

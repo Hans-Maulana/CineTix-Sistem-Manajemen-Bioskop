@@ -29,12 +29,11 @@
     .fd-poster-wrap {
         position: relative;
         aspect-ratio: 2 / 3;
-        background: linear-gradient(135deg, #1A1953, #3a37a0);
-    }
-    .fd-poster-wrap img {
-        width: 100%;
-        height: 100%;
-        object-fit: cover;
+        background: #000;
+        display: flex;
+        align-items: center;
+        justify-content: center;
+        overflow: hidden;
     }
     .fd-poster-badges {
         position: absolute;
@@ -47,6 +46,7 @@
         flex-wrap: wrap;
         gap: 8px;
         align-items: center;
+        z-index: 2;
     }
     .fd-poster-meta {
         padding: 16px 18px 18px;
@@ -430,7 +430,10 @@
         <div class="col-lg-4" data-aos="fade-right">
             <div class="fd-poster-card">
                 <div class="fd-poster-wrap">
-                    <img src="{{ $film->cover_url }}" alt="{{ $film->title }}">
+                    <!-- Blurred Background Image -->
+                    <div style="position: absolute; top: -10%; left: -10%; width: 120%; height: 120%; background-image: url('{{ $film->cover_url }}'); background-size: cover; background-position: center; filter: blur(20px); opacity: 0.5; z-index: 0;"></div>
+                    <!-- Actual Image -->
+                    <img src="{{ $film->cover_url }}" alt="{{ $film->title }}" style="position: relative; z-index: 1; width: 100%; height: 100%; object-fit: contain; object-position: center;">
                     <div class="fd-poster-badges">
                         @if($film->classification)
                             <span class="cx-classification" style="position:static;">{{ strtoupper($film->classification) }}</span>
@@ -472,8 +475,8 @@
                 @endif
                 @if($film->trailer_url)
                     <button type="button" class="btn btn-outline-danger rounded-pill px-3 py-1 d-flex align-items-center gap-2 fw-bold" data-bs-toggle="modal" data-bs-target="#trailerModal" style="border-width: 2px;">
-                        <iconify-icon class="text-white" icon="lucide:play-circle" style="font-size: 1.2rem;"></iconify-icon>
-                        <h10 class="text-white">Tonton Trailer</h10>
+                        <iconify-icon class="text-danger text-white" icon="lucide:play-circle" style="font-size: 1.2rem;"></iconify-icon>
+                        <h10 class="text-danger text-white">Tonton Trailer</h10>
                     </button>
                 @endif
             </div>
