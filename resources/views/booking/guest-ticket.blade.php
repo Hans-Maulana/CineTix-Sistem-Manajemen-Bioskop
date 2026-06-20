@@ -171,21 +171,9 @@
 
     @php $recipientEmail = $booking->customerEmail(); @endphp
 
-    <div class="cx-success-hero">
-        <div class="cx-success-icon">
-            <iconify-icon icon="lucide:badge-check"></iconify-icon>
-        </div>
-        <h2>Tiket Anda Siap!</h2>
-        @if(session('ticket_email_sent') === true)
-            <p>Salinan tiket telah dikirim ke <strong>{{ $recipientEmail }}</strong>. Periksa inbox atau folder spam/promosi.</p>
-        @elseif(session('ticket_email_sent') === false)
-            <p>Tiket aktif untuk <strong>{{ $recipientEmail }}</strong>. Email belum terkirim — gunakan tombol kirim ulang di bawah.</p>
-        @else
-            <p>Tiket aktif untuk <strong>{{ $recipientEmail }}</strong>. Jika email belum masuk, cek folder spam atau kirim ulang di bawah.</p>
-        @endif
-    </div>
 
-    @include('partials.e_ticket_card', ['booking' => $booking, 'downloadable' => false])
+
+    @include('partials.e_ticket_card', ['booking' => $booking, 'downloadable' => true, 'ticketDomId' => 'ticket-' . $booking->id])
 
     <div class="cx-ticket-notes">
         <h6>
@@ -227,4 +215,57 @@
     </div>
 </div>
 </div>
+
+@push('scripts')
+<script src="https://cdn.jsdelivr.net/npm/sweetalert2@11"></script>
+<script src="https://cdnjs.cloudflare.com/ajax/libs/html2canvas/1.4.1/html2canvas.min.js"></script>
+<script>
+    document.addEventListener('DOMContentLoaded', function() {
+        document.addEventListener('click', function(e) {
+            const btn = e.target.closest('.download-ticket-btn');
+            if (!btn) return;
+
+            e.preventDefault();
+            const bookingId = btn.getAttribute('data-booking-id');
+            const ticketEl = document.getElementById('ticket-' + bookingId);
+            if (!ticketEl) return;
+
+            const original = btn.innerHTML;
+            btn.innerHTML = '<span class="spinner-border spinner-border-sm"></span>';
+            btn.disabled = true;
+
+            html2canvas(ticketEl, {
+                scale: 3,
+                useCORS: true,
+                backgroundColor: '#e4e8ef',
+                logging: false,
+            }).then(canvas => {
+                const link = document.createElement('a');
+                link.download = 'CineTix-Ticket-' + bookingId + '.png';
+                link.href = canvas.toDataURL('image/png');
+                link.click();
+                btn.innerHTML = original;
+                btn.disabled = false;
+            }).catch(() => {
+                alert('Gagal mengunduh tiket. Silakan coba lagi.');
+                btn.innerHTML = original;
+                btn.disabled = false;
+            });
+        });
+    });
+
+    document.addEventListener("DOMContentLoaded", function() {
+        @if(session('ticket_email_sent') !== null || request()->has('success_payment'))
+        Swal.fire({
+            icon: 'success',
+            title: 'Tiket Anda Siap!',
+            html: 'Tiket aktif untuk <strong>{{ $recipientEmail }}</strong>.<br>Cek inbox atau folder spam email Anda.',
+            confirmButtonText: 'Tutup',
+            confirmButtonColor: '#1A1953',
+            backdrop: `rgba(26, 25, 83, 0.4)`
+        });
+        @endif
+    });
+</script>
+@endpush
 @endsection

@@ -132,11 +132,25 @@
               @endif
 
               <div>
-                <input type="email" name="email" class="form-control border-bottom" placeholder="Email" required autofocus>
+                <input type="email" name="email" class="form-control border-bottom @error('email') is-invalid @enderror" placeholder="Email" required autofocus value="{{ old('email') }}">
+                @error('email')
+                    <div class="invalid-feedback d-block mt-1" style="font-size: 0.85rem; font-weight: 500;">
+                        {{ $message }}
+                    </div>
+                @enderror
               </div>
 
               <div>
-                <input type="password" name="password" class="form-control border-bottom" placeholder="Password" required>
+                <input type="password" name="password" class="form-control border-bottom @error('password') is-invalid @enderror" placeholder="Password" required>
+                @error('password')
+                    <div class="invalid-feedback d-block mt-1" style="font-size: 0.85rem; font-weight: 500;">
+                        {{ $message }}
+                    </div>
+                @enderror
+              </div>
+
+              <div class="d-flex justify-content-end mb-2">
+                <a href="{{ route('password.request') }}" class="text-dark fs-3 fw-medium text-decoration-none" style="font-size: 0.85rem !important;">Lupa Password?</a>
               </div>
 
               <button type="submit" class="btn btn-dark w-100 justify-content-center py-2 fw-medium my-7 fs-4 lh-lg">

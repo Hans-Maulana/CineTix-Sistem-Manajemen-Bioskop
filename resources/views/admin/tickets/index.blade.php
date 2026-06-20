@@ -1043,7 +1043,7 @@
         }
         html5QrCode.start(
             { facingMode: 'environment' },
-            { fps: 10, qrbox: { width: 240, height: 240 } },
+            { fps: 15 },
             (decoded) => {
                 if (!isScanning) return;
                 isScanning = false;

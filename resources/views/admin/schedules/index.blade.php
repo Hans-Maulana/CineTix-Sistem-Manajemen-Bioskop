@@ -155,8 +155,8 @@
         align-items: flex-start;
     }
     .sc-poster {
-        width: 70px;
-        height: 100px;
+        width: 120px;
+        aspect-ratio: 16 / 9;
         border-radius: 10px;
         object-fit: cover;
         flex-shrink: 0;
@@ -164,7 +164,8 @@
         box-shadow: 0 4px 12px rgba(0,0,0,0.08);
     }
     .sc-poster-fallback {
-        width: 70px; height: 100px;
+        width: 120px; 
+        aspect-ratio: 16 / 9;
         border-radius: 10px;
         flex-shrink: 0;
         display: flex; align-items: center; justify-content: center;
@@ -341,7 +342,7 @@
         padding: 60px 20px;
         text-align: center;
     }
-    .sc-empty i { font-size: 3rem; color: #c7cbdc; }
+    .sc-empty > i { font-size: 3rem; color: #c7cbdc; }
 
     .sc-chip {
         display: inline-flex; align-items: center; gap: 6px;
@@ -767,12 +768,12 @@
             @endif
         </p>
         @if(request()->hasAny(['search', 'film_id', 'studio_id', 'status', 'date_from', 'date_to', 'range']))
-            <a href="{{ route('admin.schedules.index') }}" class="btn btn-sc-soft me-2">
-                <i class="bi bi-arrow-counterclockwise me-1"></i> Reset Filter
+            <a href="{{ route('admin.schedules.index') }}" class="btn btn-sc-soft d-inline-flex align-items-center me-2">
+                <i class="bi bi-arrow-counterclockwise me-2"></i> Reset Filter
             </a>
         @endif
-        <a href="{{ route('admin.schedules.create') }}" class="btn btn-sc-primary">
-            <i class="bi bi-calendar-plus me-1"></i> Tambah Jadwal
+        <a href="{{ route('admin.schedules.create') }}" class="btn btn-sc-primary d-inline-flex align-items-center">
+            <i class="bi bi-calendar-plus me-2"></i> Tambah Jadwal
         </a>
     </div>
 @endif

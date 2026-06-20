@@ -147,9 +147,9 @@
                                                     @if($existingReview)
                                                         <div class="d-flex align-items-center justify-content-between mb-1">
                                                             <span class="small fw-bold text-secondary">Ulasan Anda</span>
-                                                            <div class="text-warning small">
+                                                            <div class="small">
                                                                 @for($i = 1; $i <= 5; $i++)
-                                                                    <iconify-icon icon="solar:star-{{ $i <= $existingReview->rating ? 'bold' : 'linear' }}"></iconify-icon>
+                                                                    <iconify-icon icon="solar:star-{{ $i <= $existingReview->rating ? 'bold' : 'linear' }}" style="color: {{ $i <= $existingReview->rating ? '#ffc107' : '#cbd5e1' }}; font-size: 1.1rem;"></iconify-icon>
                                                                 @endfor
                                                             </div>
                                                         </div>

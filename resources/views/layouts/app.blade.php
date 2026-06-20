@@ -253,8 +253,7 @@
               <div class="col-lg-3 col-md-6 mb-4 mb-lg-0 pt-lg-2">
                   <a href="{{ route('about') }}" class="footer-link">TENTANG KAMI</a>
                   <a href="{{ route('faq') }}" class="footer-link">FAQ & BANTUAN</a>
-                  <a href="#!" class="footer-link">KEBIJAKAN PRIVASI</a>
-                  <a href="#!" class="footer-link">SYARAT & KETENTUAN</a>
+
               </div>
               <div class="col-lg-3 col-md-6 pt-lg-2">
                   <div class="footer-col-title">DUKUNGAN CINETIX</div>

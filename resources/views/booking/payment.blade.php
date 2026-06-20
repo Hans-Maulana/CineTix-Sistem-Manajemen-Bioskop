@@ -370,10 +370,7 @@
                 <h4 class="text-white mb-1">Selesaikan Pesanan Anda</h4>
                 <p class="text-white-50 small mb-0">Pilih metode pembayaran lalu konfirmasi untuk melanjutkan</p>
             </div>
-            <div class="text-white text-end">
-                <div class="small text-white-50">Total tagihan</div>
-                <div class="fs-3 fw-bold">Rp {{ number_format($booking->total_amount, 0, ',', '.') }}</div>
-            </div>
+
         </div>
     </div>
 
